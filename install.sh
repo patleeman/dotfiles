@@ -4,15 +4,12 @@ DOTFILES_DIR=$(dirname "$0")
 
 echo "Starting system setup"
 
-echo "Setting up working directory"
-mkdir ~/workingdir
+echo "Running initial setup scripts"
+source $DOTFILES_DIR/setup/dir.sh
+source $DOTFILES_DIR/setup/git.sh
+source $DOTFILES_DIR/setup/osx.sh
 
 echo "Loading dotfiles"
 source $DOTFILES_DIR/load.sh
-
-if [[ $OSTYPE == darwin* ]]; then
-    echo "Setting up OSX"
-    source $DOTFILES_DIR/setup/osx.sh
-fi
 
 echo "Finished system setup"

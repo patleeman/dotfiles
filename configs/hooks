@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if [[ $OSTYPE == darwin* ]]; then
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+
+    eval $(thefuck --alias)
+fi

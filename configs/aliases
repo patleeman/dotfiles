@@ -11,9 +11,9 @@ alias wd="cd ~/workingdir"
 # Git
 alias gs="git status"
 alias ga="git add ."
-alias gc="git commit"
 alias gb="git branch"
-alias gpull="git pull"
+alias gp="git pull"
+alias gcm="git commit -m '$1'"
 
 # disk usage
 alias du='du -ch'

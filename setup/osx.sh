@@ -39,7 +39,7 @@ if [[ $OSTYPE == darwin* ]]; then
     brew install pyenv-virtualenv
 
     echo "Installing load script"
-    echo "source $DOTFILES_DIR/load.sh" >> ~/.zshrc
+    echo -n "source $DOTFILES_DIR/load.sh" >> ~/.zshrc
 fi
 
 

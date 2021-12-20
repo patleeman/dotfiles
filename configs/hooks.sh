@@ -10,5 +10,19 @@ if [[ $OSTYPE == darwin* ]]; then
 
     eval $(thefuck --alias)
 
-    eval "$(direnv hook zsh)"
+
+    if [ -n "$BASH_VERSION" ]; then
+        # Bash completion
+        [[ -r "/usr/local/etc/profile.d/bash_completion.sh" ]] && . "/usr/local/etc/profile.d/bash_completion.sh"
+    fi
+
+    if [ -n "$ZSH_VERSION" ]; then
+        eval "$(direnv hook zsh)"
+        if type brew &>/dev/null; then
+            FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+
+            autoload -Uz compinit
+            compinit
+        fi
+    fi
 fi

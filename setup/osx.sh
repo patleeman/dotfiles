@@ -42,6 +42,12 @@ if [[ $OSTYPE == darwin* ]]; then
 
     echo "Installing direnv"
     brew install direnv
+
+    echo "Installing awscli"
+    brew install awscli
+
+    echo "Installing zsh-completion"
+    brew install zsh-completions
 fi
 
 

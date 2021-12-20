@@ -18,6 +18,8 @@ if [[ $OSTYPE == darwin* ]]; then
 
     if [ -n "$ZSH_VERSION" ]; then
         eval "$(direnv hook zsh)"
+
+        # zsh-completion
         if type brew &>/dev/null; then
             FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
 

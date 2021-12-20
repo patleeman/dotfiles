@@ -1,4 +1,6 @@
 # Aliases
+
+# ls
 alias ls="ls -laGpF --color=auto"
 alias ll="ls -lGpF --color=auto"
 alias l="ls -lGpF --color=auto"
@@ -9,6 +11,9 @@ alias wd="cd ~/workingdir"
 # Git
 alias gs="git status"
 alias ga="git add ."
-alias gc="git checkout"
+alias gc="git commit"
 alias gb="git branch"
-alias gp="git pull"
+alias gpull="git pull"
+
+# disk usage
+alias du='du -ch'

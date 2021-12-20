@@ -31,12 +31,17 @@ if [[ $OSTYPE == darwin* ]]; then
     echo "Installing Karabiner-Elements"
     brew install --cask karabiner-elements
 
-    echo "Installing node"
-    brew install node
+    echo "Installing nvm & node"
+    brew install nvm
+    nvm install --lts
+    nvm use --lts
 
     echo "Installing pyenv & pyenv-virtualenv"
     brew install pyenv
     brew install pyenv-virtualenv
+
+    echo "Installing direnv"
+    brew install direnv
 
     echo "Installing load script"
     echo -n "source $DOTFILES_DIR/load.sh" >> ~/.zshrc

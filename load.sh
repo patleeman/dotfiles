@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR="$(find $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/configs)"
-for DOTFILE in $SCRIPT_DIR
-do
-    if [ -f "$DOTFILE" ]; then
-        source "$DOTFILE"
-        echo "Loaded $DOTFILE"
-    fi
-done
+# Manually source all the files that we want loaded in every shell session.
+source $DOTFILES_DIR/configs/ohmyzsh
+source $DOTFILES_DIR/configs/hooks
+source $DOTFILES_DIR/configs/aliases
+source $DOTFILES_DIR/configs/git
+source $DOTFILES_DIR/configs/noom

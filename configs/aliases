@@ -18,6 +18,3 @@ function gcp () {
     git commit -m $1
     git push
 }
-
-# disk usage
-alias du='du -ch'

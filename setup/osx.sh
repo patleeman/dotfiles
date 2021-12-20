@@ -42,9 +42,6 @@ if [[ $OSTYPE == darwin* ]]; then
 
     echo "Installing direnv"
     brew install direnv
-
-    echo "Installing load script"
-    echo -n "source $DOTFILES_DIR/load.sh" >> ~/.zshrc
 fi
 
 

@@ -12,7 +12,7 @@ source $DOTFILES_DIR/setup/osx.sh
 
 if [[ $OSTYPE == darwin* ]]; then
     echo "Installing load script"
-    echo -n "export DOTFILES_DIR=${DOTFILES_DIR} && source $LOAD_FILE" >> ~/.zshrc
+    echo -n "source $LOAD_FILE" >> ~/.zshrc
 fi
 
 echo "Loading dotfiles"

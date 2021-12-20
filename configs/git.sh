@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# Git commit push
+function gcp() {
+    git add .
+    git commit -a -m "$1"
+    git push
+}
+
 # https://gist.github.com/antongrbin/14a97f99a32fce4f176b198395ef1903
 # Push the current branch to the origin and open the new PR for that branch in the
 # github UI.

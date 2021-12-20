@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # Git commit push
-function gcp() {
+function glazy() {
     git add .
-    git commit -a -m "$1"
+    git commit -a -m $1
     git push
 }
 
@@ -25,7 +25,7 @@ function newpr {
       repo=$(git remote -v | head -n1 | cut -f2 -d'/' | cut -f1 -d'.')
       open https://github.com/noom/$repo/pull/new/$branch
     else
-      git st
+      git status
       echo
       echo "newpr: Did u forgot to commit changes?"
     fi

@@ -59,4 +59,7 @@ if [[ $OSTYPE == linux-gnu* ]]; then
 
     echo "Installing FiraCode Font"
     sudo apt install fonts-firacode
+
+    echo "Installing xcopy xsel"
+    sudo apt install xclip xsel
 fi

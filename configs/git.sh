@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Git commit push
-function glazy() {
+# Git commit push for the lazy person
+function git_lazy() {
     git add .
     git commit -a -m $1
     git push
@@ -12,7 +12,7 @@ function glazy() {
 # github UI.
 # If called with arguments, for example 'newpr add the new function', it will first
 # commit changes with 'add the new function' as the commit message.
-function newpr {
+function git_new_pr {
   branch=$(git rev-parse --abbrev-ref HEAD)
   if [ $# -ne 0 ]; then
     git commit -a -m "$*"
@@ -34,7 +34,7 @@ function newpr {
 
 # Creates a new feature branch off of master.
 # Usage: 'newbranch min-1696/first'
-function newbranch {
+function git_new_branch {
   if [ -z "$(git status --porcelain)" ]; then
     git checkout master
     git pull

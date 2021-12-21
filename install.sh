@@ -9,10 +9,18 @@ echo "Running initial setup scripts"
 source $DOTFILES_DIR/setup/dir.sh
 source $DOTFILES_DIR/setup/git.sh
 source $DOTFILES_DIR/setup/osx.sh
+source $DOTFILES_DIR/setup/linux.sh
 
-if [[ $OSTYPE == darwin* ]]; then
-    echo "Installing load script"
-    echo -n "source $LOAD_FILE" >> ~/.zshrc
+LOAD_COMMAND="source $LOAD_FILE"
+
+if [[ -n "$ZSH_VERSION" ]] && ! grep -Fq "$LOAD_COMMAND" ~/.zshrc; then
+    echo "Installing load script in .zshrc"
+    echo -n $LOAD_COMMAND >> ~/.zshrc
+fi
+
+if [[ -n "$BASH_VERSION" ]] && ! grep -Fq "$LOAD_COMMAND" ~/.bashrc; then
+    echo "Installing load script in .bashrc"
+    echo -n $LOAD_COMMAND >> ~/.bashrc
 fi
 
 echo "Loading dotfiles"

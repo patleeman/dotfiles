@@ -1,9 +1,7 @@
 # Aliases
 
 # ls
-alias ls="ls -laGpF --color=auto"
-alias ll="ls -lGpF --color=auto"
-alias l="ls -lGpF --color=auto"
+alias ls="ls -lahGpF"
 
 # Folder aliases
 alias wd="cd ~/workingdir"

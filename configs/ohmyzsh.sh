@@ -76,5 +76,12 @@ if [ -n "$ZSH_VERSION" ] && [[ $OSTYPE == darwin* ]]; then
     # Add wisely, as too many plugins slow down shell startup.
     plugins=(git)
 
+    # We need to do some fuckery to get rid of the aliases ohmyzsh injects.
+    # https://newbedev.com/clear-or-disable-aliases-in-zsh
+    save_aliases=$(alias -L)
+    # This line loads ohmyzsh
     source $ZSH/oh-my-zsh.sh
+    # Unalias all the aliases zsh adds then restore existing aliases.
+    unalias -m "*"
+    eval $save_aliases; unset save_aliases
 fi

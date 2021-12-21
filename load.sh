@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DOTFILES_DIR="${HOME}/dotfiles"
+export DOTFILES="${HOME}/dotfiles"
 
 # Set nullglob to prevent error if local directory is empty.
 if [ -n "$ZSH_VERSION" ]; then
@@ -12,7 +12,7 @@ if [ -n "$BASH_VERSION" ]; then
 fi
 
 # Source the configuration files.
-for f in $DOTFILES_DIR/{configs,local}/*; do
+for f in $DOTFILES/{configs,local}/*; do
     if [[ -r $f ]] && [[ -f $f ]]; then
         source $f
     fi

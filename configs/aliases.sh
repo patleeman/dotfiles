@@ -38,4 +38,4 @@ alias iip="ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9
 alias ssh_key="copy_ssh_key_to_clipboard"
 
 # Fun aliases
-alias weather="curl wttr.in"
+alias weather="curl 'wttr.in?1nq'"

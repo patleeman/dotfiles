@@ -56,4 +56,7 @@ if [[ $OSTYPE == linux-gnu* ]]; then
 
     echo "Installing bash-completion"
     sudo apt install -y bash-completion
+
+    echo "Installing FiraCode Font"
+    sudo apt install fonts-firacode
 fi

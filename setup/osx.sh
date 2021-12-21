@@ -48,7 +48,9 @@ if [[ $OSTYPE == darwin* ]]; then
 
     echo "Installing zsh-completion"
     brew install zsh-completions
+
+    echo "Installing FiraCode Font"
+    brew tap homebrew/cask-fonts
+    brew install --cask font-fira-code
 fi
-
-
 

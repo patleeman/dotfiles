@@ -45,3 +45,14 @@ function git_new_branch {
     echo "newbranch: Aborting due to dirty git state."
   fi
 }
+
+# Handy utility that opens up git difftool in vscode if the number
+# of files changed is small, otherwise just show a regular git diff.
+function git_diff {
+  NUM_CHANGES=$(git whatchanged -1 --format=oneline | wc -l)
+  if [ "$NUM_CHANGES" -gt "5" ]; then
+    git diff
+  else
+    git difftool -y
+  fi
+}

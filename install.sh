@@ -1,27 +1,24 @@
-#!/usr/bin/env bash
+# First time system installation script
 
 DOTFILES_DIR="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 LOAD_FILE="${DOTFILES_DIR}load.sh"
-echo "DOTFILES DIR: $DOTFILES_DIR"
+echo "Your dotfiles are located at $DOTFILES_DIR"
 echo "Starting system setup"
 
 echo "Running initial setup scripts"
 source $DOTFILES_DIR/setup/dir.sh
 source $DOTFILES_DIR/setup/git.sh
-source $DOTFILES_DIR/setup/osx.sh
-source $DOTFILES_DIR/setup/linux.sh
 
-LOAD_COMMAND="source $LOAD_FILE"
-
-if [[ -n "$ZSH_VERSION" ]] && ! grep -Fq "$LOAD_COMMAND" ~/.zshrc; then
-    echo "Installing load script in .zshrc"
-    echo -n $LOAD_COMMAND >> ~/.zshrc
+if [[ $OSTYPE == darwin* ]]; then
+    source $DOTFILES_DIR/setup/osx.sh
 fi
 
-if [[ -n "$BASH_VERSION" ]] && ! grep -Fq "$LOAD_COMMAND" ~/.bashrc; then
-    echo "Installing load script in .bashrc"
-    echo -n $LOAD_COMMAND >> ~/.bashrc
+if [[ $OSTYPE == linux-gnu* ]]; then
+    source $DOTFILES_DIR/setup/linux.sh
 fi
+
+echo "Injecting load script into "
+source $DOTFILES_DIR/utils/inject_load_script.sh
 
 echo "Loading dotfiles"
 source $LOAD_FILE

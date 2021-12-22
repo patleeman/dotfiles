@@ -1,56 +1,55 @@
-#!/usr/bin/env bash
+# Main install script for macOS, tested with x86.
 
-if [[ $OSTYPE == darwin* ]]; then
-    echo "Installing Homebrew"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+echo "Installing Homebrew"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-    echo "Installing oh-my-zsh"
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+echo "Installing oh-my-zsh"
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-    echo "Install thefuck utility"
-    brew install thefuck
+brew tap homebrew/cask-versions
+brew tap homebrew/cask-fonts
 
-    echo "Installing vscode"
-    brew install --cask visual-studio-code
+echo "Install thefuck utility"
+brew install thefuck
 
-    echo "Installing iterm2"
-    brew install --cask iterm2
+echo "Installing vscode"
+brew install --cask visual-studio-code
 
-    echo "Installing Git Fork"
-    brew install --cask fork
+echo "Installing iterm2"
+brew install --cask iterm2
 
-    echo "Installing Firefox"
-    brew install --cask firefox
+echo "Installing Git Fork"
+brew install --cask fork
 
-    echo "Installing Google Chrome"
-    brew install --cask google-chrome
+echo "Installing Firefox"
+brew install --cask firefox
 
-    echo "Installing Docker"
-    brew install docker
+echo "Installing Google Chrome"
+brew install --cask google-chrome-canary
 
-    echo "Installing Karabiner-Elements"
-    brew install --cask karabiner-elements
+echo "Installing Docker"
+brew install docker
 
-    echo "Installing nvm & node"
-    brew install nvm
-    nvm install --lts
-    nvm use --lts
+echo "Installing Karabiner-Elements"
+brew install --cask karabiner-elements
 
-    echo "Installing pyenv & pyenv-virtualenv"
-    brew install pyenv
-    brew install pyenv-virtualenv
+echo "Installing nvm & node"
+brew install nvm
+nvm install --lts
+nvm use --lts
 
-    echo "Installing direnv"
-    brew install direnv
+echo "Installing pyenv & pyenv-virtualenv"
+brew install pyenv
+brew install pyenv-virtualenv
 
-    echo "Installing awscli"
-    brew install awscli
+echo "Installing direnv"
+brew install direnv
 
-    echo "Installing zsh-completion"
-    brew install zsh-completions
+echo "Installing awscli"
+brew install awscli
 
-    echo "Installing FiraCode Font"
-    brew tap homebrew/cask-fonts
-    brew install --cask font-fira-code
-fi
+echo "Installing zsh-completion"
+brew install zsh-completions
 
+echo "Installing FiraCode Font"
+brew install --cask font-fira-code

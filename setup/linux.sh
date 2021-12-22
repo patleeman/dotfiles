@@ -55,3 +55,6 @@ sudo apt install fonts-firacode
 
 echo "Installing xcopy xsel"
 sudo apt install xclip xsel
+
+echo "Installing Pandoc"
+sudo apt-get install pandoc

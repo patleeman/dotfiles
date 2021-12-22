@@ -53,3 +53,6 @@ brew install zsh-completions
 
 echo "Installing FiraCode Font"
 brew install --cask font-fira-code
+
+echo "Installing Pandoc"
+brew install pandoc

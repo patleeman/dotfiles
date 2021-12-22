@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Git commit push for the lazy person
 function git_lazy() {
     git add .

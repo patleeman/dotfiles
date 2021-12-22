@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 
 function copy_ssh_key_to_clipboard() {
     key=$(cat ~/.ssh/id_rsa.pub)

@@ -23,3 +23,7 @@ For local use on each machine. Stick sensitive scripts or configurations in here
 # setup/
 
 For initial environment setup scripts
+
+# Multi-shell setup
+
+In configs, files with the `.bash` or `.zsh` extensions get loaded in their respective environments. `.sh` files are loaded in both.

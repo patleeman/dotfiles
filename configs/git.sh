@@ -1,7 +1,7 @@
 # Git commit push for the lazy person
 function git_lazy() {
     git add .
-    git commit -a -m $1
+    git commit -m $1
     git push
 }
 

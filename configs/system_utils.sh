@@ -19,7 +19,7 @@ function update_dotfiles() {
 
         echo "Updating dotfiles"
         git fetch --quiet origin master
-        # git reset --hard FETCH_HEAD
+        git reset --hard FETCH_HEAD
         echo "Dotfiles have been updated"
     fi
 }

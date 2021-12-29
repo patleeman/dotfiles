@@ -40,3 +40,4 @@ alias ssh_key="copy_ssh_key_to_clipboard"
 
 # Fun aliases
 alias weather="curl 'wttr.in?1nq'"
+

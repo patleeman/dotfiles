@@ -56,3 +56,6 @@ brew install --cask font-fira-code
 
 echo "Installing Pandoc"
 brew install pandoc
+
+echo "Installing md5sum"
+brew install md5sha1sum

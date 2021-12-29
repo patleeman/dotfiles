@@ -29,3 +29,6 @@ for f in $DOTFILES_DIR/{configs,local}/*.sh; do
         source $f
     fi
 done
+
+# Check for updates
+update_dotfiles

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # First time system installation script
 
 DOTFILES_DIR="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"

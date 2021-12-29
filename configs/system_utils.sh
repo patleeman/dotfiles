@@ -9,6 +9,7 @@ function copy_ssh_key_to_clipboard() {
 }
 
 function update_dotfiles() {
+    git fetch -q
     if (( $(git rev-list HEAD...origin/master --count) > 0 )); then
         printf "There are dotfiles updates available. Update? [Yn]: "
         read answer

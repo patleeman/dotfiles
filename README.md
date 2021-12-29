@@ -18,9 +18,9 @@ Stick any configurations in here that get executed for every bash session.
 
 ## local/
 
-For local use on each machine. Stick sensitive scripts or configurations in here.
+For local use on each machine. Stick sensitive scripts or configurations in here. Files in this folder will be sourced on every load but won't be stored in git.
 
-# setup/
+## setup/
 
 For initial environment setup scripts
 

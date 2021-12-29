@@ -16,7 +16,7 @@ alias gnpr="git_new_pr"
 alias gnb="git_new_branch"
 
 # Dotfiles
-alias edit_dotfiles="code $DOTFILES"
+alias edit_dotfiles="code $DOTFILES_DIR"
 
 # System
 alias du="du -ach | sort -h"

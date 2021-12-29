@@ -1,5 +1,4 @@
 # Hooks for ZSH
-
 eval "$(direnv hook zsh)"
 
 # zsh-completion

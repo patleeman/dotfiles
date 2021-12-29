@@ -8,8 +8,15 @@ function copy_ssh_key_to_clipboard() {
     fi
 }
 
+# Handy utility to time how long it takes to start up the shell
+# https://blog.mattclemente.com/2020/06/26/oh-my-zsh-slow-to-load/
+timeshell() {
+  shell=${1-$SHELL}
+  for i in $(seq 1 10); do /usr/bin/time $shell -i -c exit; done
+}
+
 function update_dotfiles() {
-    git fetch -q
+    git fetch -q >> /dev/null 2>&1
     if (( $(git rev-list HEAD...origin/master --count) > 0 )); then
         printf "There are dotfiles updates available. Update? [Yn]: "
         read answer

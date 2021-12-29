@@ -26,8 +26,6 @@ if [ -n "$BASH_VERSION" ]; then
     done
 fi
 
-
-# Source the configuration files.
 for f in $DOTFILES_DIR/{configs,local}/*.sh; do
     if [[ -r $f ]] && [[ -f $f ]]; then
         source $f
@@ -35,4 +33,5 @@ for f in $DOTFILES_DIR/{configs,local}/*.sh; do
 done
 
 # Check for updates
+# TODO: Figure out how we can check for updates lazily, this adds about half a second to shell startup time.
 update_dotfiles

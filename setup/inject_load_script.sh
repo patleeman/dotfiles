@@ -4,9 +4,16 @@ if [[ ! $LOAD_FILE ]]; then
   exit 1
 fi
 
+if [[ ! $DOTFILES_DIR ]]; then
+  echo "ERROR: DOTFILES_DIR not set"
+  exit 1
+fi
+
 LOAD_COMMAND=$(cat <<EOF
+
+
 # Load dotfiles
-export DOTFILES_DIR="$LOAD_FILE"
+export DOTFILES_DIR="$DOTFILES_DIR"
 source "$LOAD_FILE"
 EOF
 )

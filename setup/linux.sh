@@ -2,7 +2,7 @@
 # Tested with Pop!_OS 20.10
 
 sudo apt update
-sudo apt upgrade
+sudo apt -y upgrade
 
 sudo apt install -y curl
 
@@ -57,4 +57,6 @@ echo "Installing xcopy xsel"
 sudo apt install xclip xsel
 
 echo "Installing Pandoc"
-sudo apt-get install pandoc
+wget https://github.com/jgm/pandoc/releases/download/2.16.2/pandoc-2.16.2-linux-amd64.tar.gz
+tar -xvf pandoc-2.16.2-linux-amd64.tar.gz
+sudo mv pandoc-2.16.2-linux-amd64/bin/pandoc /usr/local/bin/pandoc

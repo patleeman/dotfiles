@@ -10,10 +10,12 @@ echo "Running initial setup scripts"
 source $DOTFILES_DIR/setup/dir.sh
 source $DOTFILES_DIR/setup/git.sh
 
+# macOS only install
 if [[ $OSTYPE == darwin* ]]; then
     source $DOTFILES_DIR/setup/osx.sh
 fi
 
+# Linux only install
 is_ubuntu=$(lsb_release -d | grep -i ubuntu > /dev/null)
 if [[ $OSTYPE == linux-gnu* ]] && $is_ubuntu; then
     echo "Installing minimal setup for headless environment."

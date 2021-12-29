@@ -4,7 +4,9 @@ if [[ ! $LOAD_FILE ]]; then
   exit 1
 fi
 
-LOAD_COMMAND="source $LOAD_FILE"
+LOAD_COMMAND="
+export DOTFILES_DIR="$LOAD_FILE"
+source $LOAD_FILE"
 
 if [[ -n "$ZSH_VERSION" ]] && ! grep -Fq "$LOAD_COMMAND" ~/.zshrc; then
     echo -n $LOAD_COMMAND >> ~/.zshrc
@@ -13,5 +15,5 @@ fi
 
 if [[ -n "$BASH_VERSION" ]] && ! grep -Fq "$LOAD_COMMAND" ~/.bashrc; then
     echo -n $LOAD_COMMAND >> ~/.bashrc
-    echo "Installe load script in ~/.bashrc"
+    echo "Installed load script in ~/.bashrc"
 fi

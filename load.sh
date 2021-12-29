@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
-export DOTFILES="${HOME}/dotfiles"
+# Set value so we know dotfiles have been sourced.
+export DOTFILES="true"
 
 # Set nullglob to prevent error if local directory is empty.
 if [ -n "$ZSH_VERSION" ]; then
     set -o nullglob
-
-    # Source the configuration files.
-    for f in $DOTFILES/{configs,local}/*.zsh; do
+    for f in $DOTFILES_DIR/{configs,local}/*.zsh; do
         if [[ -r $f ]] && [[ -f $f ]]; then
             source $f
         fi
@@ -16,8 +15,7 @@ fi
 
 if [ -n "$BASH_VERSION" ]; then
     shopt -s nullglob
-    # Source the configuration files.
-    for f in $DOTFILES/{configs,local}/*.bash; do
+    for f in $DOTFILES_DIR/{configs,local}/*.bash; do
         if [[ -r $f ]] && [[ -f $f ]]; then
             source $f
         fi
@@ -26,7 +24,7 @@ fi
 
 
 # Source the configuration files.
-for f in $DOTFILES/{configs,local}/*.sh; do
+for f in $DOTFILES_DIR/{configs,local}/*.sh; do
     if [[ -r $f ]] && [[ -f $f ]]; then
         source $f
     fi

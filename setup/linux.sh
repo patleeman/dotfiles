@@ -2,7 +2,7 @@
 # Tested with Pop!_OS 20.10
 
 sudo apt update
-sudo apt -y upgrade
+# sudo apt -y upgrade
 
 sudo apt install -y curl
 

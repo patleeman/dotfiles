@@ -28,7 +28,7 @@ if [[ $OSTYPE == linux-gnu* ]] && $is_ubuntu; then
 fi
 
 echo "Injecting load script into ~/.zshrc or ~/.bashrc"
-source $DOTFILES_DIR/inject_load_script.sh
+source "${DOTFILES_DIR}setup/inject_load_script.sh"
 
 echo "Loading dotfiles"
 source $LOAD_FILE

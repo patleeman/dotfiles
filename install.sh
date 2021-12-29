@@ -14,8 +14,15 @@ if [[ $OSTYPE == darwin* ]]; then
     source $DOTFILES_DIR/setup/osx.sh
 fi
 
-if [[ $OSTYPE == linux-gnu* ]]; then
-    source $DOTFILES_DIR/setup/linux.sh
+is_ubuntu=$(lsb_release -d | grep -i ubuntu > /dev/null)
+if [[ $OSTYPE == linux-gnu* ]] && $is_ubuntu; then
+    echo "Installing minimal setup for headless environment."
+    source $DOTFILES_DIR/setup/ubuntu_headless.sh
+
+    if [[ -n "$DESKTOP_SESION" ]]; then
+        echo "Desktop environment detected, installing additional software."
+        source $DOTFILES_DIR/setup/ubuntu_desktop.sh
+    fi
 fi
 
 echo "Injecting load script into "

@@ -31,7 +31,3 @@ for f in $DOTFILES_DIR/{configs,local}/*.sh; do
         source $f
     fi
 done
-
-# Check for updates
-# TODO: Figure out how we can check for updates lazily, this adds about half a second to shell startup time.
-update_dotfiles

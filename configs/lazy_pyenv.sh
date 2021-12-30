@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 # https://github.com/davidparsson/zsh-pyenv-lazy/blob/master/pyenv-lazy.plugin.zsh
 # Try to find pyenv, if it's not on the path
@@ -13,6 +14,6 @@ if type pyenv > /dev/null; then
         unset -f pyenv
         eval "$(command pyenv init -)"
         eval "$(command pyenv virtualenv-init -)"
-        pyenv $@
+        pyenv "$@"
     }
 fi

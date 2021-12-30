@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Make Git not complain about pushing upstream branches.
 git config --global push.default current

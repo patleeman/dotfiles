@@ -1,4 +1,4 @@
-
+#!/usr/bin/env bash
 if [[ ! $LOAD_FILE ]]; then
   echo "ERROR: LOAD_FILE not set"
   exit 1
@@ -18,7 +18,8 @@ source "$LOAD_FILE"
 EOF
 )
 
-CHECK_COMMAND="source "$LOAD_FILE""
+# shellcheck disable=SC2016
+CHECK_COMMAND='source "$LOAD_FILE"'
 
 if [[ -n "$ZSH_VERSION" ]] && ! grep -Fq "$CHECK_COMMAND" ~/.zshrc; then
     echo -n "$LOAD_COMMAND" >> ~/.zshrc
@@ -30,5 +31,5 @@ elif [[ -n "$BASH_VERSION" ]] && ! grep -Fq "$CHECK_COMMAND" ~/.bashrc; then
 
 else
     echo -n "Load script not installed in ~/.zshrc nor ~/.bashrc. Please manually add the following lines to one of those files:"
-    printf "\n$LOAD_COMMAND\n"
+    printf "\n%s\n" "$LOAD_COMMAND"
 fi

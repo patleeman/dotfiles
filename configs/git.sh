@@ -1,7 +1,9 @@
+#!/usr/bin/env bash
+
 # Git commit push for the lazy person
 function git_lazy() {
     git add .
-    git commit -m $1
+    git commit -m "$1"
     git push
 }
 
@@ -19,9 +21,9 @@ function git_new_pr {
     echo "don't do this on master."
   else
     if [ -z "$(git status --porcelain)" ]; then
-      git push --set-upstream origin $branch
+      git push --set-upstream origin "$branch"
       repo=$(git remote -v | head -n1 | cut -f2 -d'/' | cut -f1 -d'.')
-      open https://github.com/noom/$repo/pull/new/$branch
+      open "https://github.com/noom/$repo/pull/new/$branch"
     else
       git status
       echo
@@ -36,7 +38,7 @@ function git_new_branch {
   if [ -z "$(git status --porcelain)" ]; then
     git checkout master
     git pull
-    git checkout -b $USER/$1
+    git checkout -b "$USER/$1"
   else
     git status
     echo

@@ -1,3 +1,4 @@
-# hooks that run in all shells
+#!/usr/bin/env sh
 
-eval $(thefuck --alias)
+# hooks that run in all shells
+eval "$(thefuck --alias)"

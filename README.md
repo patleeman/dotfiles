@@ -26,7 +26,7 @@ For initial environment setup scripts
 
 # Multi-shell setup
 
-In configs, files with the `.bash` or `.zsh` extensions get loaded in their respective environments. `.sh` files are loaded in both.
+In configs, files with the `.bash` or `.zsh` extensions get loaded in their respective environments. `.sh` files are loaded in both. `.sh` extension files are not actually compatible with `/bin/sh` and are written with `bash` target in mind.
 
 # Auto updates
 

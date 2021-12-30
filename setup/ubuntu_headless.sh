@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Minimal setup for headless environment.
 # Tested with GH codespaces
 

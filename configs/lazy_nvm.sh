@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 
 # lazyload nvm
 # https://gist.github.com/fl0w/07ce79bd44788f647deab307c94d6922
@@ -9,26 +10,27 @@ lazynvm() {
   export NVM_DIR=~/.nvm
   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
   if [ -f "$NVM_DIR/bash_completion" ]; then
+    # shellcheck source=/dev/null
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
   fi
 }
 
 nvm() {
   lazynvm
-  nvm $@
+  nvm "$@"
 }
 
 node() {
   lazynvm
-  node $@
+  node "$@"
 }
 
 npm() {
   lazynvm
-  npm $@
+  npm "$@"
 }
 
 npx() {
   lazynvm
-  npx $@
+  npx "$@"
 }

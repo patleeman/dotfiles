@@ -68,4 +68,5 @@ export SCM_CHECK=true
 # export BASH_IT_RELOAD_LEGACY=1
 
 # Load Bash It
+# shellcheck source=/dev/null
 source "$BASH_IT"/bash_it.sh

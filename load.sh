@@ -17,8 +17,9 @@ elif [ -n "$BASH_VERSION" ]; then
     ext="bash"
 fi
 
-for f in $DOTFILES_DIR{configs,local}/*.{$ext,sh}; do
+for f in "$DOTFILES_DIR"{configs,local}/*.{$ext,sh}; do
     if [[ -r $f ]] && [[ -f $f ]]; then
-        source $f
+        # shellcheck disable=SC1090
+        source "$f"
     fi
 done

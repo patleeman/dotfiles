@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # Oh-my-zsh configuration
 
 # Disable Oh-my-zsh compfix https://github.com/ohmyzsh/ohmyzsh/issues/6835#issuecomment-390216875

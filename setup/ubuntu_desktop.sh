@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Additional setup for Ubuntu based desktop environments.
 # Tested with Pop!_OS 20.10
 

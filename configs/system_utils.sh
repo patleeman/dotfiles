@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 function copy_ssh_key_to_clipboard() {
     key=$(cat ~/.ssh/id_rsa.pub)
@@ -12,5 +13,5 @@ function copy_ssh_key_to_clipboard() {
 # https://blog.mattclemente.com/2020/06/26/oh-my-zsh-slow-to-load/
 timeshell() {
   shell=${1-$SHELL}
-  for i in $(seq 1 10); do /usr/bin/time $shell -i -c exit; done
+  for _ in $(seq 1 10); do /usr/bin/time "$shell" -i -c exit; done
 }

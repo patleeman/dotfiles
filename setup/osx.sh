@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Main install script for macOS, tested with x86.
 
 echo "Installing Homebrew"

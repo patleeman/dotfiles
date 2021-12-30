@@ -7,26 +7,17 @@ fi
 # Set value so we know dotfiles have been sourced.
 export DOTFILES="true"
 
-# Set nullglob to prevent error if local directory is empty.
+ext=""
 if [ -n "$ZSH_VERSION" ]; then
+    # Set nullglob to prevent error if local directory is empty.
     set -o nullglob
-    for f in $DOTFILES_DIR/{configs,local}/*.zsh; do
-        if [[ -r $f ]] && [[ -f $f ]]; then
-            source $f
-        fi
-    done
-fi
-
-if [ -n "$BASH_VERSION" ]; then
+    ext="zsh"
+elif [ -n "$BASH_VERSION" ]; then
     shopt -s nullglob
-    for f in $DOTFILES_DIR/{configs,local}/*.bash; do
-        if [[ -r $f ]] && [[ -f $f ]]; then
-            source $f
-        fi
-    done
+    ext="bash"
 fi
 
-for f in $DOTFILES_DIR/{configs,local}/*.sh; do
+for f in $DOTFILES_DIR{configs,local}/*.{$ext,sh}; do
     if [[ -r $f ]] && [[ -f $f ]]; then
         source $f
     fi

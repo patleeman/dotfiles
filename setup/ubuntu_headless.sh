@@ -43,3 +43,6 @@ tar -xvf pandoc*.tar.gz
 sudo mv pandoc*/bin/pandoc /usr/local/bin/pandoc
 cd ..
 rm -rf tmp
+
+echo "Installing tree"
+sudo apt-get install tree

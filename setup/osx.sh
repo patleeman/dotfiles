@@ -60,3 +60,6 @@ brew install pandoc
 
 echo "Installing md5sum"
 brew install md5sha1sum
+
+echo "Installing tree"
+brew install tree

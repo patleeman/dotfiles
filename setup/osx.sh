@@ -63,3 +63,6 @@ brew install md5sha1sum
 
 echo "Installing tree"
 brew install tree
+
+echo "Installing stats"
+brew install --cask stats

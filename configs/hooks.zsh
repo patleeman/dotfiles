@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # Hooks for ZSH
-eval "$(direnv hook zsh)"
+# eval "$(direnv hook zsh)"
 
 # zsh-completion
 if type brew &>/dev/null; then

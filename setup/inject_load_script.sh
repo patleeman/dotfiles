@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+DOTFILES_DIR="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+LOAD_FILE="${DOTFILES_DIR}load.sh"
+
 if [[ ! $LOAD_FILE ]]; then
   echo "ERROR: LOAD_FILE not set"
   exit 1
@@ -22,11 +26,13 @@ EOF
 CHECK_COMMAND='source "$LOAD_FILE"'
 
 if [[ -n "$ZSH_VERSION" ]] && ! grep -Fq "$CHECK_COMMAND" ~/.zshrc; then
-    echo -n "$LOAD_COMMAND" >> ~/.zshrc
+    cp ~/.zshrc ~/.zshrc.bak
+    echo -n "$LOAD_COMMAND" > ~/.zshrc
     echo "Installed load script in ~/.zshrc"
 
 elif [[ -n "$BASH_VERSION" ]] && ! grep -Fq "$CHECK_COMMAND" ~/.bashrc; then
-    echo -n "$LOAD_COMMAND" >> ~/.bashrc
+    cp ~/.bashrc ~/.bashrc.bak
+    echo -n "$LOAD_COMMAND" > ~/.bashrc
     echo "Installed load script in ~/.bashrc"
 
 else

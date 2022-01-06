@@ -6,6 +6,9 @@ echo "Installing Homebrew"
 
 echo "Installing oh-my-zsh"
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+# Fix shell completion permissions
+# https://github.com/zsh-users/zsh-completions/issues/433#issuecomment-799542335
+chmod -R go-w "$(brew --prefix)/share"
 
 brew tap homebrew/cask-versions
 brew tap homebrew/cask-fonts

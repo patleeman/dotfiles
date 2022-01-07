@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 if [ -z "$DOTFILES_DIR" ] ; then
     echo "DOTFILES_DIR not set, please run dotfiles install again"
 fi

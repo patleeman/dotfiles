@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # First time system installation script
 
 DOTFILES_DIR="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
@@ -19,7 +19,7 @@ if [[ $OSTYPE == darwin* ]]; then
 fi
 
 # Linux only install
-is_ubuntu=$(lsb_release -d | grep -i ubuntu > /dev/null)
+is_ubuntu=$(lsb_release -d 2> /dev/null | grep -i ubuntu > /dev/null)
 if [[ $OSTYPE == linux-gnu* ]] && $is_ubuntu; then
     echo "Installing minimal setup for headless environment."
     # shellcheck disable=SC1091
@@ -32,12 +32,8 @@ if [[ $OSTYPE == linux-gnu* ]] && $is_ubuntu; then
     fi
 fi
 
-echo "Injecting load script into ~/.zshrc or ~/.bashrc"
+echo "Injecting load script"
 # shellcheck disable=SC1090
 source "${DOTFILES_DIR}setup/inject_load_script.sh"
-
-echo "Loading dotfiles"
-# shellcheck disable=SC1090
-source "$LOAD_FILE"
 
 echo "Finished system setup"

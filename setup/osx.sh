@@ -19,9 +19,6 @@ brew install thefuck
 echo "Installing vscode"
 brew install --cask visual-studio-code
 
-echo "Installing iterm2"
-brew install --cask iterm2
-
 echo "Installing Git Fork"
 brew install --cask fork
 
@@ -61,6 +58,9 @@ brew install --cask font-fira-code
 echo "Installing Pandoc"
 brew install pandoc
 
+echo "Installing tmux"
+brew install tmux
+
 echo "Installing md5sum"
 brew install md5sha1sum
 
@@ -69,3 +69,15 @@ brew install tree
 
 echo "Installing stats"
 brew install --cask stats
+
+echo "Installing mas"
+brew install mas
+
+echo "Installing InYourFace"
+mas install 1476964367
+
+echo "Installing Magnet"
+mas install 441258766
+
+echo "Installing Fantastical"
+mas install 975937182

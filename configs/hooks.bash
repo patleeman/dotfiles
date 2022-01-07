@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Hooks for Bash
 
+# Hooks for Bash
 eval "$(direnv hook bash)"
+eval $(thefuck --alias)
 
 # Bash completion
 # shellcheck source=/dev/null

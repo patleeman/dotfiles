@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 function update_dotfiles() {
+    cd "$DOTFILES_DIR" || return 1
     git fetch -q >> /dev/null 2>&1
     if (( $(git rev-list HEAD...origin/master --count) > 0 )); then
         printf "There are dotfiles updates available. Update? [Yn]: "

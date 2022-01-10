@@ -1,4 +1,7 @@
 
+echo "Deploying Terminal settings"
+cp home/Library/Preferences/com.apple.Terminal.plist ~/Library/Preferences/com.apple.Terminal.plist
+
 echo "Copying tmux config"
 cp ./home/.tmux.conf ~/
 

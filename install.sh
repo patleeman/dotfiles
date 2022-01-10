@@ -16,6 +16,9 @@ source "$DOTFILES_DIR/setup/git.sh"
 if [[ $OSTYPE == darwin* ]]; then
     # shellcheck disable=SC1091
     source "$DOTFILES_DIR/setup/osx.sh"
+
+    # Deploy settings
+    source "$DOTFILES_DIR/helpers/osx_deploy_settings.sh"
 fi
 
 # Linux only install

@@ -27,11 +27,6 @@ alias psg="ps | grep -v grep | grep -i -e VSZ -e"
 alias mkdir="mkdir -pv"
 alias copy="pbcopy"
 
-# safe file management
-alias cp='cp -iv'
-alias rm='rm -i'
-alias mv='mv -i'
-
 # IP address
 alias eip='curl icanhazip.com'
 alias iip="ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'"

@@ -18,7 +18,8 @@ if [[ $OSTYPE == darwin* ]]; then
     source "$DOTFILES_DIR/setup/osx.sh"
 
     # Deploy settings
-    source "$DOTFILES_DIR/helpers/osx_deploy_settings.sh"
+    source "$DOTFILES_DIR/setup/osx_settings.zsh"
+    deploy_settings
 fi
 
 # Linux only install

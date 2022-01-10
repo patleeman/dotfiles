@@ -26,7 +26,6 @@ alias ps="ps aux"
 alias psl="ps | less"
 alias psg="ps | grep -v grep | grep -i -e VSZ -e"
 alias mkdir="mkdir -pv"
-alias copy="pbcopy"
 
 # IP address
 alias eip='curl icanhazip.com'

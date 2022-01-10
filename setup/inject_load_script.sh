@@ -21,12 +21,12 @@ EOF
 
 if command -v zsh --version &> /dev/null ; then
     cp ~/.zshrc ~/.zshrc.bak
-    echo -n "$LOAD_COMMAND" > ~/.zshrc
+    echo "$LOAD_COMMAND" > ~/.zshrc
     echo "Installed load script in ~/.zshrc"
 fi
 
 if command -v bash --version &> /dev/null ; then
     cp ~/.bashrc ~/.bashrc.bak
-    echo -n "$LOAD_COMMAND" > ~/.bashrc
+    echo "$LOAD_COMMAND" > ~/.bashrc
     echo "Installed load script in ~/.bashrc"
 fi

@@ -44,5 +44,9 @@ sudo mv pandoc*/bin/pandoc /usr/local/bin/pandoc
 cd ..
 rm -rf tmp
 
-echo "Installing tree"
-sudo apt-get install tree
+echo "Installing bat"
+sudo apt-get install -y bat
+
+echo "Installing exa"
+sudo apt-get install -y exa
+

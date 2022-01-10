@@ -2,7 +2,8 @@
 # Aliases
 
 # ls
-alias ls="ls -lahGpF"
+alias ls="exa -lah"
+alias tree="exa -laT"
 
 # Folder aliases
 alias wd="cd ~/workingdir"

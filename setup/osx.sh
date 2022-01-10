@@ -64,11 +64,14 @@ brew install tmux
 echo "Installing md5sum"
 brew install md5sha1sum
 
-echo "Installing tree"
-brew install tree
-
 echo "Installing stats"
 brew install --cask stats
+
+echo "Installing bat"
+brew install bat
+
+echo "Installing exa"
+brew install exa
 
 echo "Installing mas"
 brew install mas

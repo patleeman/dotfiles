@@ -3,11 +3,11 @@
 PLISTS=(
     "com.apple.Terminal.plist"
     "com.apple.finder.plist"
-    "com.apple.dock.plist"
     "com.amethyst.Amethyst.plist"
+    "com.crowdcafe.windowmagnet.plist"
     )
 
-function copy_settings {
+function backup_settings {
     # Copy Terminal plist locally for backup
     echo "Copying plists locally"
     for plist in "${PLISTS[@]}"; do

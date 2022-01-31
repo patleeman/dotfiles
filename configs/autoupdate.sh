@@ -14,6 +14,8 @@ function update_dotfiles() {
         git -C "$DOTFILES_DIR" fetch --quiet origin master
         git -C "$DOTFILES_DIR" reset --hard FETCH_HEAD
         echo "Dotfiles have been updated"
+    else
+        echo "Dotfiles are up to date"
     fi
 }
 

@@ -2,7 +2,7 @@
 
 function update_dotfiles() {
     git -C "$DOTFILES_DIR" fetch -q >> /dev/null 2>&1
-    if (( $(git rev-list HEAD...origin/master --count) > 0 )); then
+    if (( $(git -C "$DOTFILES_DIR" rev-list HEAD...origin/master --count) > 0 )); then
         printf "There are dotfiles updates available. Update? [Yn]: "
         read -r answer
         if [[ "$answer" == "n" ]] ; then

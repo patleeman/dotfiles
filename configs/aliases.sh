@@ -18,7 +18,6 @@ alias gnpr="git_new_pr"
 alias gnb="git_new_branch"
 alias gshal="git rev-parse HEAD"
 alias gsha="git rev-parse --short HEAD"
-alias gopen="open $(git remote -v | grep fetch | awk '{print $2}' | sed 's/git@/http:\/\//' | sed 's/com:/com\//')| head -n1"
 
 # Dotfiles
 alias edit_dotfiles='code $DOTFILES_DIR'

@@ -1,5 +1,6 @@
 if [ -z "$DOTFILES_DIR" ] ; then
     echo "DOTFILES_DIR not set, please run dotfiles install again"
+    exit 1
 fi
 
 # Set value so we know dotfiles have been sourced.

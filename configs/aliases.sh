@@ -16,8 +16,7 @@ alias gd="git_diff"
 alias gl="git_lazy"
 alias gnpr="git_new_pr"
 alias gnb="git_new_branch"
-alias gshal="git rev-parse HEAD"
-alias gsha="git rev-parse --short HEAD"
+alias gsha="git rev-parse HEAD"
 
 # Dotfiles
 alias edit_dotfiles='code $DOTFILES_DIR'

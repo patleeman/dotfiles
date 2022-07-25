@@ -3,6 +3,7 @@
 
 echo "Installing Homebrew"
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 echo "Installing oh-my-zsh"
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
@@ -78,9 +79,3 @@ brew install mas
 
 echo "Installing InYourFace"
 mas install 1476964367
-
-echo "Installing Magnet"
-mas install 441258766
-
-echo "Installing Fantastical"
-mas install 975937182

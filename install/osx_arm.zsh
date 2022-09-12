@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
-# Main install script for macOS, tested with x86.
+#!/usr/bin/env sh
 
+# Install Applications
 echo "Installing Homebrew"
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -27,13 +27,10 @@ echo "Installing Firefox"
 brew install --cask firefox
 
 echo "Installing Google Chrome"
-brew install --cask google-chrome-canary
+brew install --cask google-chrome
 
 echo "Installing Docker"
 brew install docker
-
-echo "Installing Karabiner-Elements"
-brew install --cask karabiner-elements
 
 echo "Installing nvm & node"
 brew install nvm
@@ -59,14 +56,11 @@ brew install --cask font-fira-code
 echo "Installing Pandoc"
 brew install pandoc
 
-echo "Installing tmux"
-brew install tmux
-
 echo "Installing md5sum"
 brew install md5sha1sum
 
-echo "Installing stats"
-brew install --cask stats
+echo "Installing bat"
+brew install bat
 
 echo "Installing bat"
 brew install bat
@@ -74,8 +68,11 @@ brew install bat
 echo "Installing exa"
 brew install exa
 
-echo "Installing mas"
-brew install mas
-
 echo "Installing InYourFace"
 mas install 1476964367
+
+echo "Installing Rust"
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+echo "Installing zellij"
+cargo install --locked zellij

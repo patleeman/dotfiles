@@ -18,6 +18,9 @@ alias gnpr="git_new_pr"
 alias gnb="git_new_branch"
 alias gsha="git rev-parse HEAD"
 
+# Mux
+alias mux="zellij"
+
 # Dotfiles
 alias edit_dotfiles='code $DOTFILES_DIR'
 

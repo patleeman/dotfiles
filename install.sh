@@ -1,43 +1,40 @@
 #!/usr/bin/env sh
 # First time system installation script
-
 DOTFILES_DIR="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 LOAD_FILE="${DOTFILES_DIR}load.sh"
 echo "Your dotfiles are located at $DOTFILES_DIR"
 echo "Starting system setup"
 
-echo "Running initial setup scripts"
-# shellcheck disable=SC1091
-source "$DOTFILES_DIR/setup/dir.sh"
-# shellcheck disable=SC1091
-source "$DOTFILES_DIR/setup/git.sh"
-
-# macOS only install
-if [[ $OSTYPE == darwin* ]]; then
-    # shellcheck disable=SC1091
-    source "$DOTFILES_DIR/setup/osx.sh"
-
-    # Deploy settings
-    source "$DOTFILES_DIR/setup/osx_settings.zsh"
-    deploy_settings
-fi
-
-# Linux only install
-is_ubuntu=$(lsb_release -d 2> /dev/null | grep -i ubuntu > /dev/null)
-if [[ $OSTYPE == linux-gnu* ]] && $is_ubuntu; then
-    echo "Installing minimal setup for headless environment."
-    # shellcheck disable=SC1091
-    source "$DOTFILES_DIR/setup/ubuntu_headless.sh"
-
-    if [[ -n "$DESKTOP_SESION" ]]; then
-        echo "Desktop environment detected, installing additional software."
-        # shellcheck disable=SC1091
-        source "$DOTFILES_DIR/setup/ubuntu_desktop.sh"
-    fi
-fi
+echo "Which system would you like to setup?"
+echo "1. MacOS [ARM]"
+read input;
+case $input in
+    1) . "${DOTFILES_DIR}/install/osx_arm.zsh";;
+    *)
+        echo "Option not valid, exiting"
+        exit 1
+        ;;
+esac
 
 echo "Injecting load script"
-# shellcheck disable=SC1090
-source "${DOTFILES_DIR}setup/inject_load_script.sh"
+LOAD_COMMAND=$(cat <<EOF
 
-echo "Finished system setup"
+# Load dotfiles
+export DOTFILES_DIR="$DOTFILES_DIR"
+source "$LOAD_FILE"
+EOF
+)
+
+if command -v zsh --version > /dev/null 2>&1 ; then
+    mv ~/.zshrc ~/.zshrc.bak
+    touch ~/.zshrc
+    echo "$LOAD_COMMAND" > ~/.zshrc
+    echo "Installed load script in ~/.zshrc"
+fi
+
+if command -v bash --version > /dev/null 2>&1 ; then
+    mv ~/.bashrc ~/.bashrc.bak
+    touch ~/.bashrc
+    echo "$LOAD_COMMAND" > ~/.bashrc
+    echo "Installed load script in ~/.bashrc"
+fi

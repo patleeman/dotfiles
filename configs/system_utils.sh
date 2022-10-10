@@ -1,12 +1,26 @@
 #!/usr/bin/env bash
 
+# Small utility to list out the available ssh pub keys and copy it to your clipboard.
 function copy_ssh_key_to_clipboard() {
-    key=$(cat ~/.ssh/id_rsa.pub)
-    if [[ $OSTYPE == darwin* ]]; then
-        pbcopy < <(echo "$key")
-    else
-        echo "$key" | xclip -selection clipboard
-    fi
+    echo "Select the file you'd like to copy."
+    PS3="Select ssh public key to copy, or 0 to exit: "
+    files=("$HOME"/.ssh/*.pub)
+    select file in "${files[@]}"; do
+        if [[ $REPLY == "0" ]]; then
+            break
+        fi
+        if [[ -n "$file" ]]; then
+            key=$(cat "$file")
+            if [[ $OSTYPE == darwin* ]]; then
+                pbcopy < <(echo "$key")
+            else
+                # Else assumes you're on a linux system that supports xclip
+                echo "$key" | xclip -selection clipboard
+            fi
+            echo "$file copied to system clipboard."
+            break
+        fi
+    done
 }
 
 # Handy utility to time how long it takes to start up the shell

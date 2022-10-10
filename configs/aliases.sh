@@ -18,8 +18,10 @@ alias gnpr="git_new_pr"
 alias gnb="git_new_branch"
 alias gsha="git rev-parse HEAD"
 
-# Mux
+# Replace mux and term with zellij
 alias mux="zellij"
+alias tmux="zellij"
+alias term="zellij"
 
 # Dotfiles
 alias edit_dotfiles='code $DOTFILES_DIR'
@@ -27,13 +29,12 @@ alias edit_dotfiles='code $DOTFILES_DIR'
 # System
 alias du="du -ach | sort -h"
 alias ps="ps aux"
-alias psl="ps | less"
-alias psg="ps | grep -v grep | grep -i -e VSZ -e"
 alias mkdir="mkdir -pv"
 
+
 # IP address
-alias eip='curl icanhazip.com'
-alias iip="ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'"
+alias whatismyip='curl icanhazip.com'
+alias whatismylocalip='get_local_ip_address'
 
 # SSH
 alias ssh_key="copy_ssh_key_to_clipboard"

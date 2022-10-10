@@ -15,3 +15,8 @@ timeshell() {
   shell=${1-$SHELL}
   for _ in $(seq 1 10); do /usr/bin/time "$shell" -i -c exit; done
 }
+
+# Get the local ip address
+function get_local_ip_address() {
+    ifconfig en0 | grep inet | grep -v inet6 | awk '{print $2}'
+}

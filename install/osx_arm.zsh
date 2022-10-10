@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 
 # Install Applications
 echo "Installing Homebrew"
@@ -37,6 +37,8 @@ brew install nvm
 nvm install --lts
 nvm use --lts
 
+npm install -g tldr
+
 echo "Installing pyenv & pyenv-virtualenv"
 brew install pyenv
 brew install pyenv-virtualenv
@@ -59,14 +61,11 @@ brew install pandoc
 echo "Installing md5sum"
 brew install md5sha1sum
 
-echo "Installing bat"
-brew install bat
-
-echo "Installing bat"
-brew install bat
-
 echo "Installing exa"
 brew install exa
+
+echo "Installing HTTPie"
+brew install httpie
 
 echo "Installing InYourFace"
 mas install 1476964367
@@ -76,3 +75,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 echo "Installing zellij"
 cargo install --locked zellij
+
+echo "Installing zsh-autocomplete"
+git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ~/.oh-my-zsh/plugins/zsh-autocomplete

@@ -1,8 +1,6 @@
 #!/usr/bin/env zsh
 # Oh-my-zsh configuration
 
-source ~/.oh-my-zsh/plugins/zsh-autocomplete/zsh-autocomplete.plugin.zsh
-
 # Disable Oh-my-zsh compfix https://github.com/ohmyzsh/ohmyzsh/issues/6835#issuecomment-390216875
 ZSH_DISABLE_COMPFIX=true
 

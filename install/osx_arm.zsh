@@ -75,6 +75,3 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 echo "Installing zellij"
 cargo install --locked zellij
-
-echo "Installing zsh-autocomplete"
-git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ~/.oh-my-zsh/plugins/zsh-autocomplete

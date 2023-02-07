@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-BLOG_PATH="$HOME/workingdir/patricklee.nyc"
+export BLOG_PATH="$HOME/workingdir/patricklee.nyc"
 
 function edit_blog() {
     if [ -d "$BLOG_PATH" ]; then

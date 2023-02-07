@@ -26,9 +26,6 @@ brew install --cask fork
 echo "Installing Firefox"
 brew install --cask firefox
 
-echo "Installing Google Chrome"
-brew install --cask google-chrome
-
 echo "Installing Docker"
 brew install docker
 
@@ -36,6 +33,8 @@ echo "Installing nvm & node"
 brew install nvm
 nvm install --lts
 nvm use --lts
+# Set default node version for system
+nvm alias default node
 
 npm install -g tldr
 
@@ -49,17 +48,11 @@ brew install direnv
 echo "Installing awscli"
 brew install awscli
 
-echo "Installing zsh-completion"
-brew install zsh-completions
-
 echo "Installing FiraCode Font"
 brew install --cask font-fira-code
 
 echo "Installing Pandoc"
 brew install pandoc
-
-echo "Installing md5sum"
-brew install md5sha1sum
 
 echo "Installing exa"
 brew install exa
@@ -72,6 +65,3 @@ mas install 1476964367
 
 echo "Installing Rust"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-echo "Installing zellij"
-cargo install --locked zellij

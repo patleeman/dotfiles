@@ -13,6 +13,7 @@
 # @raycast.author Patrick Lee
 # @raycast.authorURL https://patricklee.nyc
 
+DOTFILES_DIR="$HOME/dotfiles"
 code $DOTFILES_DIR
 
 

@@ -18,16 +18,17 @@
 const process = require("process");
 const { exec } = require("child_process");
 
-const NOTE_NAME = "!Task Inbox";
+const date = new Date().toISOString().split("T")[0];
+const FILE_NAME = `Journal/${date}.md`;
 
 const tag = process.argv[3].startsWith("#")
   ? process.argv[3]
   : `#${process.argv[3]}`;
 const task = process.argv[2];
-const content = `- [ ] ${task} ${tag}\n`;
+const content = `- [ ] ${task} ${process.argv[3] ? tag : ""}\n`;
 
-const URI = `obsidian://new/?append=true&name=${encodeURIComponent(
-  NOTE_NAME
+const URI = `obsidian://new/?append=true&file=${encodeURIComponent(
+  FILE_NAME
 )}&content=${encodeURIComponent(content)}`;
 
 exec(`open "${URI}"`);

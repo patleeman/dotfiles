@@ -60,6 +60,9 @@ brew install exa
 echo "Installing HTTPie"
 brew install httpie
 
+echo "Installing jq"
+brew install jq
+
 echo "Installing InYourFace"
 mas install 1476964367
 

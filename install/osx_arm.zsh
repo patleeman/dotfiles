@@ -50,6 +50,7 @@ brew install awscli
 
 echo "Installing FiraCode Font"
 brew install --cask font-fira-code
+brew install --cask font-fira-code-nerd-font
 
 echo "Installing Pandoc"
 brew install pandoc
@@ -63,8 +64,18 @@ brew install httpie
 echo "Installing jq"
 brew install jq
 
+echo "Installing Neovim"
+brew install neovim
+
+echo "Installing ripgrep"
+brew install ripgrep
+
 echo "Installing InYourFace"
 mas install 1476964367
 
 echo "Installing Rust"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+source ln.sh
+source git.sh
+source dir.sh

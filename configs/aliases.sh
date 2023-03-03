@@ -17,7 +17,7 @@ alias gnb="git_new_branch"
 alias gsha="git rev-parse HEAD"
 
 # Dotfiles
-alias edit_dotfiles='code $DOTFILES_DIR'
+alias edit_dotfiles='cd $DOTFILES_DIR && nvim'
 
 # System
 alias du="du -ach | sort -h"

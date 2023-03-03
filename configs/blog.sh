@@ -4,7 +4,7 @@ export BLOG_PATH="$HOME/workingdir/patricklee.nyc"
 
 function edit_blog() {
     if [ -d "$BLOG_PATH" ]; then
-        code "$BLOG_PATH"
+       cd "$BLOG_PATH" && nvim
     else
         echo "Blog not found in $BLOG_PATH"
     fi

@@ -1,5 +1,5 @@
 # source $(brew --prefix nvm)/nvm.sh
-
+#
 # export NVM_DIR="$HOME/.nvm"
 # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 # [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -8,15 +8,15 @@
 # if [ -n "$node_version" ]; then
 #   nvm use "$node_version";
 # fi;
-#
-# export NVM_DIR="$HOME/.config/nvm"
+
+# https://gist.github.com/fl0w/07ce79bd44788f647deab307c94d6922
+export NVM_DIR="$HOME/.config/nvm"
 
 # Lazy load
 if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   NODE_GLOBALS=(`find $NVM_DIR/versions/node -maxdepth 3 -type l -wholename '*/bin/*' | xargs -n1 basename | sort | uniq`)
   NODE_GLOBALS+=("node")
   NODE_GLOBALS+=("nvm")
-  NODE_GLOBALS+=("npx")
   # Lazy-loading nvm + npm on node globals
   load_nvm () {
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"

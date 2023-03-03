@@ -6,8 +6,3 @@ man () {
     command man "$@"
 }
 
-
-curl () {
-    printf "Suggestion: Try using httpie with the commands 'http' or 'https'\n\n"
-    command curl "$@"
-}

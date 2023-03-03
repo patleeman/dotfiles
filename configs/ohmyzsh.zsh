@@ -74,7 +74,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git thefuck httpie)
+plugins=(git thefuck)
 
 # We need to do some fuckery to get rid of the aliases ohmyzsh injects.
 # https://newbedev.com/clear-or-disable-aliases-in-zsh

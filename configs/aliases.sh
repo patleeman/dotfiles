@@ -18,6 +18,7 @@ alias gsha="git rev-parse HEAD"
 
 # Dotfiles
 alias edit_dotfiles='cd $DOTFILES_DIR && nvim'
+alias notes='cd ~/Dropbox/Notes && nvim'
 
 # System
 alias du="du -ach | sort -h"

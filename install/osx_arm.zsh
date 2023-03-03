@@ -70,6 +70,9 @@ brew install neovim
 echo "Installing ripgrep"
 brew install ripgrep
 
+echo "Installing lazygit"
+brew install lazygit
+
 echo "Installing InYourFace"
 mas install 1476964367
 

@@ -1,14 +1,28 @@
-source $(brew --prefix nvm)/nvm.sh
+# source $(brew --prefix nvm)/nvm.sh
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+#
+# node_version=$(find .node-version -exec cat {} + 2> /dev/null);
+# if [ -n "$node_version" ]; then
+#   nvm use "$node_version";
+# fi;
+#
+# export NVM_DIR="$HOME/.config/nvm"
 
-# https://stackoverflow.com/questions/23556330/run-nvm-use-automatically-every-time-theres-a-nvmrc-file-on-the-directory
-load-node-version() {
-    node_version=$(find .node-version -exec cat {} + 2> /dev/null);
-    if [ -n "$node_version" ]; then
-        nvm use "$node_version";
-    fi;
-}
-load-node-version
+# Lazy load
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+  NODE_GLOBALS=(`find $NVM_DIR/versions/node -maxdepth 3 -type l -wholename '*/bin/*' | xargs -n1 basename | sort | uniq`)
+  NODE_GLOBALS+=("node")
+  NODE_GLOBALS+=("nvm")
+  NODE_GLOBALS+=("npx")
+  # Lazy-loading nvm + npm on node globals
+  load_nvm () {
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  }
+  # Making node global trigger the lazy loading
+  for cmd in "${NODE_GLOBALS[@]}"; do
+    eval "${cmd}(){ unset -f ${NODE_GLOBALS}; load_nvm; ${cmd} \$@ }"
+  done
+fi

@@ -76,6 +76,6 @@ mas install 1476964367
 echo "Installing Rust"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-source ln.sh
-source git.sh
+source nvim.sh
 source dir.sh
+source git.sh

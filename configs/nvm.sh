@@ -1,13 +1,4 @@
-# source $(brew --prefix nvm)/nvm.sh
-#
-# export NVM_DIR="$HOME/.nvm"
-# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-#
-# node_version=$(find .node-version -exec cat {} + 2> /dev/null);
-# if [ -n "$node_version" ]; then
-#   nvm use "$node_version";
-# fi;
+#!/usr/bin/env sh
 
 # https://gist.github.com/fl0w/07ce79bd44788f647deab307c94d6922
 export NVM_DIR="$HOME/.config/nvm"

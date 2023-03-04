@@ -17,6 +17,7 @@ if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   NODE_GLOBALS=(`find $NVM_DIR/versions/node -maxdepth 3 -type l -wholename '*/bin/*' | xargs -n1 basename | sort | uniq`)
   NODE_GLOBALS+=("node")
   NODE_GLOBALS+=("nvm")
+  NODE_GLOBALS+=("npx")
   # Lazy-loading nvm + npm on node globals
   load_nvm () {
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"

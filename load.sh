@@ -26,3 +26,4 @@ for f in "$DOTFILES_DIR"{configs,local}/*.{$ext,sh}; do
         . "$f"
     fi
 done
+

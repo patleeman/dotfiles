@@ -58,9 +58,6 @@ brew install pandoc
 echo "Installing exa"
 brew install exa
 
-echo "Installing HTTPie"
-brew install httpie
-
 echo "Installing jq"
 brew install jq
 
@@ -73,12 +70,12 @@ brew install ripgrep
 echo "Installing lazygit"
 brew install lazygit
 
+echo "Installing todotxt-cli"
+brew install todo-txt
+
 echo "Installing InYourFace"
 mas install 1476964367
 
 echo "Installing Rust"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-source nvim.sh
-source dir.sh
-source git.sh

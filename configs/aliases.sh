@@ -2,7 +2,7 @@
 # Aliases
 
 # ls
-alias ls="exa -lah"
+alias ls="exa -lh"
 alias tree="exa -laT"
 
 # Folder aliases

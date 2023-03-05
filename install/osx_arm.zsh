@@ -73,6 +73,9 @@ brew install lazygit
 echo "Installing todotxt-cli"
 brew install todo-txt
 
+echo "Installing fzf"
+brew install fzf
+
 echo "Installing InYourFace"
 mas install 1476964367
 

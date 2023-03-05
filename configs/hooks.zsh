@@ -7,3 +7,5 @@ fi
 # Hooks for ZSH
 eval "$(direnv hook zsh)"
 eval $(thefuck --alias)
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

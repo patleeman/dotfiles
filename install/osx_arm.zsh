@@ -73,6 +73,9 @@ brew install lazygit
 echo "Installing todotxt-cli"
 brew install todo-txt
 
+echo "Installing tmux"
+brew install tmux
+
 echo "Installing fzf"
 brew install fzf
 

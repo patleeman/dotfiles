@@ -41,16 +41,6 @@ M.general = {
     ["<leader>n"] = { "<cmd> set nu! <CR>", "toggle line number" },
     ["<leader>rn"] = { "<cmd> set rnu! <CR>", "toggle relative number" },
 
-    -- update nvchad
-    ["<leader>uu"] = { "<cmd> :NvChadUpdate <CR>", "update nvchad" },
-
-    -- ["<leader>tt"] = {
-    --   function()
-    --     require("base46").toggle_theme()
-    --   end,
-    --   "toggle theme",
-    -- },
-
     -- Allow moving the cursor through wrapped lines with j, k, <Up> and <Down>
     -- http://www.reddit.com/r/vim/comments/2k4cbr/problem_with_gj_and_gk/
     -- empty mode is same as using <cmd> :eap
@@ -74,7 +64,7 @@ M.general = {
     ["<leader>-"] = {":vsplit <CR>"},
   },
 
-  t = { ["<C-x>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },
+  t = { ["<C-j>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },
 
   v = {
     ["<Up>"] = { 'v:count || mode(1)[0:1] == "no" ? "k" : "gk"', opts = { expr = true } },
@@ -275,11 +265,7 @@ M.nvimtree = {
 
   n = {
     -- toggle
-    ["<leader>fn"] = { "<cmd> NvimTreeToggle <CR>", "toggle nvimtree" },
-    ["<C-n>"] = { "<cmd> NvimTreeToggle <CR>", "toggle nvimtree" },
-
-    -- focus
-    -- ["<leader>e"] = { "<cmd> NvimTreeFocus <CR>", "focus nvimtree" },
+    ["<leader>nn"] = { "<cmd> NvimTreeToggle <CR>", "toggle nvimtree" },
   },
 }
 

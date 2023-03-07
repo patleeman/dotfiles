@@ -79,6 +79,9 @@ brew install tmux
 echo "Installing fzf"
 brew install fzf
 
+echo "Installing zsh-vi-mode"
+brew install zsh-vi-mode
+
 echo "Installing InYourFace"
 mas install 1476964367
 

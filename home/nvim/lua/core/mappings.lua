@@ -23,7 +23,7 @@ M.general = {
 
     -- Jump outside the first closing character. Useful with auto-bracketing 
     -- https://old.reddit.com/r/neovim/comments/rztkaq/how_do_you_jump_out_pairs_or_quotes_in_insert/hrzolns/
-    ["ll"] = {
+    [";;"] = {
       function()
         local closers = {")", "]", "}", ">", "'", '"', "`", ","}
         local line = vim.api.nvim_get_current_line()

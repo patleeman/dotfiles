@@ -76,14 +76,14 @@ M.general = {
     ["<leader>b"] = { "<cmd> enew <CR>", "new buffer" },
 
     -- Lazygit
-    ["<leader>gg"] = { ":LazyGit<CR>" },
+    ["<leader>gg"] = { "<cmd> LazyGit<CR>" },
 
     -- Insert date
-    ["<leader>dd"] = {"i<C-R>=strftime(\"%Y-%m-%d\")<CR><Esc>"},
-    ["<leader>dt"] = {"i<C-R>=strftime(\"%Y-%m-%d %a %I:%M %p\")<CR><Esc>"},
+    ["<leader>dd"] = {"i<C-R>=strftime(\"%Y-%m-%d\")<CR><Esc>", "Insert date"},
+    ["<leader>dt"] = {"i<C-R>=strftime(\"%Y-%m-%d %a %I:%M %p\")<CR><Esc>", "Insert datetime"},
 
-    ["<leader>\\"] = {":split <CR>"},
-    ["<leader>-"] = {":vsplit <CR>"},
+    ["<leader>\\"] = {"<cmd> vsplit<CR>"},
+    ["<leader>-"] = {"<cmd> split<CR>"},
   },
 
   t = { ["<C-j>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },

@@ -33,17 +33,6 @@ cmd = require("core.lazy_load").packer_cmds,
       end
     end,
   },
-
-  ["NvChad/nvterm"] = {
-    module = "nvterm",
-    config = function()
-      require "plugins.configs.nvterm"
-    end,
-    setup = function()
-      require("core.utils").load_mappings "nvterm"
-    end,
-  },
-
   ["nvim-tree/nvim-web-devicons"] = {
     after = "ui",
     module = "nvim-web-devicons",

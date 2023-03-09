@@ -274,33 +274,6 @@ M.telescope = {
   },
 }
 
-M.nvterm = {
-  plugin = true,
-
-  n = {
-    ["<leader>tt"] = {
-      function()
-        require("nvterm.terminal").new "horizontal"
-      end,
-      "new horizontal term",
-    },
-
-    ["<leader>tv"] = {
-      function()
-        require("nvterm.terminal").new "vertical"
-      end,
-      "new vertical term",
-    },
-
-    ["<leader>ti"] = {
-      function()
-        require("nvterm.terminal").new "float"
-      end,
-      "new floating term",
-    },
-  },
-}
-
 M.blankline = {
   plugin = true,
 

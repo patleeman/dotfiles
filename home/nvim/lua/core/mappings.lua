@@ -86,6 +86,8 @@ M.general = {
     ["<leader>wa"] = { "<cmd>Bwipeout<cr>", "wipeout all buffers"},
     ["<tab>"] = { "<cmd>bnext<CR>", "next buffer" },
     ["<S-tab>"] = { "<cmd>bprevious<CR>", "previous buffer" },
+
+
   },
 
   t = { ["<C-j>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },
@@ -230,6 +232,7 @@ M.telescope = {
   n = {
     -- find
     ["<leader>ff"] = { "<cmd> Telescope find_files <CR>", "find files" },
+    ["<C-o>"] = { "<cmd> Telescope find_files <CR>", "find files" },
     ["<leader>fa"] = { "<cmd> Telescope find_files follow=true no_ignore=true hidden=true <CR>", "find all" },
     ["<leader>fw"] = { "<cmd> Telescope live_grep <CR>", "live grep" },
     ["<leader>fb"] = { "<cmd> Telescope buffers <CR>", "find buffers" },
@@ -262,13 +265,6 @@ M.blankline = {
 
       "Jump to current_context",
     },
-  },
-}
-
-M.bufdelete = {
-  plugin = true,
-
-  n = {
   },
 }
 

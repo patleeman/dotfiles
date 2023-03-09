@@ -5,7 +5,7 @@ local plugins = {
   ["lewis6991/impatient.nvim"] = {},
 
   ["wbthomason/packer.nvim"] = {
-cmd = require("core.lazy_load").packer_cmds,
+    cmd = require("core.lazy_load").packer_cmds,
     config = function()
       require "plugins"
     end,
@@ -29,6 +29,21 @@ cmd = require("core.lazy_load").packer_cmds,
       require("plugins.configs.others").devicons()
     end,
   },
+
+  ["nvim-lualine/lualine.nvim"] = {
+    after = "nvim-web-devicons",
+    config = function()
+      require('lualine').setup({
+        options = {
+          theme = 'solarized_dark',
+          section_separators = { left = '', right = '' },
+          component_separators = { left = '', right = '' }
+        },
+      })
+    end,
+  },
+
+  ["nvim-lua/lsp-status.nvim"] = {},
 
   ["lukas-reineke/indent-blankline.nvim"] = {
     opt = true,
@@ -84,7 +99,6 @@ cmd = require("core.lazy_load").packer_cmds,
     end,
   },
 
-  ["nvim-lua/lsp-status.nvim"] = {},
 
   -- load luasnips + cmp related in insert mode only
   ["rafamadriz/friendly-snippets"] = {

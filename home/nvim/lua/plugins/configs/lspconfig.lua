@@ -5,7 +5,7 @@ if not present then
 end
 
 require("base46").load_highlight "lsp"
-require "nvchad_ui.lsp"
+-- require "nvchad_ui.lsp"
 
 local M = {}
 local utils = require "core.utils"
@@ -17,10 +17,6 @@ M.on_attach = function(client, bufnr)
   client.server_capabilities.documentRangeFormattingProvider = false
 
   utils.load_mappings("lspconfig", { buffer = bufnr })
-
-  if client.server_capabilities.signatureHelpProvider then
-    require("nvchad_ui.signature").setup(client)
-  end
 end
 
 M.capabilities = vim.lsp.protocol.make_client_capabilities()

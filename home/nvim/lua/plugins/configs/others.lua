@@ -1,7 +1,6 @@
 local M = {}
 
 local load_override = require("core.utils").load_override
-local utils = require "core.utils"
 
 M.autopairs = function()
   local present1, autopairs = pcall(require, "nvim-autopairs")
@@ -135,7 +134,7 @@ M.devicons = function()
   if present then
     require("base46").load_highlight "devicons"
 
-    local options = { override = require("nvchad_ui.icons").devicons }
+    local options = {}
     options = require("core.utils").load_override(options, "nvim-tree/nvim-web-devicons")
 
     devicons.setup(options)

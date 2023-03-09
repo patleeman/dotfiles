@@ -23,18 +23,7 @@ cmd = require("core.lazy_load").packer_cmds,
     end,
   },
 
-  ["NvChad/ui"] = {
-    after = "base46",
-    config = function()
-      local present, nvchad_ui = pcall(require, "nvchad_ui")
-
-      if present then
-        nvchad_ui.setup()
-      end
-    end,
-  },
   ["nvim-tree/nvim-web-devicons"] = {
-    after = "ui",
     module = "nvim-web-devicons",
     config = function()
       require("plugins.configs.others").devicons()
@@ -155,7 +144,7 @@ cmd = require("core.lazy_load").packer_cmds,
   ["MunifTanjim/nui.nvim"] = {},
   ["nvim-neo-tree/neo-tree.nvim"] = {
     config = function()
-      require "plugins.configs.neotree"      
+      require "plugins.configs.neotree"
     end,
   },
 

@@ -140,6 +140,12 @@ cmd = require("core.lazy_load").packer_cmds,
     end,
   },
 
+  ["famiu/bufdelete.nvim"] = {
+    setup = function()
+      require("plugins.configs.bufdelete")
+    end
+  },
+
   -- file managing , picker etc
   ["MunifTanjim/nui.nvim"] = {},
   ["nvim-neo-tree/neo-tree.nvim"] = {

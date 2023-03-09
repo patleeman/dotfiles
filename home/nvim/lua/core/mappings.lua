@@ -68,19 +68,24 @@ M.general = {
     ["<Up>"] = { 'v:count || mode(1)[0:1] == "no" ? "k" : "gk"', opts = { expr = true } },
     ["<Down>"] = { 'v:count || mode(1)[0:1] == "no" ? "j" : "gj"', opts = { expr = true } },
 
-    -- new buffer
-    ["<leader>b"] = { "<cmd> enew <CR>", "new buffer" },
 
     -- Lazygit
     ["<leader>gg"] = { "<cmd> LazyGit<CR>" },
 
     -- Insert date
-    ["<leader>dd"] = {"i<C-R>=strftime(\"%Y-%m-%d\")<CR><Esc>", "Insert date"},
-    ["<leader>dt"] = {"i<C-R>=strftime(\"%Y-%m-%d %a %I:%M %p\")<CR><Esc>", "Insert datetime"},
+    ["<leader>dd"] = { "i<C-R>=strftime(\"%Y-%m-%d\")<CR><Esc>", "Insert date" },
+    ["<leader>dt"] = { "i<C-R>=strftime(\"%Y-%m-%d %a %I:%M %p\")<CR><Esc>", "Insert datetime" },
 
-    ["<leader>\\"] = {"<cmd> vsplit<CR>"},
-    ["<leader>-"] = {"<cmd> split<CR>"},
+    ["<leader>\\"] = { "<cmd>vsplit<CR>" },
+    ["<leader>-"] = { "<cmd>split<CR>" },
     ["<leader>nn"] = { "<cmd>Neotree toggle<CR>", "toggle neotree" },
+
+    -- Buffers
+    ["<leader>b"] = { "<cmd> enew <CR>", "new buffer" },
+    ["<leader>w"] = { "<cmd>Bdelete<CR>", "delete buffer" },
+    ["<leader>wa"] = { "<cmd>Bwipeout<cr>", "wipeout all buffers"},
+    ["<tab>"] = { "<cmd>bnext<CR>", "next buffer" },
+    ["<S-tab>"] = { "<cmd>bprevious<CR>", "previous buffer" },
   },
 
   t = { ["<C-j>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },
@@ -114,7 +119,7 @@ M.comment = {
 
   v = {
     ["<leader>/"] = {
-      "<ESC><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>",
+     "<ESC><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>",
       "toggle comment",
     },
   },
@@ -167,13 +172,6 @@ M.lspconfig = {
       end,
       "lsp definition type",
     },
-
-    -- ["<leader>ra"] = {
-    --   function()
-    --     require("nvchad_ui.renamer").open()
-    --   end,
-    --   "lsp rename",
-    -- },
 
     ["<leader>ca"] = {
       function()
@@ -264,6 +262,13 @@ M.blankline = {
 
       "Jump to current_context",
     },
+  },
+}
+
+M.bufdelete = {
+  plugin = true,
+
+  n = {
   },
 }
 

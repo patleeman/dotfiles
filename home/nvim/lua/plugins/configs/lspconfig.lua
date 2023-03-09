@@ -39,25 +39,41 @@ M.capabilities.textDocument.completion.completionItem = {
   },
 }
 
-lspconfig.lua_ls.setup {
-  on_attach = M.on_attach,
-  capabilities = M.capabilities,
+require("mason-lspconfig").setup()
+require("mason-lspconfig").setup_handlers {
+  -- The first entry (without a key) will be the default handler
+  -- and will be called for each installed server that doesn't have
+  -- a dedicated handler.
+  function (server_name) -- default handler (optional)
+    require("lspconfig")[server_name].setup({
+      on_attach = M.on_attach,
+      capabilities = M.capabilities,
+    })
+  end,
+  -- Next, you can provide a dedicated handler for specific servers.
+  -- For example, a handler override for the `rust_analyzer`:
+  ["lua_ls"] = function ()
+    lspconfig.lua_ls.setup {
+      on_attach = M.on_attach,
+      capabilities = M.capabilities,
 
-  settings = {
-    Lua = {
-      diagnostics = {
-        globals = { "vim" },
-      },
-      workspace = {
-        library = {
-          [vim.fn.expand "$VIMRUNTIME/lua"] = true,
-          [vim.fn.expand "$VIMRUNTIME/lua/vim/lsp"] = true,
+      settings = {
+        Lua = {
+          diagnostics = {
+            globals = { "vim" },
+          },
+          workspace = {
+            library = {
+              [vim.fn.expand "$VIMRUNTIME/lua"] = true,
+              [vim.fn.expand "$VIMRUNTIME/lua/vim/lsp"] = true,
+            },
+            maxPreload = 100000,
+            preloadFileSize = 10000,
+          },
         },
-        maxPreload = 100000,
-        preloadFileSize = 10000,
       },
-    },
-  },
+    }
+  end
 }
 
 return M

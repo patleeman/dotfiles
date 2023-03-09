@@ -87,6 +87,9 @@ M.general = {
     ["<tab>"] = { "<cmd>bnext<CR>", "next buffer" },
     ["<S-tab>"] = { "<cmd>bprevious<CR>", "previous buffer" },
 
+    -- LSP
+    ["<leader>rn"] = { "<cmd>Lspsaga rename<CR>", "lsp rename" },
+
 
   },
 

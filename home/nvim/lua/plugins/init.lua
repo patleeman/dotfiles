@@ -34,7 +34,7 @@ local plugins = {
     module = "lsp-status",
     config = function()
       require('lsp-status').config({
-        status_symbol = '{}',
+        status_symbol = 'LSP Status: ',
         indicator_errors = '',
         indicator_warnings = '',
         indicator_info = '🛈',
@@ -93,6 +93,10 @@ local plugins = {
     config = function()
       require "plugins.configs.mason"
     end,
+  },
+
+  ["williamboman/mason-lspconfig.nvim"] = {
+    module = 'mason-lspconfig',
   },
 
   ["neovim/nvim-lspconfig"] = {
@@ -181,6 +185,13 @@ local plugins = {
     end,
     setup = function()
       require("core.utils").load_mappings "telescope"
+    end,
+  },
+
+  ["glepnir/lspsaga.nvim"] = {
+    cmd = "Lspsaga",
+    config = function()
+      require('lspsaga').setup({})
     end,
   },
  }

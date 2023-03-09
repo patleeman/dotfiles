@@ -30,20 +30,26 @@ local plugins = {
     end,
   },
 
-  ["nvim-lualine/lualine.nvim"] = {
-    after = "nvim-web-devicons",
+  ["nvim-lua/lsp-status.nvim"] = {
+    module = "lsp-status",
     config = function()
-      require('lualine').setup({
-        options = {
-          theme = 'solarized_dark',
-          section_separators = { left = '', right = '' },
-          component_separators = { left = '', right = '' }
-        },
+      require('lsp-status').config({
+        status_symbol = '{}',
+        indicator_errors = '',
+        indicator_warnings = '',
+        indicator_info = '🛈',
+        indicator_hint = '❗',
+        indicator_ok = '',
+        spinner_frames = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'},
       })
     end,
   },
 
-  ["nvim-lua/lsp-status.nvim"] = {},
+  ["nvim-lualine/lualine.nvim"] = {
+    config = function()
+      require('plugins.configs.lualine')
+    end,
+  },
 
   ["lukas-reineke/indent-blankline.nvim"] = {
     opt = true,

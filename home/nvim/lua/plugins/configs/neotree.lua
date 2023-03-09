@@ -45,7 +45,7 @@ local config = {
   use_default_mappings = true,
   -- source_selector provides clickable tabs to switch between sources.
   source_selector = {
-    winbar = true, -- toggle to show selector on winbar
+    winbar = false, -- toggle to show selector on winbar
     statusline = false, -- toggle to show selector on statusline
     show_scrolled_off_parent_node = false, -- this will replace the tabs with the parent path
     -- of the top visible node when scrolled down.
@@ -288,9 +288,9 @@ local config = {
   window = { -- see https://github.com/MunifTanjim/nui.nvim/tree/main/lua/nui/popup for
     -- possible options. These can also be functions that return these options.
     position = "left", -- left, right, top, bottom, float, current
-    width = 40, -- applies to left and right positions
+    width = 30, -- applies to left and right positions
     height = 15, -- applies to top and bottom positions
-    auto_expand_width = false, -- expand the window when file exceeds the window width. does not work with position = "float"
+    auto_expand_width = true, -- expand the window when file exceeds the window width. does not work with position = "float"
     popup = { -- settings that apply to float position only
       size = {
         height = "80%",

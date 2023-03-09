@@ -86,15 +86,7 @@ local plugins = {
   },
 
   -- git stuff
-  ["lewis6991/gitsigns.nvim"] = {
-    ft = "gitcommit",
-    setup = function()
-      require("core.lazy_load").gitsigns()
-    end,
-    config = function()
-      require("plugins.configs.others").gitsigns()
-    end,
-  },
+  ["kdheepak/lazygit.nvim"] = {},
 
   -- lsp stuff
   ["williamboman/mason.nvim"] = {
@@ -117,7 +109,6 @@ local plugins = {
   ["nvim-lua/lsp-status.nvim"] = {},
 
   -- load luasnips + cmp related in insert mode only
-
   ["rafamadriz/friendly-snippets"] = {
     module = { "cmp", "cmp_nvim_lsp" },
     event = "InsertEnter",
@@ -192,22 +183,7 @@ local plugins = {
       require("core.utils").load_mappings "telescope"
     end,
   },
-
-  ["kdheepak/lazygit.nvim"] = {},
-
-  -- Only load whichkey after all the gui
-  ["folke/which-key.nvim"] = {
-    disable = true,
-    module = "which-key",
-    keys = { "<leader>", '"', "'", "`" },
-    config = function()
-      require "plugins.configs.whichkey"
-    end,
-    setup = function()
-      require("core.utils").load_mappings "whichkey"
-    end,
-  },
-}
+ }
 
 -- Load all plugins
 local present, packer = pcall(require, "packer")

@@ -82,6 +82,9 @@ brew install fzf
 echo "Installing zsh-vi-mode"
 brew install zsh-vi-mode
 
+echo "Shellcheck"
+brew install shellcheck
+
 echo "Installing InYourFace"
 mas install 1476964367
 

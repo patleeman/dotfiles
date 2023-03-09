@@ -80,6 +80,7 @@ M.general = {
 
     ["<leader>\\"] = {"<cmd> vsplit<CR>"},
     ["<leader>-"] = {"<cmd> split<CR>"},
+    ["<leader>nn"] = { "<cmd>Neotree toggle<CR>", "toggle neotree" },
   },
 
   t = { ["<C-j>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },
@@ -251,15 +252,6 @@ M.lspconfig = {
       end,
       "lsp formatting",
     },
-  },
-}
-
-M.nvimtree = {
-  plugin = true,
-
-  n = {
-    -- toggle
-    ["<leader>nn"] = { "<cmd> NvimTreeToggle <CR>", "toggle nvimtree" },
   },
 }
 

@@ -27,8 +27,10 @@ if fn.empty(fn.glob(install_path)) > 0 then
       require("packer").loader "nvim-treesitter"
     end,
   })
+
 end
 
 pcall(require, "custom")
 
 require("core.utils").load_mappings()
+

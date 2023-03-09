@@ -5,7 +5,7 @@ local plugins = {
   ["lewis6991/impatient.nvim"] = {},
 
   ["wbthomason/packer.nvim"] = {
-    cmd = require("core.lazy_load").packer_cmds,
+cmd = require("core.lazy_load").packer_cmds,
     config = function()
       require "plugins"
     end,
@@ -163,14 +163,10 @@ local plugins = {
   },
 
   -- file managing , picker etc
-  ["nvim-tree/nvim-tree.lua"] = {
-    ft = "alpha",
-    cmd = { "NvimTreeToggle", "NvimTreeFocus" },
+  ["MunifTanjim/nui.nvim"] = {},
+  ["nvim-neo-tree/neo-tree.nvim"] = {
     config = function()
-      require "plugins.configs.nvimtree"
-    end,
-    setup = function()
-      require("core.utils").load_mappings "nvimtree"
+      require "plugins.configs.neotree"      
     end,
   },
 

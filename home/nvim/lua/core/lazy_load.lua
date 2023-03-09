@@ -39,7 +39,7 @@ M.on_file_open = function(plugin_name)
     plugin = plugin_name,
     condition = function()
       local file = vim.fn.expand "%"
-      return file ~= "NvimTree_1" and file ~= "[packer]" and file ~= ""
+      return file ~= "[packer]" and file ~= ""
     end,
   }
 end

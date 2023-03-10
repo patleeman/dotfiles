@@ -88,9 +88,14 @@ M.general = {
     ["<S-tab>"] = { "<cmd>bprevious<CR>", "previous buffer" },
 
     -- LSP
-    ["<leader>rn"] = { "<cmd>Lspsaga rename<CR>", "lsp rename" },
-
-
+    ["<leader>gh"] = { "<cmd>Lspsaga lsp_finder<CR>", "lsp find definition" },
+    ["<leader>ga"] = { "<cmd>Lspsaga code_action<CR>", "lsp code a:ction" },
+    ["<leader>gr"] = { "<cmd>Lspsaga rename<CR>", "lsp rename" },
+    ["<leader>gd"] = { "<cmd>Lspsaga goto_definition<CR>", "lsp goto definition"},
+    ["<leader>gt"] = { "<cmd>Lspsaga peek_type_definition<CR>", "lsp peek type definition" },
+    ["<leader>gi"] = { "<cmd>Lspsaga incoming_calls<CR>" },
+    ["<leader>go"] = { "<cmd>Lspsaga outgoing_calls<CR>" },
+    ["K"] = { "<cmd>Lspsaga hover_doc<CR>" },
   },
 
   t = { ["<C-j>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },
@@ -98,6 +103,8 @@ M.general = {
   v = {
     ["<Up>"] = { 'v:count || mode(1)[0:1] == "no" ? "k" : "gk"', opts = { expr = true } },
     ["<Down>"] = { 'v:count || mode(1)[0:1] == "no" ? "j" : "gj"', opts = { expr = true } },
+
+    ["<leader>ga"] = { "<cmd>Lspsaga code_action<CR>", "lsp code action" },
   },
 
   x = {

@@ -41,6 +41,8 @@ npm install -g tldr
 echo "Installing pyenv & pyenv-virtualenv"
 brew install pyenv
 brew install pyenv-virtualenv
+pyenv install 3
+pyenv global 3
 
 echo "Installing direnv"
 brew install direnv
@@ -90,4 +92,7 @@ mas install 1476964367
 
 echo "Installing Rust"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+echo "Install neovim-remote"
+pip3 install neovim-remote
 

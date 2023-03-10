@@ -197,6 +197,9 @@ local plugins = {
 
   ["alexghergh/nvim-tmux-navigation"] = {
     module = "nvim-tmux-navigation",
+    setup = function()
+      require("core.lazy_load").on_vim_enter "nvim-tmux-navigation"
+    end,
     config = function()
       local nvim_tmux_nav = require('nvim-tmux-navigation')
 

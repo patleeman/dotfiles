@@ -44,6 +44,19 @@ M.on_file_open = function(plugin_name)
   }
 end
 
+
+M.on_vim_enter = function(plugin_name)
+  M.lazy_load {
+    events = { "VimEnter" },
+    augroup_name = "BeLazyOnVimEnter" .. plugin_name,
+    plugin = plugin_name,
+    condition = function()
+      local file = vim.fn.expand "%"
+      return file ~= "[packer]" and file ~= ""
+    end,
+  }
+end
+
 M.packer_cmds = {
   "PackerSnapshot",
   "PackerSnapshotRollback",

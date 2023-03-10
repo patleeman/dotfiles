@@ -68,7 +68,6 @@ M.general = {
     ["<Up>"] = { 'v:count || mode(1)[0:1] == "no" ? "k" : "gk"', opts = { expr = true } },
     ["<Down>"] = { 'v:count || mode(1)[0:1] == "no" ? "j" : "gj"', opts = { expr = true } },
 
-
     -- Lazygit
     ["<leader>gg"] = { "<cmd> LazyGit<CR>" },
 
@@ -82,8 +81,8 @@ M.general = {
 
     -- Buffers
     ["<leader>b"] = { "<cmd> enew <CR>", "new buffer" },
-    ["<leader>w"] = { "<cmd>Bdelete<CR>", "delete buffer" },
-    ["<leader>wa"] = { "<cmd>Bwipeout<cr>", "wipeout all buffers"},
+    ["<leader>w"] = { "<cmd>Bdelete!<CR>", "delete buffer" },
+    ["<leader>wa"] = { "<cmd>Bwipeout!<cr>", "wipeout all buffers"},
     ["<tab>"] = { "<cmd>bnext<CR>", "next buffer" },
     ["<S-tab>"] = { "<cmd>bprevious<CR>", "previous buffer" },
 

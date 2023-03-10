@@ -47,12 +47,13 @@ M.general = {
   n = {
     ["<ESC>"] = { "<cmd> noh <CR>", "no highlight" },
 
-    -- switch between windows
-    ["<C-h>"] = { "<C-w>h", "window left" },
-    ["<C-l>"] = { "<C-w>l", "window right" },
-    ["<C-j>"] = { "<C-w>j", "window down" },
-    ["<C-k>"] = { "<C-w>k", "window up" },
-
+    -- -- switch between windows
+    -- ["<C-h>"] = { "<Cmd>NvimTmuxNavigateLeft<CR>", "window left" },
+    -- ["<C-l>"] = { "<Cmd>NvimTmuxNavigateRight<CR>", "window right" },
+    -- ["<C-j>"] = { "<Cmd>NvimTmuxNavigateDown<CR>", "window down" },
+    -- ["<C-k>"] = { "<Cmd>NvimTmuxNavigateUp<CR>", "window up" },
+    -- ["<C-\\>"] = { "<Cmd>NvimTmuxNavigateLastActive<CR>", "last active" },
+    -- ["<C=Space>"] = { "<Cmd>NvimTmuxNavigateNext<CR>", "next active"},
     -- save
     ["<C-s>"] = { "<cmd> w <CR>", "save file" },
 

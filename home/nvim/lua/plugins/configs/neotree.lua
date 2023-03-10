@@ -290,7 +290,7 @@ local config = {
     position = "left", -- left, right, top, bottom, float, current
     width = 30, -- applies to left and right positions
     height = 15, -- applies to top and bottom positions
-    auto_expand_width = true, -- expand the window when file exceeds the window width. does not work with position = "float"
+    auto_expand_width = false, -- expand the window when file exceeds the window width. does not work with position = "float"
     popup = { -- settings that apply to float position only
       size = {
         height = "80%",

@@ -87,6 +87,13 @@ local plugins = {
   -- git stuff
   ["kdheepak/lazygit.nvim"] = {},
 
+  ["ruifm/gitlinker.nvim"] = {
+    module = "gitlinker",
+    setup = function()
+      require("gitlinker").setup()
+    end
+  },
+
   -- lsp stuff
   ["williamboman/mason.nvim"] = {
     cmd = require("core.lazy_load").mason_cmds,
@@ -216,6 +223,7 @@ local plugins = {
 
     end
   },
+ 
  }
 
 -- Load all plugins

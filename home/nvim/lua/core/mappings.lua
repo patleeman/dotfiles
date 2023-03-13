@@ -45,6 +45,14 @@ M.general = {
   },
 
   n = {
+    -- TODO: Move binds from init.lua here.
+    -- ["<C-h>"] = { "<Cmd>NvimTmuxNavigateLeft<CR>", "window left" },
+    -- ["<C-l>"] = { "<Cmd>NvimTmuxNavigateRight<CR>", "window right" },
+    -- ["<C-j>"] = { "<Cmd>NvimTmuxNavigateDown<CR>", "window down" },
+    -- ["<C-k>"] = { "<Cmd>NvimTmuxNavigateUp<CR>", "window up" },
+    -- ["<C-\\>"] = { "<Cmd>NvimTmuxNavigateLastActive<CR>", "last active" },
+    -- ["<C=Space>"] = { "<Cmd>NvimTmuxNavigateNext<CR>", "next active"},
+
     ["<ESC>"] = { "<cmd> noh <CR>", "no highlight" },
     ["<C-s>"] = { "<cmd> w <CR>", "save file" },
     ["C-d"] = { "<C-d>zz" },

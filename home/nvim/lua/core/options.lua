@@ -15,10 +15,10 @@ opt.cursorline = true
 
 -- Indenting
 opt.expandtab = true
-opt.shiftwidth = 2
+opt.shiftwidth = 4
 opt.smartindent = true
-opt.tabstop = 2
-opt.softtabstop = 2
+opt.tabstop = 4
+opt.softtabstop = 4
 
 opt.fillchars = { eob = " " }
 opt.ignorecase = true
@@ -42,7 +42,12 @@ opt.timeoutlen = 800
 opt.undofile = true
 
 -- interval for writing swap file to disk
-opt.updatetime = 250
+opt.updatetime = 50
+opt.swapfile = false
+opt.backup = false
+
+opt.scrolloff = 8
+
 
 -- go to previous/next line with h,l,left arrow and right arrow
 -- when cursor reaches end/beginning of line

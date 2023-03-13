@@ -46,16 +46,11 @@ M.general = {
 
   n = {
     ["<ESC>"] = { "<cmd> noh <CR>", "no highlight" },
-
-    -- -- switch between windows
-    -- ["<C-h>"] = { "<Cmd>NvimTmuxNavigateLeft<CR>", "window left" },
-    -- ["<C-l>"] = { "<Cmd>NvimTmuxNavigateRight<CR>", "window right" },
-    -- ["<C-j>"] = { "<Cmd>NvimTmuxNavigateDown<CR>", "window down" },
-    -- ["<C-k>"] = { "<Cmd>NvimTmuxNavigateUp<CR>", "window up" },
-    -- ["<C-\\>"] = { "<Cmd>NvimTmuxNavigateLastActive<CR>", "last active" },
-    -- ["<C=Space>"] = { "<Cmd>NvimTmuxNavigateNext<CR>", "next active"},
-    -- save
     ["<C-s>"] = { "<cmd> w <CR>", "save file" },
+    ["C-d"] = { "<C-d>zz" },
+    ["C-u"] = { "<C-u>zz" },
+    ["n"] = { "nzzzv" },
+    ["N"] = { "Nzzzv" },
 
     -- Copy all
     ["<C-c>"] = { "<cmd> %y+ <CR>", "copy whole file" },
@@ -96,6 +91,8 @@ M.general = {
     ["<leader>gi"] = { "<cmd>Lspsaga incoming_calls<CR>" },
     ["<leader>go"] = { "<cmd>Lspsaga outgoing_calls<CR>" },
     ["K"] = { "<cmd>Lspsaga hover_doc<CR>" },
+
+
   },
 
   t = { ["<C-j>"] = { termcodes "<C-\\><C-N>", "escape terminal mode" } },
@@ -103,6 +100,10 @@ M.general = {
   v = {
     ["<Up>"] = { 'v:count || mode(1)[0:1] == "no" ? "k" : "gk"', opts = { expr = true } },
     ["<Down>"] = { 'v:count || mode(1)[0:1] == "no" ? "j" : "gj"', opts = { expr = true } },
+    
+    -- Shift visual highlights up and down.
+    ["J"] = { ":m '>+1<CR>gv=gv" },
+    ["K"] = { ":m '<-2<CR>gv=gv"},
 
     ["<leader>ga"] = { "<cmd>Lspsaga code_action<CR>", "lsp code action" },
   },

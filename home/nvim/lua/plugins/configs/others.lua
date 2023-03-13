@@ -29,7 +29,7 @@ M.blankline = function()
     return
   end
 
-  require("base46").load_highlight "blankline"
+  -- require("base46").load_highlight "blankline"
 
   local options = {
     indentLine_enabled = 1,
@@ -132,7 +132,7 @@ M.devicons = function()
   local present, devicons = pcall(require, "nvim-web-devicons")
 
   if present then
-    require("base46").load_highlight "devicons"
+    -- require("base46").load_highlight "devicons"
 
     local options = {}
     options = require("core.utils").load_override(options, "nvim-tree/nvim-web-devicons")

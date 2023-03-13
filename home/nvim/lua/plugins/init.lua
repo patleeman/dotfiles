@@ -1,244 +1,259 @@
 local plugins = {
 
-  ["nvim-lua/plenary.nvim"] = { module = "plenary" },
+    ["nvim-lua/plenary.nvim"] = { module = "plenary" },
 
-  ["lewis6991/impatient.nvim"] = {},
+    ["lewis6991/impatient.nvim"] = {},
 
-  ["wbthomason/packer.nvim"] = {
-    cmd = require("core.lazy_load").packer_cmds,
-    config = function()
-      require "plugins"
-    end,
-  },
+    ["wbthomason/packer.nvim"] = {
+        cmd = require("core.lazy_load").packer_cmds,
+        config = function()
+            require "plugins"
+        end,
+    },
 
-  ["NvChad/extensions"] = { module = { "telescope", "nvchad" } },
+    -- ["NvChad/extensions"] = { module = { "telescope", "nvchad" } },
 
-  ["NvChad/base46"] = {
-    config = function()
-      local ok, base46 = pcall(require, "base46")
+    -- ["NvChad/base46"] = {
+    --   config = function()
+    --     local ok, base46 = pcall(require, "base46")
+    --
+    --     if ok then
+    --       base46.load_theme()
+    --     end
+    --   end,
+    -- },
+    --
 
-      if ok then
-        base46.load_theme()
-      end
-    end,
-  },
+    ["tjdevries/colorbuddy.nvim"] = {
+        module = "colorbuddy",
+    },
+    ["lalitmee/cobalt2.nvim"] = {
+        after = "colorbuddy.nvim",
+        config = function()
+            local ok, colorbuddy = pcall(require, "colorbuddy")
 
-  ["nvim-tree/nvim-web-devicons"] = {
-    module = "nvim-web-devicons",
-    config = function()
-      require("plugins.configs.others").devicons()
-    end,
-  },
+            if ok then
+                colorbuddy.colorscheme('cobalt2')
+            end
+        end
+    },
 
-  ["nvim-lua/lsp-status.nvim"] = {
-    module = "lsp-status",
-    config = function()
-      require('lsp-status').config({
-        status_symbol = 'LSP Status: ',
-        indicator_errors = '',
-        indicator_warnings = '',
-        indicator_info = '🛈',
-        indicator_hint = '!!',
-        indicator_ok = '',
-        spinner_frames = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'},
-      })
-    end,
-  },
+    ["nvim-tree/nvim-web-devicons"] = {
+        module = "nvim-web-devicons",
+        config = function()
+            require("plugins.configs.others").devicons()
+        end,
+    },
 
-  ["nvim-lualine/lualine.nvim"] = {
-    config = function()
-      require('plugins.configs.lualine')
-    end,
-  },
+    ["nvim-lua/lsp-status.nvim"] = {
+        module = "lsp-status",
+        config = function()
+            require('lsp-status').config({
+                status_symbol = 'LSP Status: ',
+                indicator_errors = '',
+                indicator_warnings = '',
+                indicator_info = '🛈',
+                indicator_hint = '!!',
+                indicator_ok = '',
+                spinner_frames = {'⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'},
+            })
+        end,
+    },
 
-  ["lukas-reineke/indent-blankline.nvim"] = {
-    opt = true,
-    setup = function()
-      require("core.lazy_load").on_file_open "indent-blankline.nvim"
-      require("core.utils").load_mappings "blankline"
-    end,
-    config = function()
-      require("plugins.configs.others").blankline()
-    end,
-  },
+    ["nvim-lualine/lualine.nvim"] = {
+        config = function()
+            require('plugins.configs.lualine')
+        end,
+    },
 
-  ["NvChad/nvim-colorizer.lua"] = {
-    opt = true,
-    setup = function()
-      require("core.lazy_load").on_file_open "nvim-colorizer.lua"
-    end,
-    config = function()
-      require("plugins.configs.others").colorizer()
-    end,
-  },
+    ["lukas-reineke/indent-blankline.nvim"] = {
+        opt = true,
+        setup = function()
+            require("core.lazy_load").on_file_open "indent-blankline.nvim"
+            require("core.utils").load_mappings "blankline"
+        end,
+        config = function()
+            require("plugins.configs.others").blankline()
+        end,
+    },
 
-  ["nvim-treesitter/nvim-treesitter"] = {
-    module = "nvim-treesitter",
-    setup = function()
-      require("core.lazy_load").on_file_open "nvim-treesitter"
-    end,
-    cmd = require("core.lazy_load").treesitter_cmds,
-    run = ":TSUpdate",
-    config = function()
-      require "plugins.configs.treesitter"
-    end,
-  },
+    ["NvChad/nvim-colorizer.lua"] = {
+        opt = true,
+        setup = function()
+            require("core.lazy_load").on_file_open "nvim-colorizer.lua"
+        end,
+        config = function()
+            require("plugins.configs.others").colorizer()
+        end,
+    },
 
-  -- git stuff
-  ["kdheepak/lazygit.nvim"] = {},
+    ["nvim-treesitter/nvim-treesitter"] = {
+        module = "nvim-treesitter",
+        setup = function()
+            require("core.lazy_load").on_file_open "nvim-treesitter"
+        end,
+        cmd = require("core.lazy_load").treesitter_cmds,
+        run = ":TSUpdate",
+        config = function()
+            require "plugins.configs.treesitter"
+        end,
+    },
 
-  ["ruifm/gitlinker.nvim"] = {
-    module = "gitlinker",
-    setup = function()
-      require("gitlinker").setup()
-    end
-  },
+    -- git stuff
+    ["kdheepak/lazygit.nvim"] = {},
 
-  -- lsp stuff
-  ["williamboman/mason.nvim"] = {
-    cmd = require("core.lazy_load").mason_cmds,
-    config = function()
-      require "plugins.configs.mason"
-    end,
-  },
+    ["ruifm/gitlinker.nvim"] = {
+        module = "gitlinker",
+        setup = function()
+            require("gitlinker").setup()
+        end
+    },
 
-  ["williamboman/mason-lspconfig.nvim"] = {
-    module = 'mason-lspconfig',
-  },
+    -- lsp stuff
+    ["williamboman/mason.nvim"] = {
+        cmd = require("core.lazy_load").mason_cmds,
+        config = function()
+            require "plugins.configs.mason"
+        end,
+    },
 
-  ["neovim/nvim-lspconfig"] = {
-    opt = true,
-    setup = function()
-      require("core.lazy_load").on_file_open "nvim-lspconfig"
-    end,
-    config = function()
-      require "plugins.configs.lspconfig"
-    end,
-  },
+    ["williamboman/mason-lspconfig.nvim"] = {
+        module = 'mason-lspconfig',
+    },
+
+    ["neovim/nvim-lspconfig"] = {
+        opt = true,
+        setup = function()
+            require("core.lazy_load").on_file_open "nvim-lspconfig"
+        end,
+        config = function()
+            require "plugins.configs.lspconfig"
+        end,
+    },
 
 
-  -- load luasnips + cmp related in insert mode only
-  ["rafamadriz/friendly-snippets"] = {
-    module = { "cmp", "cmp_nvim_lsp" },
-    event = "InsertEnter",
-  },
+    -- load luasnips + cmp related in insert mode only
+    ["rafamadriz/friendly-snippets"] = {
+        module = { "cmp", "cmp_nvim_lsp" },
+        event = "InsertEnter",
+    },
 
-  ["hrsh7th/nvim-cmp"] = {
-    after = "friendly-snippets",
-    config = function()
-      require "plugins.configs.cmp"
-    end,
-  },
+    ["hrsh7th/nvim-cmp"] = {
+        after = "friendly-snippets",
+        config = function()
+            require "plugins.configs.cmp"
+        end,
+    },
 
-  ["L3MON4D3/LuaSnip"] = {
-    wants = "friendly-snippets",
-    after = "nvim-cmp",
-    config = function()
-      require("plugins.configs.others").luasnip()
-    end,
-  },
+    ["L3MON4D3/LuaSnip"] = {
+        wants = "friendly-snippets",
+        after = "nvim-cmp",
+        config = function()
+            require("plugins.configs.others").luasnip()
+        end,
+    },
 
-  ["saadparwaiz1/cmp_luasnip"] = { after = "LuaSnip" },
-  ["hrsh7th/cmp-nvim-lua"] = { after = "cmp_luasnip" },
-  ["hrsh7th/cmp-nvim-lsp"] = { after = "cmp-nvim-lua" },
-  ["hrsh7th/cmp-buffer"] = { after = "cmp-nvim-lsp" },
-  ["hrsh7th/cmp-path"] = { after = "cmp-buffer" },
+    ["saadparwaiz1/cmp_luasnip"] = { after = "LuaSnip" },
+    ["hrsh7th/cmp-nvim-lua"] = { after = "cmp_luasnip" },
+    ["hrsh7th/cmp-nvim-lsp"] = { after = "cmp-nvim-lua" },
+    ["hrsh7th/cmp-buffer"] = { after = "cmp-nvim-lsp" },
+    ["hrsh7th/cmp-path"] = { after = "cmp-buffer" },
 
-  -- misc plugins
-  ["windwp/nvim-autopairs"] = {
-    after = "nvim-cmp",
-    config = function()
-      require("plugins.configs.others").autopairs()
-    end,
-  },
+    -- misc plugins
+    ["windwp/nvim-autopairs"] = {
+        after = "nvim-cmp",
+        config = function()
+            require("plugins.configs.others").autopairs()
+        end,
+    },
 
-  ["goolord/alpha-nvim"] = {
-    after = "base46",
-    disable = false,
-    config = function()
-      require "plugins.configs.alpha"
-    end,
-  },
+    ["goolord/alpha-nvim"] = {
+        -- after = "base46",
+        disable = false,
+        config = function()
+            require "plugins.configs.alpha"
+        end,
+    },
 
- ["numToStr/Comment.nvim"] = {
-    module = "Comment",
-    keys = { "gc", "gb" },
-    config = function()
-      require("plugins.configs.others").comment()
-    end,
-    setup = function()
-      require("core.utils").load_mappings "comment"
-    end,
-  },
+    ["numToStr/Comment.nvim"] = {
+        module = "Comment",
+        keys = { "gc", "gb" },
+        config = function()
+            require("plugins.configs.others").comment()
+        end,
+        setup = function()
+            require("core.utils").load_mappings "comment"
+        end,
+    },
 
-  ["famiu/bufdelete.nvim"] = {
-    setup = function()
-      require("plugins.configs.bufdelete")
-    end
-  },
+    ["famiu/bufdelete.nvim"] = {
+        setup = function()
+            require("plugins.configs.bufdelete")
+        end
+    },
 
-  -- file managing , picker etc
-  ["MunifTanjim/nui.nvim"] = {},
-  ["nvim-neo-tree/neo-tree.nvim"] = {
-    config = function()
-      require "plugins.configs.neotree"
-    end,
-  },
+    -- file managing , picker etc
+    ["MunifTanjim/nui.nvim"] = {},
+    ["nvim-neo-tree/neo-tree.nvim"] = {
+        config = function()
+            require "plugins.configs.neotree"
+        end,
+    },
 
-  ["nvim-telescope/telescope.nvim"] = {
-    cmd = "Telescope",
-    config = function()
-      require "plugins.configs.telescope"
-    end,
-    setup = function()
-      require("core.utils").load_mappings "telescope"
-    end,
-  },
+    ["nvim-telescope/telescope.nvim"] = {
+        cmd = "Telescope",
+        config = function()
+            require "plugins.configs.telescope"
+        end,
+        setup = function()
+            require("core.utils").load_mappings "telescope"
+        end,
+    },
 
-  ["glepnir/lspsaga.nvim"] = {
-    cmd = "Lspsaga",
-    config = function()
-      require('lspsaga').setup({})
-    end,
-  },
+    ["glepnir/lspsaga.nvim"] = {
+        cmd = "Lspsaga",
+        config = function()
+            require('lspsaga').setup({})
+        end,
+    },
 
-  ["alexghergh/nvim-tmux-navigation"] = {
-    module = "nvim-tmux-navigation",
-    setup = function()
-      require("core.lazy_load").on_vim_enter "nvim-tmux-navigation"
-    end,
-    config = function()
-      local nvim_tmux_nav = require('nvim-tmux-navigation')
+    ["alexghergh/nvim-tmux-navigation"] = {
+        module = "nvim-tmux-navigation",
+        setup = function()
+            require("core.lazy_load").on_vim_enter "nvim-tmux-navigation"
+        end,
+        config = function()
+            local nvim_tmux_nav = require('nvim-tmux-navigation')
 
-      nvim_tmux_nav.setup {
-        disable_when_zoomed = true -- defaults to false
-      }
+            nvim_tmux_nav.setup {
+                disable_when_zoomed = true -- defaults to false
+            }
 
-      vim.keymap.set('n', "<C-h>", nvim_tmux_nav.NvimTmuxNavigateLeft)
-      vim.keymap.set('n', "<C-j>", nvim_tmux_nav.NvimTmuxNavigateDown)
-      vim.keymap.set('n', "<C-k>", nvim_tmux_nav.NvimTmuxNavigateUp)
-      vim.keymap.set('n', "<C-l>", nvim_tmux_nav.NvimTmuxNavigateRight)
-      vim.keymap.set('n', "<C-\\>", nvim_tmux_nav.NvimTmuxNavigateLastActive)
-      vim.keymap.set('n', "<C-Space>", nvim_tmux_nav.NvimTmuxNavigateNext)
+            vim.keymap.set('n', "<C-h>", nvim_tmux_nav.NvimTmuxNavigateLeft)
+            vim.keymap.set('n', "<C-j>", nvim_tmux_nav.NvimTmuxNavigateDown)
+            vim.keymap.set('n', "<C-k>", nvim_tmux_nav.NvimTmuxNavigateUp)
+            vim.keymap.set('n', "<C-l>", nvim_tmux_nav.NvimTmuxNavigateRight)
+            vim.keymap.set('n', "<C-\\>", nvim_tmux_nav.NvimTmuxNavigateLastActive)
+            vim.keymap.set('n', "<C-Space>", nvim_tmux_nav.NvimTmuxNavigateNext)
 
-    end
-  },
- 
- }
+        end
+    },
+
+}
 
 -- Load all plugins
 local present, packer = pcall(require, "packer")
 
 if present then
-  vim.cmd "packadd packer.nvim"
+    vim.cmd "packadd packer.nvim"
 
-  -- Override with default plugins with user ones
-  plugins = require("core.utils").merge_plugins(plugins)
+    -- Override with default plugins with user ones
+    plugins = require("core.utils").merge_plugins(plugins)
 
-  -- load packer init options
-  local init_options = require("plugins.configs.others").packer_init()
-  init_options = require("core.utils").load_override(init_options, "wbthomason/packer.nvim")
+    -- load packer init options
+    local init_options = require("plugins.configs.others").packer_init()
+    init_options = require("core.utils").load_override(init_options, "wbthomason/packer.nvim")
 
-  packer.init(init_options)
-  packer.startup { plugins }
+    packer.init(init_options)
+    packer.startup { plugins }
 end

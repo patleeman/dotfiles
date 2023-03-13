@@ -100,11 +100,15 @@ M.general = {
   v = {
     ["<Up>"] = { 'v:count || mode(1)[0:1] == "no" ? "k" : "gk"', opts = { expr = true } },
     ["<Down>"] = { 'v:count || mode(1)[0:1] == "no" ? "j" : "gj"', opts = { expr = true } },
-    
+
     -- Shift visual highlights up and down.
     ["J"] = { ":m '>+1<CR>gv=gv" },
     ["K"] = { ":m '<-2<CR>gv=gv"},
+    -- Shift visual highlights left and right 
+    [">"] = { ">gv" },
+    ["<"] = { "<gv"},
 
+    -- Trigger a LSP code action
     ["<leader>ga"] = { "<cmd>Lspsaga code_action<CR>", "lsp code action" },
   },
 

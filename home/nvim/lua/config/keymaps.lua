@@ -3,7 +3,7 @@
 -- Add any additional keymaps here
 
 -- INSERT MODE KEYMAPS
-vim.keymap.set("i", "jj", "<ESC>")
+vim.keymap.set("i", "jj", "<ESC>", { desc = "Escape insert mode" })
 vim.keymap.set("i", ";;", function()
   local closers = { ")", "]", "}", ">", "'", '"', "`", "," }
   local line = vim.api.nvim_get_current_line()
@@ -25,10 +25,9 @@ vim.keymap.set("i", ";;", function()
   end
 end, { desc = "Escape a pair" })
 
-vim.keymap.set("i", "<leader>dd", 'i<C-R>=strftime("%Y-%m-%d")<CR><Esc>', { desc = "Insert date" })
-vim.keymap.set("i", "<leader>dt", 'i<C-R>=strftime("%Y-%m-%d %a %I:%M %p")<CR><Esc>', { desc = "Insert datetime" })
-
 -- NORMAL MODE KEYMAPS
+vim.keymap.set("n", "<leader>dd", 'i<C-R>=strftime("%Y-%m-%d")<CR><Esc>', { desc = "Insert date" })
+vim.keymap.set("n", "<leader>dt", 'i<C-R>=strftime("%Y-%m-%d %a %I:%M %p")<CR><Esc>', { desc = "Insert datetime" })
 vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
 vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
 

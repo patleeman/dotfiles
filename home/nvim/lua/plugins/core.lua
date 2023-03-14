@@ -5,7 +5,30 @@ return {
       { "<leader>gg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
     },
   },
-
+  {
+    "ThePrimeagen/harpoon",
+    config = function()
+      require("telescope").load_extension("harpoon")
+    end,
+    keys = {
+      { "<leader>ha", '<cmd>lua require("harpoon.mark").add_file()<CR>', desc = "Add file to Harpoon" },
+      {
+        "<leader>hh",
+        '<cmd>lua require("harpoon.ui").toggle_quick_menu()<CR>',
+        desc = "Toggle Harpoon quick menu",
+      },
+      { "<leader>hf", "<cmd>Telescope harpoon marks<CR>", desc = "Fuzzy find harpoon marks" },
+      { "<leader>h1", '<cmd>lua require("harpoon.ui").nav_file(1)<CR>', desc = "Navigate to first harpoon file" },
+      { "<leader>h2", '<cmd>lua require("harpoon.ui").nav_file(2)<CR>', desc = "Navigate to second harpoon file" },
+      { "<leader>h3", '<cmd>lua require("harpoon.ui").nav_file(3)<CR>', desc = "Navigate to third harpoon file" },
+      { "<leader>h4", '<cmd>lua require("harpoon.ui").nav_file(4)<CR>', desc = "Navigate to fourth harpoon file" },
+      {
+        "<leader>h5",
+        '<cmd>lua require("harpoon.ui").nav_file(5)<CR>',
+        desc = "Navigate to fifth ff harpoon file",
+      },
+    },
+  },
   -- Super Tab
   {
     "L3MON4D3/LuaSnip",

@@ -30,6 +30,8 @@ vim.keymap.set("n", "<leader>dd", 'i<C-R>=strftime("%Y-%m-%d")<CR><Esc>', { desc
 vim.keymap.set("n", "<leader>dt", 'i<C-R>=strftime("%Y-%m-%d %a %I:%M %p")<CR><Esc>', { desc = "Insert datetime" })
 vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
 vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
+vim.keymap.set("n", "<Tab>", "<cmd>bnext<CR>", { desc = "Next buffer" })
+vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<CR>", { desc = "Next buffer" })
 
 vim.keymap.set("n", "n", "nzzzv", { desc = "Search down and center" })
 vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })

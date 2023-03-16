@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import os
 import subprocess
 from pyfzf.pyfzf import FzfPrompt
@@ -33,8 +34,8 @@ class TodoItem:
 
 
 def parse_files(directory):
-    checklist_items: [TodoItem] = []
-    for root, dirs, files in os.walk(directory):
+    checklist_items: list[TodoItem] = []
+    for root, _, files in os.walk(directory):
         # TODO: Add an ignore file
         for file in files:
             if file.endswith(".md"):
@@ -80,7 +81,7 @@ def mark_todo(todo: TodoItem, state: TodoStates):
 def prompt():
     fzf = FzfPrompt()
     notes_path = os.path.expanduser(NOTES_DIR)
-    todo_items: [TodoItem] = parse_files(notes_path)
+    todo_items: list[TodoItem] = parse_files(notes_path)
 
     fzf_display_strings = [
         f"{x.short_hash}: {x.todo}" for x in todo_items]
@@ -94,6 +95,9 @@ def prompt():
     for todo_item in todo_items:
         if id == todo_item.short_hash:
             todo_to_update = todo_item
+
+    if todo_to_update is None:
+        exit(1)
 
     action = fzf.prompt([Actions.OPEN_VIM, Actions.DONE,
                         Actions.WONT_DO])

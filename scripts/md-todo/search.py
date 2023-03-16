@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import subprocess
 from pyfzf.pyfzf import FzfPrompt
 from hashlib import md5
 from enum import StrEnum
@@ -25,9 +26,9 @@ def parse_files(directory):
                             todo_index = text.index("[ ]") + 3
                             todo_item = text[todo_index:].strip()
                             payload = {
-                                "file": file_path,
+                                "path": file_path,
                                 "raw": text,
-                                "line_number": line_num,
+                                "line": line_num + 1,
                                 "todo": todo_item,
                                 "hash": md5(todo_item.encode('utf8')).hexdigest()
                             }
@@ -64,6 +65,7 @@ if __name__ == "__main__":
     elif action == Actions.WONT_DO:
         print("Won't Do")
     elif action == Actions.OPEN_VIM:
-        print("Open in vim")
+        subprocess.call(['nvim', f'+{found_todo["line"]}', found_todo['path']])
+        exit(0)
     elif action == Actions.EXIT:
         print("DO NOTHING")

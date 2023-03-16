@@ -39,3 +39,28 @@ vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line up" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line down" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block right" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
+
+-- https://sbulav.github.io/vim/neovim-opening-urls/
+-- URL handling
+if vim.fn.has("mac") == 1 then
+  vim.keymap.set(
+    "n",
+    "gx",
+    '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
+    { desc = "Open link" }
+  )
+elseif vim.fn.has("unix") == 1 then
+  vim.keymap.set(
+    "n",
+    "gx",
+    '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
+    { desc = "Open link" }
+  )
+else
+  vim.keymap.set(
+    "n",
+    "gx",
+    '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
+    { desc = "Open link" }
+  )
+end

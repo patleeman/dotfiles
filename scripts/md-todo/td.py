@@ -6,6 +6,7 @@ from pyfzf.pyfzf import FzfPrompt
 from hashlib import md5
 from enum import StrEnum
 from dataclasses import dataclass
+from datetime import datetime
 
 
 NOTES_DIR = "~/Dropbox/Notes"
@@ -59,8 +60,7 @@ def parse_files(directory):
     return checklist_items
 
 
-# TODO: Append metadata like done:2023-01-01 or wontdo:2023-01-01
-def mark_todo(todo: TodoItem, state: TodoStates):
+def mark_todo(todo: TodoItem, state: TodoStates, append: str = ""):
     with open(todo.path, 'r') as f:
         lines = f.readlines()
 
@@ -72,6 +72,8 @@ def mark_todo(todo: TodoItem, state: TodoStates):
         exit(1)
 
     line_to_modify = line_to_modify.replace(TodoStates.OPEN, state)
+    if append:
+        line_to_modify = f"{line_to_modify} {append}"
     lines[todo.line - 1] = line_to_modify
 
     with open(todo.path, 'w') as f:
@@ -105,12 +107,13 @@ def prompt():
         exit(0)
 
     action = action[0]
+    date = datetime.now().strftime("%Y-%m-%d")
     if action == Actions.DONE:
-        mark_todo(todo_to_update, TodoStates.DONE)
+        mark_todo(todo_to_update, TodoStates.DONE, f"done::{date}")
         print(
             f"Line {todo_to_update.line} in {todo_to_update.path} marked as done")
     elif action == Actions.WONT_DO:
-        mark_todo(todo_to_update, TodoStates.WONT_DO)
+        mark_todo(todo_to_update, TodoStates.WONT_DO, f"wontdo::{date}")
         print(
             f"Line {todo_to_update.line} in {todo_to_update.path} marked as won't do")
     elif action == Actions.OPEN_VIM:

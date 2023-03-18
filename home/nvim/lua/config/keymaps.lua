@@ -49,20 +49,20 @@ if vim.fn.has("mac") == 1 then
     "n",
     "gx",
     '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
-    { desc = "Open link" }
+    { desc = "Open URI under cursor" }
   )
 elseif vim.fn.has("unix") == 1 then
   vim.keymap.set(
     "n",
     "gx",
     '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
-    { desc = "Open link" }
+    { desc = "Open URI under cursor" }
   )
 else
   vim.keymap.set(
     "n",
     "gx",
     '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
-    { desc = "Open link" }
+    { desc = "Open URI under cursor" }
   )
 end

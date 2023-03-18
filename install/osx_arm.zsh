@@ -72,9 +72,6 @@ brew install ripgrep
 echo "Installing lazygit"
 brew install lazygit
 
-echo "Installing todotxt-cli"
-brew install todo-txt
-
 echo "Installing tmux"
 brew install tmux
 

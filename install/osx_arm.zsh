@@ -84,6 +84,13 @@ brew install zsh-vi-mode
 echo "Shellcheck"
 brew install shellcheck
 
+
+echo "Installing Yabai"
+brew install brew install koekeishiya/formulae/yabai
+
+echo "Installing Linear Mouse"
+brew install --cask linearmouse
+
 echo "Installing InYourFace"
 mas install 1476964367
 
@@ -92,7 +99,3 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 echo "Install neovim-remote"
 pip3 install neovim-remote
-
-echo "Installing Yabai"
-brew install brew install koekeishiya/formulae/yabai
-

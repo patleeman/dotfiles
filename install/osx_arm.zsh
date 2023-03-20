@@ -93,3 +93,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 echo "Install neovim-remote"
 pip3 install neovim-remote
 
+echo "Installing Yabai"
+brew install brew install koekeishiya/formulae/yabai
+

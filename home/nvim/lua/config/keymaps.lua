@@ -36,6 +36,10 @@ vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<CR>", { desc = "Next buffer" })
 vim.keymap.set("n", "n", "nzzzv", { desc = "Search down and center" })
 vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })
 
+vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" })
+
+vim.keymap.set("n", "<leader>bda", "<cmd>%bd<CR>", { desc = "Close all unsaved buffers" })
+
 -- VISUAL MODE KEYMAPS
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line up" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line down" })

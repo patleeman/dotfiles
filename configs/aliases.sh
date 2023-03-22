@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # Environment Variables
 export BLOG_PATH="$HOME/workingdir/patricklee.nyc"
@@ -10,9 +10,9 @@ alias ls="exa -lh"
 alias tree="exa -laT"
 
 # Folder aliases
-alias cwd="cd $WORKING_DIR"
-alias wd="find $WORKING_DIR -type d -depth 1 | fzf --print0 | xargs -0 -o nvim"
- 
+alias cwd='cd $WORKING_DIR'
+alias wd='find $WORKING_DIR -type d -depth 1 | fzf --print0 | xargs -0 -o nvim'
+
 # Git
 alias gs="git status"
 alias ga="git add ."
@@ -20,14 +20,14 @@ alias gb="git branch"
 
 # https://docs.gitignore.io/install/command-line
 # Generate a gitignore from a
-function git_ignore {
-	curl -sL https://www.toptal.com/developers/gitignore/api/$@
+git_ignore() {
+	curl -sL "https://www.toptal.com/developers/gitignore/api/$*"
 }
 
 # FZF Git commands
 # https://github.com/junegunn/fzf/wiki/Examples#git
 # fbr - checkout git branch (including remote branches), sorted by most recent commit, limit 30 last branches
-function fgit_branch_checkout {
+fgit_branch_checkout() {
 	local branches branch
 	branches=$(git for-each-ref --count=30 --sort=-committerdate refs/heads/ --format="%(refname:short)") &&
 		branch=$(echo "$branches" |
@@ -36,7 +36,7 @@ function fgit_branch_checkout {
 }
 
 # fcoc - checkout git commit
-function fgit_commit_checkout {
+fgit_commit_checkout() {
 	local commits commit
 	commits=$(git log --pretty=oneline --abbrev-commit --reverse) &&
 		commit=$(echo "$commits" | fzf --tac +s +m -e) &&
@@ -44,7 +44,7 @@ function fgit_commit_checkout {
 }
 
 # fshow - git commit browser
-function fgit_commits_browse {
+fgit_commits_browse() {
 	git log --graph --color=always \
 		--format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
 		fzf --ansi --no-sort --reverse --tiebreak=index --bind=ctrl-s:toggle-sort \
@@ -100,4 +100,3 @@ timeshell() {
 	shell=${1-$SHELL}
 	for _ in $(seq 1 10); do /usr/bin/time "$shell" -i -c exit; done
 }
-

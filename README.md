@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal collection of dotfiles for both mac and linux.
+Personal collection of dotfiles.
 
 # Quickstart
 
@@ -15,7 +15,7 @@ source osx_arm.zsh
 
 ## configs/
 
-Stick any configurations in here that get executed for every bash session.
+Stick any configurations in here that get executed for every shell session.
 
 ## local/
 

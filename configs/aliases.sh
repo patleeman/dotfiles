@@ -2,6 +2,7 @@
 
 # Environment Variables
 export BLOG_PATH="$HOME/workingdir/patricklee.nyc"
+export WORKING_DIR="$HOME/workingdir"
 
 # Aliases
 # Remap ls to use exa for nicer output
@@ -9,9 +10,9 @@ alias ls="exa -lh"
 alias tree="exa -laT"
 
 # Folder aliases
-alias wd="cd ~/workingdir"
-alias fwd="find ~/workingdir | fzf"
-
+alias cwd="cd $WORKING_DIR"
+alias wd="find $WORKING_DIR -type d -depth 1 | fzf --print0 | xargs -0 -o nvim"
+ 
 # Git
 alias gs="git status"
 alias ga="git add ."

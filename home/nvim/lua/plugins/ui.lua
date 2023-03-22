@@ -15,6 +15,9 @@ return {
         window = {
           position = "float",
           width = 30,
+          mappings = {
+            ["<esc>"] = "close_window",
+          },
         },
       })
     end,

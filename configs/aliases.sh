@@ -10,8 +10,8 @@ alias ls="exa -lh"
 alias tree="exa -laT"
 
 # Folder aliases
-alias cwd='cd $WORKING_DIR'
-alias wd='find $WORKING_DIR -type d -depth 1 | fzf --print0 --height 20% --reverse | xargs -0 -o nvim'
+alias wd='cd $WORKING_DIR'
+alias op='ls -1 $WORKING_DIR fzf --print0 --height 20% --reverse | xargs -0 -o nvim'
 
 # Git
 alias gs="git status"

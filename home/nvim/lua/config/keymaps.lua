@@ -70,3 +70,6 @@ else
     { desc = "Open URI under cursor" }
   )
 end
+
+-- Tmux
+vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux split-window -v -p 25<CR>", { desc = "Open a vertical tmux pane" })

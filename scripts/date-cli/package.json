@@ -1,0 +1,22 @@
+{
+  "name": "date-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chrono-node": "^2.6.2",
+    "commander": "^10.0.0",
+    "luxon": "^3.3.0"
+  },
+  "devDependencies": {
+    "@commander-js/extra-typings": "^10.0.3",
+    "@types/luxon": "^3.2.0",
+    "@types/node": "^18.15.11",
+    "ts-node": "^10.9.1"
+  }
+}

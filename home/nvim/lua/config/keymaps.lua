@@ -26,8 +26,22 @@ vim.keymap.set("i", ";;", function()
 end, { desc = "Escape a pair" })
 
 -- NORMAL MODE KEYMAPS
-vim.keymap.set("n", "<leader>dd", 'i<C-R>=strftime("%Y-%m-%d")<CR><Esc>', { desc = "Insert date" })
-vim.keymap.set("n", "<leader>dt", 'i<C-R>=strftime("%Y-%m-%d %a %I:%M %p")<CR><Esc>', { desc = "Insert datetime" })
+-- Ask for a string to parse into a date time object
+local function parse_dt(quickFormat, prompt)
+  vim.ui.input({ prompt = prompt }, function(input)
+    local cmd = vim.fn.system("dt -q " .. quickFormat .. " " .. input)
+    local date = vim.fn.split(cmd, "\n")
+    local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+    vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, date)
+  end)
+end
+vim.keymap.set("n", "<leader>dd", function()
+  parse_dt("ymd", "Parse to date: ")
+end, { desc = "Insert date from natural language" })
+vim.keymap.set("n", "<leader>dt", function()
+  parse_dt("ymdhm", "Parse to datetime: ")
+end, { desc = "Insert datetime from natural language" })
+
 vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
 vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
 vim.keymap.set("n", "<Tab>", "<cmd>bnext<CR>", { desc = "Next buffer" })
@@ -45,7 +59,6 @@ vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line up" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line down" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block right" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
-vim.keymap.set("v", "<leader>d", "ygv<CMD>!dt -q a <C-r><CR>", { desc = "Convert the highlighted text to datetime" })
 
 -- https://sbulav.github.io/vim/neovim-opening-urls/
 -- URL handling

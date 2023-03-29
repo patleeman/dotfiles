@@ -16,6 +16,7 @@ function parse_date(text: string, format: string | undefined = undefined, quickF
           return dt.toFormat("yyyy-MM-dd");
         case "ymdhm":
           return dt.toFormat("yyyy-MM-dd hh:mm a");
+        case "a":
         case "auto":
           // If no time element, then just output a date.
           if (dt.hour === 12 && dt.minute === 0 && dt.second === 0 && dt.millisecond === 0) {
@@ -41,11 +42,12 @@ function main(): void {
     .option('-q, --quick-format <string>', "Quick format: ymd (yyyy-MM-dd), ymdhm (yyyy-MM-dd hh:mm a) , ts (X), auto (ymd or ymdhm)")
     .option("-f, --format <string>", "Provide a custom date format (https://moment.github.io/luxon/#/formatting?id=table-of-tokens)")
     .action((text: string[], options) => {
+      const parseText = text.join(" ");
       const format = options?.format;
       const quickFormat = options?.quickFormat;
       let date: undefined | string;
       try {
-        date = parse_date(text.join(" "), format, quickFormat);
+        date = parse_date(parseText, format, quickFormat);
       } catch (e) {
         let m = "Failed to parse date";
         if (e instanceof Error) {
@@ -58,7 +60,7 @@ function main(): void {
       if (date) {
         process.stdout.write(date);
       } else {
-        process.stderr.write("Unable to parse");
+        process.stderr.write(`Unable to parse ${parseText}`);
         process.exit(1);
       }
     });
@@ -68,3 +70,4 @@ function main(): void {
 
 
 main();
+

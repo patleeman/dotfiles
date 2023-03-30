@@ -13,7 +13,7 @@ return {
     config = function()
       require("neo-tree").setup({
         window = {
-          -- position = "float",
+          position = "right",
           width = 30,
           mappings = {
             -- ["<esc>"] = "close_window",
@@ -45,5 +45,11 @@ return {
       dashboard.section.header.val = vim.split(logo, "\n", {})
       return dashboard
     end,
+  },
+  {
+    "rcarriga/nvim-notify",
+    opts = {
+      top_down = false,
+    },
   },
 }

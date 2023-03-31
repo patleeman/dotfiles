@@ -20,8 +20,22 @@ alias gb="git branch"
 
 # https://docs.gitignore.io/install/command-line
 # Generate a gitignore from a
-git_ignore() {
+gi() {
 	curl -sL "https://www.toptal.com/developers/gitignore/api/$*"
+}
+
+git_ignore() {
+	if [ -z "$*" ]; then
+		args=$(gi "list" | tr "," "\n" | fzf --multi --height 20% --reverse | tr '\n' ',' | sed 's/,$/\n/')
+	else
+		args="$*"
+	fi
+
+	if [ -z "$args" ]; then
+		exit 1
+	fi
+
+	gi "$args"
 }
 
 # FZF Git commands

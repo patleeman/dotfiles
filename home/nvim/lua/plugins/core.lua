@@ -90,6 +90,9 @@ return {
       { "<C-l>", "<cmd>lua require('nvim-tmux-navigation').NvimTmuxNavigateRight()<CR>", desc = "Tmux navigate right" },
     },
   },
+  {
+    "wakatime/vim-wakatime",
+  },
   -- {
   --   "jakewvincent/mkdnflow.nvim",
   --   config = function()

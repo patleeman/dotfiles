@@ -96,4 +96,7 @@ return {
       require("mkdnflow").setup()
     end,
   },
+  {
+    "wakatime/vim-wakatime",
+  },
 }

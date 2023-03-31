@@ -26,6 +26,16 @@ vim.keymap.set("i", ";;", function()
 end, { desc = "Escape a pair" })
 
 -- NORMAL MODE KEYMAPS
+vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
+vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
+vim.keymap.set("n", "<Tab>", "<cmd>bnext<CR>", { desc = "Next buffer" })
+vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<CR>", { desc = "Next buffer" })
+
+vim.keymap.set("n", "n", "nzzzv", { desc = "Search down and center" })
+vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })
+vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" })
+vim.keymap.set("n", "<leader>bw", "<cmd>%bd<CR>", { desc = "Close all unsaved buffers" })
+
 -- Ask for a string to parse into a date time object
 local function parse_dt(quickFormat, prompt)
   vim.ui.input({ prompt = prompt }, function(input)
@@ -41,18 +51,6 @@ end, { desc = "Insert date from natural language" })
 vim.keymap.set("n", "<leader>dt", function()
   parse_dt("ymdhm", "Parse to datetime: ")
 end, { desc = "Insert datetime from natural language" })
-
-vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
-vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
-vim.keymap.set("n", "<Tab>", "<cmd>bnext<CR>", { desc = "Next buffer" })
-vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<CR>", { desc = "Next buffer" })
-
-vim.keymap.set("n", "n", "nzzzv", { desc = "Search down and center" })
-vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })
-
-vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" })
-
-vim.keymap.set("n", "<leader>bw", "<cmd>%bd<CR>", { desc = "Close all unsaved buffers" })
 
 -- VISUAL MODE KEYMAPS
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line up" })

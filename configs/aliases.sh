@@ -75,6 +75,9 @@ alias dotfiles='cd $DOTFILES_DIR && nvim'
 alias notes='cd ~/Dropbox/Notes && nvim'
 alias edit_blog='cd "$BLOG_PATH" && nvim'
 
+#Yabai
+alias yabai_restart='launchctl kickstart -k "gui/${UID}/homebrew.mxcl.yabai"'
+
 # System
 alias du="du -ach | sort -h"
 alias ps="ps aux"

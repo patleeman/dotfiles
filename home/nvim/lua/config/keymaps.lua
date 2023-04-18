@@ -37,20 +37,17 @@ vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" }
 vim.keymap.set("n", "<leader>bw", "<cmd>%bd<CR>", { desc = "Close all unsaved buffers" })
 
 -- Ask for a string to parse into a date time object
-local function parse_dt(quickFormat, prompt)
+local function parse_dt(prompt)
   vim.ui.input({ prompt = prompt }, function(input)
-    local cmd = vim.fn.system("dt -q " .. quickFormat .. " " .. input)
+    local cmd = vim.fn.system("dt -q " .. input)
     local date = vim.fn.split(cmd, "\n")
     local row, col = unpack(vim.api.nvim_win_get_cursor(0))
     vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, date)
   end)
 end
 vim.keymap.set("n", "<leader>dd", function()
-  parse_dt("ymd", "Parse to date: ")
+  parse_dt("Parse to date: ")
 end, { desc = "Insert date from natural language" })
-vim.keymap.set("n", "<leader>dt", function()
-  parse_dt("ymdhm", "Parse to datetime: ")
-end, { desc = "Insert datetime from natural language" })
 
 -- VISUAL MODE KEYMAPS
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line up" })

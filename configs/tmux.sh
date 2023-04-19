@@ -6,3 +6,9 @@ if [ -n "$TMUX" ]; then
 else
 	export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
 fi
+
+if
+	command -v tmux >/dev/null && [ -z "$TMUX" ]
+then
+	tmux attach -t default || tmux new -s default
+fi

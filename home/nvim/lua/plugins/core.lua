@@ -20,4 +20,25 @@ return {
   {
     "wakatime/vim-wakatime",
   },
+  -- Disable built in mini.bufremove and replace with bufdelete so we can re-open alpha when all buffers closed
+  { "echasnovski/mini.bufremove", enabled = false },
+  {
+    "famiu/bufdelete.nvim",
+    keys = {
+      {
+        "<leader>bd",
+        function()
+          require("bufdelete").bufdelete(0, false)
+        end,
+        desc = "Delete Buffer",
+      },
+      {
+        "<leader>bD",
+        function()
+          require("bufdelete").bufdelete(0, true)
+        end,
+        desc = "Delete Buffer (Force)",
+      },
+    },
+  },
 }

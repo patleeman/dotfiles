@@ -13,10 +13,11 @@ return {
     config = function()
       require("neo-tree").setup({
         window = {
-          position = "left",
+          position = "float",
+          -- position = "left",
           width = 30,
           mappings = {
-            -- ["<esc>"] = "close_window",
+            ["<esc>"] = "close_window",
           },
         },
       })

@@ -33,11 +33,18 @@ return {
         desc = "Delete Buffer",
       },
       {
-        "<leader>bD",
+        "<leader>bd",
         function()
           require("bufdelete").bufdelete(0, true)
         end,
-        desc = "Delete Buffer (Force)",
+        desc = "Delete buffer (force)",
+      },
+      {
+        "<leader>bw",
+        function()
+          require("bufdelete").bufwipeout({ 0, 100 }, false)
+        end,
+        desc = "Wipeout buffers",
       },
     },
   },

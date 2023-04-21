@@ -34,7 +34,7 @@ vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<CR>", { desc = "Next buffer" })
 vim.keymap.set("n", "n", "nzzzv", { desc = "Search down and center" })
 vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })
 vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" })
-vim.keymap.set("n", "<leader>bw", "<cmd>%bd<CR>", { desc = "Close all unsaved buffers" })
+-- vim.keymap.set("n", "<leader>bw", "<cmd>%bd<CR>", { desc = "Close all unsaved buffers" })
 
 -- Ask for a string to parse into a date time object
 local function parse_dt(prompt)

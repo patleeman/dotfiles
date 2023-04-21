@@ -8,7 +8,7 @@ else
 fi
 
 if
-	command -v tmux >/dev/null && [ -z "$TMUX" ]
+	command -v tmux >/dev/null && [ -z "$TMUX" ] && [ "$LC_TERMINAL" = "iTerm2" ]
 then
 	tmux attach -t default || tmux new -s default
 fi

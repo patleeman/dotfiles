@@ -1,4 +1,5 @@
 {
+  "ChatGPT.nvim": { "branch": "main", "commit": "5a0fdf6c408a53924081aff0b7379e765c7edc1b" },
   "LazyVim": { "branch": "main", "commit": "0b8c799a7a20624b8d607190fa33e70adacb0b03" },
   "LuaSnip": { "branch": "master", "commit": "8d6c0a93dec34900577ba725e91c44b8d3ca1f45" },
   "alpha-nvim": { "branch": "main", "commit": "87c204040e3f5d4c1c95067b35905d8f8a2f2545" },

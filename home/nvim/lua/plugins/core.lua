@@ -17,35 +17,4 @@ return {
       { "<C-l>", "<cmd>lua require('nvim-tmux-navigation').NvimTmuxNavigateRight()<CR>", desc = "Tmux navigate right" },
     },
   },
-  {
-    "wakatime/vim-wakatime",
-  },
-  -- Disable built in mini.bufremove and replace with bufdelete so we can re-open alpha when all buffers closed
-  { "echasnovski/mini.bufremove", enabled = false },
-  {
-    "famiu/bufdelete.nvim",
-    keys = {
-      {
-        "<leader>bd",
-        function()
-          require("bufdelete").bufdelete(0, false)
-        end,
-        desc = "Delete Buffer",
-      },
-      {
-        "<leader>bd",
-        function()
-          require("bufdelete").bufdelete(0, true)
-        end,
-        desc = "Delete buffer (force)",
-      },
-      {
-        "<leader>bw",
-        function()
-          require("bufdelete").bufwipeout({ 0, 100 }, false)
-        end,
-        desc = "Wipeout buffers",
-      },
-    },
-  },
 }

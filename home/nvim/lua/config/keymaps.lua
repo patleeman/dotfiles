@@ -2,29 +2,6 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
--- INSERT MODE KEYMAPS
--- vim.keymap.set("i", "jj", "<ESC>", { desc = "Escape insert mode" })
--- vim.keymap.set("i", ";;", function()
---   local closers = { ")", "]", "}", ">", "'", '"', "`", "," }
---   local line = vim.api.nvim_get_current_line()
---   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
---   local after = line:sub(col + 1, -1)
---   local closer_col = #after + 1
---   local closer_i = nil
---   for i, closer in ipairs(closers) do
---     local cur_index, _ = after:find(closer)
---     if cur_index and (cur_index < closer_col) then
---       closer_col = cur_index
---       closer_i = i
---     end
---   end
---   if closer_i then
---     vim.api.nvim_win_set_cursor(0, { row, col + closer_col })
---   else
---     vim.api.nvim_win_set_cursor(0, { row, col + 1 })
---   end
--- end, { desc = "Escape a pair" })
-
 -- NORMAL MODE KEYMAPS
 vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
 vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
@@ -34,7 +11,6 @@ vim.keymap.set("n", "<S-Tab>", "<cmd>bprevious<CR>", { desc = "Next buffer" })
 vim.keymap.set("n", "n", "nzzzv", { desc = "Search down and center" })
 vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })
 vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" })
--- vim.keymap.set("n", "<leader>bw", "<cmd>%bd<CR>", { desc = "Close all unsaved buffers" })
 
 -- Ask for a string to parse into a date time object
 local function parse_dt(prompt)
@@ -48,6 +24,11 @@ end
 vim.keymap.set("n", "<leader>dd", function()
   parse_dt("Parse to date: ")
 end, { desc = "Insert date from natural language" })
+
+-- Tmux split terminal
+vim.keymap.set("n", "<leader>tt", "<cmd>silent !tmux split-window -v -p 25<CR>", { desc = "Open a vertical tmux pane" })
+vim.keymap.set("n", "<leader>tv", "<cmd>silent !tmux split-window -v<CR>", { desc = "Open a vertical tmux pane" })
+vim.keymap.set("n", "<leader>th", "<cmd>silent !tmux split-window -h<CR>", { desc = "Open a horizontal tmux pane" })
 
 -- VISUAL MODE KEYMAPS
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line up" })
@@ -80,5 +61,41 @@ else
   )
 end
 
--- Tmux
-vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux split-window -v -p 25<CR>", { desc = "Open a vertical tmux pane" })
+-- Utility to get listed buffers
+local function get_listed_buffers()
+  local buffers = {}
+  local len = 0
+  for buffer = 1, vim.fn.bufnr("$") do
+    if vim.fn.buflisted(buffer) == 1 then
+      len = len + 1
+      buffers[len] = buffer
+    end
+  end
+
+  return buffers
+end
+
+-- Utility to clear no name buffers
+local function clearNoNameBuffers()
+  local buffers = get_listed_buffers()
+  for _, bufnr in ipairs(buffers) do
+    local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
+    local name = vim.api.nvim_buf_get_name(bufnr)
+    if ft == "" and name == "" then
+      vim.api.nvim_buf_delete(bufnr, {})
+    end
+  end
+end
+
+-- Command to delete all buffers
+vim.api.nvim_create_user_command("BDeleteAll", function()
+  local buffers = get_listed_buffers()
+  for _, bufnr in ipairs(buffers) do
+    local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
+    local name = vim.api.nvim_buf_get_name(bufnr)
+    if ft ~= "Alpha" and name ~= "" then
+      vim.api.nvim_buf_delete(bufnr, {})
+    end
+  end
+end, { desc = "Delete all buffers" })
+vim.keymap.set("n", "<leader>bw", "<cmd>BDeleteAll<CR>", { desc = "Close all unsaved buffers" })

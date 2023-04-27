@@ -17,6 +17,8 @@ return {
           width = 30,
         },
         filesystem = {
+          follow_current_file = true,
+          use_libuv_file_watcher = true,
           filtered_items = {
             hide_dotfiles = true,
             hide_hidden = false,
@@ -45,6 +47,14 @@ return {
         lualine_z = {
           { "location", padding = { left = 1, right = 1 } },
         },
+      },
+    },
+  },
+  {
+    "akinsho/bufferline.nvim",
+    opts = {
+      options = {
+        always_show_bufferline = true,
       },
     },
   },

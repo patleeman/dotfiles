@@ -37,6 +37,7 @@ brew install --cask fork
 brew install --cask font-fira-code
 brew install --cask font-fira-code-nerd-font
 brew install --cask linearmouse
+brew install --cask alacritty
 
 # Set up node
 nvm install --lts

@@ -13,11 +13,8 @@ CALENDAR_UIDS = [
     "D81A0E95-A2A0-43ED-8B98-28A2518FF6C5"
 ]
 
-DAY_START = datetime.time(hour=8)
-DAY_END = datetime.time(hour=18)
 
-
-def get_availability(days: int):
+def get_availability(days: int, day_start_time="08:00", day_end_time="18:00"):
     # Customize the CLI command
     CMD = [
         "icalBuddy",
@@ -30,7 +27,7 @@ def get_availability(days: int):
         f"-ic {','.join(CALENDAR_UIDS)}",
         f"eventsToday+{days}"
     ]
-    print("Executing: ", " ".join(CMD))
+    # print("Executing: ", " ".join(CMD))
 
     # Run the command and check it completed
     completed = subprocess.run(
@@ -69,7 +66,7 @@ def get_availability(days: int):
 
         count += 2
 
-    # Go through and figure out the occupied time periods
+    # Go through and figure out the occupied time periods by merging events
     occupied_periods = {}
     for day in events:
         events[day].sort(key=lambda d: d.get("start"))
@@ -90,8 +87,44 @@ def get_availability(days: int):
 
         occupied_periods[day] = occupied
 
-    print(occupied_periods)
-    return events
+    # Grab the time between the occupied periods to figure out what times are open
+    open_periods = {}
+    for day in occupied_periods:
+        day_open_periods = []
+        counter = 0
+        while counter < len(occupied_periods[day]):
+            period = occupied_periods[day][counter]
+            start_period = period[0]
+            end_period = period[1]
+
+            if counter == 0:
+                start = datetime.datetime.fromisoformat(
+                    f"{day} {day_start_time}")
+                if start < start_period:
+                    day_open_periods.append((start, start_period))
+
+            if counter == len(occupied_periods[day]) - 1:
+                end = datetime.datetime.fromisoformat(f"{day} {day_end_time}")
+                if end > end_period:
+                    day_open_periods.append((end_period, end))
+                counter += 1
+                continue
+
+            end_period = period[1]
+            next_start = occupied_periods[day][counter + 1][0]
+            day_open_periods.append((end_period, next_start))
+
+            counter += 1
+
+        open_periods[day] = day_open_periods
+
+    output = []
+    for day in open_periods:
+        for period in open_periods[day]:
+            output.append(
+                f"{day}: {period[0].strftime('%I:%M %p')} - {period[1].strftime('%I:%M %p')}")
+
+    return "\n".join(output)
 
 
 if __name__ == "__main__":
@@ -99,4 +132,4 @@ if __name__ == "__main__":
     days = 0
     if len(args) > 1:
         days = int(args[1])
-    get_availability(days)
+    print(get_availability(days))

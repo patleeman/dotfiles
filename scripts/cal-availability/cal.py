@@ -2,19 +2,22 @@
 import sys
 import subprocess
 import datetime
-from pprint import pprint
 
+# Symbol to mark each calendar event
 BULLET = "📅"
 
 # Run icalBuddy calendars to get a list of calendars
-
 CALENDAR_UIDS = [
     "27F9112A-B256-4EE3-887A-D3510B7FBA74",
     "D81A0E95-A2A0-43ED-8B98-28A2518FF6C5"
 ]
 
 
-def get_availability(days: int, day_start_time="08:00", day_end_time="18:00"):
+def get_availability(
+        days: int,
+        minimum_meeting_duration_min: int = 30,
+        day_start_time: str = "08:00",
+        day_end_time: str = "18:00"):
     # Customize the CLI command
     CMD = [
         "icalBuddy",
@@ -87,7 +90,8 @@ def get_availability(days: int, day_start_time="08:00", day_end_time="18:00"):
 
         occupied_periods[day] = occupied
 
-    # Grab the time between the occupied periods to figure out what times are open
+    # Grab the time between the occupied periods to figure
+    # out what times are open
     open_periods = {}
     for day in occupied_periods:
         day_open_periods = []
@@ -101,18 +105,21 @@ def get_availability(days: int, day_start_time="08:00", day_end_time="18:00"):
                 start = datetime.datetime.fromisoformat(
                     f"{day} {day_start_time}")
                 if start < start_period:
-                    day_open_periods.append((start, start_period))
+                    day_open_periods.append(
+                        (start, start_period, start_period - start))
 
             if counter == len(occupied_periods[day]) - 1:
                 end = datetime.datetime.fromisoformat(f"{day} {day_end_time}")
                 if end > end_period:
-                    day_open_periods.append((end_period, end))
+                    day_open_periods.append(
+                        (end_period, end, end - end_period))
                 counter += 1
                 continue
 
             end_period = period[1]
             next_start = occupied_periods[day][counter + 1][0]
-            day_open_periods.append((end_period, next_start))
+            day_open_periods.append(
+                (end_period, next_start, next_start - end_period))
 
             counter += 1
 
@@ -120,9 +127,28 @@ def get_availability(days: int, day_start_time="08:00", day_end_time="18:00"):
 
     output = []
     for day in open_periods:
+        day_output = []
+        day_output.append(f"\nDay: {day}")
         for period in open_periods[day]:
-            output.append(
-                f"{day}: {period[0].strftime('%I:%M %p')} - {period[1].strftime('%I:%M %p')}")
+            seconds = period[2].total_seconds()
+            time_delta_string = []
+            hours = int(seconds // 3600)
+            if hours:
+                time_delta_string.append(f"{hours}h")
+
+            minutes = int((seconds % 3600) // 60)
+            if minutes:
+                time_delta_string.append(f"{minutes}m")
+
+            if seconds >= minimum_meeting_duration_min * 60:
+                start_period = period[0].strftime('%I:%M %p')
+                end_period = period[1].strftime('%I:%M %p')
+                delta_string = ' '.join(time_delta_string)
+                day_output.append(
+                    f"{start_period} - {end_period} ({delta_string})")
+
+        if len(day_output) > 1:
+            output += day_output
 
     return "\n".join(output)
 
@@ -132,4 +158,9 @@ if __name__ == "__main__":
     days = 0
     if len(args) > 1:
         days = int(args[1])
-    print(get_availability(days))
+
+    minimum_meeting_duration_min = 30
+    if len(args) > 2:
+        minimum_meeting_duration_min = int(args[2])
+
+    print(get_availability(days, minimum_meeting_duration_min))

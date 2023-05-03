@@ -128,8 +128,8 @@ def get_availability(
     output = []
     for day in open_periods:
         day_output = []
-        day_obj = datetime.datetime.fromisoformat(day)
-        day_output.append(f"\n{day_obj.strftime('%a %b %-m, %Y')}: ")
+        day_obj = datetime.datetime.strptime(day, "%Y-%m-%d")
+        day_output.append(f"\n{day_obj.strftime('%a %b %-d, %Y')}: ")
         for period in open_periods[day]:
             seconds = period[2].total_seconds()
             time_delta_string = []

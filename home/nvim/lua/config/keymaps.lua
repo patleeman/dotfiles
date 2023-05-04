@@ -17,6 +17,7 @@ vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
 
 -- Buffers
 vim.keymap.set("n", "<leader>bw", "<cmd>BDeleteAll<CR>", { desc = "Close all unsaved buffers" })
+vim.keymap.set("n", "<leader>bn", "<cmd>enew<CR>", { desc = "Create a new buffer" })
 
 -- Use tmux instead of vim terminal
 vim.keymap.set("n", "<leader>tt", "<cmd>silent !tmux split-window -v -p 25<CR>", { desc = "Open a vertical tmux pane" })

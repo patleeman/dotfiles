@@ -31,8 +31,7 @@ brew install \
   tmux \
   fzf \
   shellcheck \
-  koekeishiya/formulae/yabai \
-  iterm2
+  koekeishiya/formulae/yabai 
 brew install --cask fork
 brew install --cask font-fira-code
 brew install --cask font-fira-code-nerd-font

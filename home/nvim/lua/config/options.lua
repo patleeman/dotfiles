@@ -4,7 +4,6 @@
 
 -- Don't hide any text
 vim.opt.conceallevel = 0
-
 -- Don't replace whitespace with >+- chars
 vim.opt.list = false
 
@@ -12,3 +11,5 @@ vim.opt.list = false
 vim.api.nvim_command("aunmenu PopUp.How-to\\ disable\\ mouse")
 
 vim.api.nvim_command("aunmenu PopUp.-1-")
+
+vim.api.nvim_command("set wrap linebreak")

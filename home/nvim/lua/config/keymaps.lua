@@ -57,10 +57,32 @@ end, { desc = "Delete all buffers" })
 vim.keymap.set("n", "<leader>bw", "<cmd>BDeleteAll<CR>", { desc = "Close all unsaved buffers" })
 vim.keymap.set("n", "<leader>bn", "<cmd>enew<CR>", { desc = "Create a new buffer" })
 
+-- Helper function to open tmux window in current buffer's directory
+function tmux_split_window(orientation, size)
+  local current_dir = vim.fn.expand("%:p:h")
+  local cmd = "tmux split-window -c " .. vim.fn.shellescape(current_dir)
+
+  -- Add orientation and size options if specified
+  if orientation then
+    cmd = cmd .. " -" .. orientation
+  end
+  if size then
+    cmd = cmd .. " -p " .. size
+  end
+
+  vim.fn.system(cmd)
+end
+
 -- Use tmux instead of vim terminal
-vim.keymap.set("n", "<leader>tt", "<cmd>silent !tmux split-window -v -p 25<CR>", { desc = "Open a vertical tmux pane" })
-vim.keymap.set("n", "<leader>tv", "<cmd>silent !tmux split-window -v<CR>", { desc = "Open a vertical tmux pane" })
-vim.keymap.set("n", "<leader>th", "<cmd>silent !tmux split-window -h<CR>", { desc = "Open a horizontal tmux pane" })
+vim.keymap.set("n", "<leader>tt", function()
+  tmux_split_window("v", 25)
+end, { desc = "Open a vertical tmux pane" })
+vim.keymap.set("n", "<leader>tv", function()
+  tmux_split_window("v")
+end, { desc = "Open a vertical tmux pane" })
+vim.keymap.set("n", "<leader>th", function()
+  tmux_split_window("h")
+end, { desc = "Open a horizontal tmux pane" })
 
 -- Open URL under cursor https://sbulav.github.io/vim/neovim-opening-urls/
 if vim.fn.has("mac") == 1 then

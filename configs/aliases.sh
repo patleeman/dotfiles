@@ -69,13 +69,17 @@ fgit_commits_browse() {
 FZF-EOF"
 }
 
+# vim to nvim
+alias vim="nvim"
+alias vi="nvim"
+
 # Quick edit
 alias edit_dotfiles='cd $DOTFILES_DIR && nvim .'
 alias dotfiles='cd $DOTFILES_DIR && nvim .'
 alias notes='cd ~/Dropbox/Notes && nvim .'
 alias blog='cd "$BLOG_PATH" && nvim .'
 
-#Yabai
+# Yabai
 alias yabai_restart='launchctl kickstart -k "gui/${UID}/homebrew.mxcl.yabai"'
 
 # System

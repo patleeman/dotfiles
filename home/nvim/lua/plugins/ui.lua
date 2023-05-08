@@ -10,6 +10,7 @@ return {
   },
   {
     "nvim-neo-tree/neo-tree.nvim",
+    enabled = false,
     config = function()
       require("neo-tree").setup({
         window = {
@@ -55,6 +56,7 @@ return {
     opts = {
       options = {
         always_show_bufferline = true,
+        diagnostics = "nvim_lsp",
       },
     },
   },

@@ -18,14 +18,15 @@ vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
 vim.keymap.set("n", "<leader>ct", 'lua require("lsp_lines").toggle()', { desc = "Toggle lsp_lines diagnostics" })
 
 -- Set up telescope file browser
-vim.keymap.set("n", "<leader>e", "<CMD>Telescope file_browser<CR>", { noremap = true, desc = "Telescope file browser" })
+vim.keymap.set("n", "<leader>e", "<cmd>Telescope file_browser<CR>", { noremap = true, desc = "Telescope file browser" })
 -- open file_browser with the path of the current buffer
 vim.keymap.set(
   "n",
   "<leader>E",
-  "<CMD>Telescope file_browser path=%:p:h select_buffer=true<CR>",
+  "<cmd>Telescope file_browser path=%:p:h select_buffer=true<CR>",
   { noremap = true, desc = "Telescope file browser (in CWD)" }
 )
+vim.keymap.set("n", "<leader>bf", "<cmd>Telescope buffers<cr>")
 
 -- Utility to get listed buffers
 local function get_listed_buffers()
@@ -101,21 +102,21 @@ if vim.fn.has("mac") == 1 then
   vim.keymap.set(
     "n",
     "gx",
-    '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
+    '<cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
     { desc = "Open URI under cursor" }
   )
 elseif vim.fn.has("unix") == 1 then
   vim.keymap.set(
     "n",
     "gx",
-    '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
+    '<cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
     { desc = "Open URI under cursor" }
   )
 else
   vim.keymap.set(
     "n",
     "gx",
-    '<Cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
+    '<cmd>call jobstart(["open", expand("<cfile>")], {"detach": v:true})<CR>',
     { desc = "Open URI under cursor" }
   )
 end

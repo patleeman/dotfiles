@@ -15,6 +15,8 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line down" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block right" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
 
+vim.keymap.set("n", "<leader>ct", 'lua require("lsp_lines").toggle()', { desc = "Toggle lsp_lines diagnostics" })
+
 -- Utility to get listed buffers
 local function get_listed_buffers()
   local buffers = {}

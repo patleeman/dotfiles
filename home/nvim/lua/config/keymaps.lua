@@ -18,10 +18,14 @@ vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
 vim.keymap.set("n", "<leader>ct", 'lua require("lsp_lines").toggle()', { desc = "Toggle lsp_lines diagnostics" })
 
 -- Set up telescope file browser
-vim.keymap.set("n", "<leader>e", "<CMD>Telescope file_browser<CR>", { noremap = true })
-
+vim.keymap.set("n", "<leader>e", "<CMD>Telescope file_browser<CR>", { noremap = true, desc = "Telescope file browser" })
 -- open file_browser with the path of the current buffer
-vim.keymap.set("n", "<leader>E", "<CMD>Telescope file_browser path=%:p:h select_buffer=true<CR>", { noremap = true })
+vim.keymap.set(
+  "n",
+  "<leader>E",
+  "<CMD>Telescope file_browser path=%:p:h select_buffer=true<CR>",
+  { noremap = true, desc = "Telescope file browser (in CWD)" }
+)
 
 -- Utility to get listed buffers
 local function get_listed_buffers()

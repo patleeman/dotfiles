@@ -26,6 +26,7 @@ brew install \
   exa \
   jq \
   neovim \
+  fd \
   ripgrep \
   lazygit \
   tmux \

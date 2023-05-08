@@ -46,7 +46,7 @@ fgit_branch_checkout() {
 	branches=$(git for-each-ref --count=30 --sort=-committerdate refs/heads/ --format="%(refname:short)") &&
 		branch=$(echo "$branches" |
 			fzf-tmux -d $((2 + $(wc -l <<<"$branches"))) +m) &&
-		git checkout $(echo "$branch" | sed "s/.* //" | sed "s#remotes/[^/]*/##")
+		git checkout "$(echo "$branch" | sed "s/.* //" | sed "s#remotes/[^/]*/##")"
 }
 
 # fcoc - checkout git commit
@@ -54,7 +54,7 @@ fgit_commit_checkout() {
 	local commits commit
 	commits=$(git log --pretty=oneline --abbrev-commit --reverse) &&
 		commit=$(echo "$commits" | fzf --tac +s +m -e) &&
-		git checkout $(echo "$commit" | sed "s/ .*//")
+		git checkout "$(echo "$commit" | sed "s/ .*//")"
 }
 
 # fshow - git commit browser

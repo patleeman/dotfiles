@@ -2,6 +2,13 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
+-- Clear keymaps added by lazyvim
+vim.keymap.del("n", "H")
+vim.keymap.del("n", "L")
+vim.keymap.del("n", "`")
+vim.keymap.del("n", "<leader>ft")
+vim.keymap.del("n", "<leader>fT")
+
 -- Navigation
 vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
 vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
@@ -12,9 +19,10 @@ vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })
 vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" })
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move line up" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line down" })
-vim.keymap.set("v", ">", ">gv", { desc = "Move block right" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
+vim.keymap.set("v", ">", ">gv", { desc = "Move block right" })
 
+-- LSP Lines, toggle diagnostics on or off
 vim.keymap.set("n", "<leader>ct", 'lua require("lsp_lines").toggle()', { desc = "Toggle lsp_lines diagnostics" })
 
 -- Set up telescope file browser
@@ -43,16 +51,16 @@ local function get_listed_buffers()
 end
 
 -- Utility to clear no name buffers
-local function clearNoNameBuffers()
-  local buffers = get_listed_buffers()
-  for _, bufnr in ipairs(buffers) do
-    local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
-    local name = vim.api.nvim_buf_get_name(bufnr)
-    if ft == "" and name == "" then
-      vim.api.nvim_buf_delete(bufnr, {})
-    end
-  end
-end
+-- local function clearNoNameBuffers()
+--   local buffers = get_listed_buffers()
+--   for _, bufnr in ipairs(buffers) do
+--     local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
+--     local name = vim.api.nvim_buf_get_name(bufnr)
+--     if ft == "" and name == "" then
+--       vim.api.nvim_buf_delete(bufnr, {})
+--     end
+--   end
+-- end
 
 -- Command to delete all buffers
 vim.api.nvim_create_user_command("BDeleteAll", function()
@@ -70,6 +78,21 @@ end, { desc = "Delete all buffers" })
 vim.keymap.set("n", "<leader>bw", "<cmd>BDeleteAll<CR>", { desc = "Close all unsaved buffers" })
 vim.keymap.set("n", "<leader>bn", "<cmd>enew<CR>", { desc = "Create a new buffer" })
 
+-- Bufferline
+vim.keymap.set("n", "<leader>1", "<cmd>BufferLineGoToBuffer 1<CR>", { desc = "Go to buffer 1" })
+vim.keymap.set("n", "<leader>2", "<cmd>BufferLineGoToBuffer 2<CR>", { desc = "Go to buffer 2" })
+vim.keymap.set("n", "<leader>3", "<cmd>BufferLineGoToBuffer 3<CR>", { desc = "Go to buffer 3" })
+vim.keymap.set("n", "<leader>4", "<cmd>BufferLineGoToBuffer 4<CR>", { desc = "Go to buffer 4" })
+vim.keymap.set("n", "<leader>5", "<cmd>BufferLineGoToBuffer 5<CR>", { desc = "Go to buffer 5" })
+vim.keymap.set("n", "<leader>6", "<cmd>BufferLineGoToBuffer 6<CR>", { desc = "Go to buffer 6" })
+vim.keymap.set("n", "<leader>7", "<cmd>BufferLineGoToBuffer 7<CR>", { desc = "Go to buffer 7" })
+vim.keymap.set("n", "<leader>8", "<cmd>BufferLineGoToBuffer 8<CR>", { desc = "Go to buffer 8" })
+vim.keymap.set("n", "<leader>9", "<cmd>BufferLineGoToBuffer 9<CR>", { desc = "Go to buffer 9" })
+vim.keymap.set("n", "<leader>0", "<cmd>BufferLineGoToBuffer 10<CR>", { desc = "Go to buffer 10" })
+vim.keymap.set("n", "[", "<cmd>BufferLineCycleNext<CR>", { desc = "Next Buffer" })
+vim.keymap.set("n", "]", "<cmd>BufferLineCyclePrev<CR>", { desc = "Prev Buffer" })
+
+-- Tmux require("lsp_lines").toggle()
 -- Helper function to open tmux window in current buffer's directory
 function tmux_split_window(orientation, size)
   local current_dir = vim.fn.expand("%:p:h")

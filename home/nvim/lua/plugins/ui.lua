@@ -57,7 +57,7 @@ return {
       options = {
         always_show_bufferline = true,
         diagnostics = "nvim_lsp",
-        numbers = "both",
+        numbers = "ordinal",
       },
     },
   },

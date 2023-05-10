@@ -3,11 +3,11 @@
 -- Add any additional keymaps here
 
 -- Clear keymaps added by lazyvim
-vim.keymap.del("n", "H")
-vim.keymap.del("n", "L")
-vim.keymap.del("n", "`")
-vim.keymap.del("n", "<leader>ft")
-vim.keymap.del("n", "<leader>fT")
+-- vim.keymap.del("n", "H")
+-- vim.keymap.del("n", "L")
+-- vim.keymap.del("n", "`")
+-- vim.keymap.del("n", "<leader>ft")
+-- vim.keymap.del("n", "<leader>ft")
 
 -- Navigation
 vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })

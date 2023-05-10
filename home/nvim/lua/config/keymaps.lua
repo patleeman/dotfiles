@@ -25,17 +25,6 @@ vim.keymap.set("v", ">", ">gv", { desc = "Move block right" })
 -- LSP Lines, toggle diagnostics on or off
 vim.keymap.set("n", "<leader>ct", 'lua require("lsp_lines").toggle()', { desc = "Toggle lsp_lines diagnostics" })
 
--- Set up telescope file browser
-vim.keymap.set("n", "<leader>e", "<cmd>Telescope file_browser<CR>", { noremap = true, desc = "Telescope file browser" })
--- open file_browser with the path of the current buffer
-vim.keymap.set(
-  "n",
-  "<leader>E",
-  "<cmd>Telescope file_browser path=%:p:h select_buffer=true<CR>",
-  { noremap = true, desc = "Telescope file browser (in CWD)" }
-)
-vim.keymap.set("n", "<leader>bf", "<cmd>Telescope buffers<cr>")
-
 -- Utility to get listed buffers
 local function get_listed_buffers()
   local buffers = {}
@@ -94,7 +83,7 @@ vim.keymap.set("n", "]", "<cmd>BufferLineCyclePrev<CR>", { desc = "Prev Buffer" 
 
 -- Tmux require("lsp_lines").toggle()
 -- Helper function to open tmux window in current buffer's directory
-function tmux_split_window(orientation, size)
+local function tmux_split_window(orientation, size)
   local current_dir = vim.fn.expand("%:p:h")
   local cmd = "tmux split-window -c " .. vim.fn.shellescape(current_dir)
 

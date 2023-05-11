@@ -32,6 +32,10 @@ return {
             display_stat = {
               mode = false,
             },
+            hidden = {
+              file_browser = false,
+              folder_browser = false,
+            },
           },
         },
       })

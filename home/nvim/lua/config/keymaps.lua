@@ -2,13 +2,6 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
--- Clear keymaps added by lazyvim
--- vim.keymap.del("n", "H")
--- vim.keymap.del("n", "L")
--- vim.keymap.del("n", "`")
--- vim.keymap.del("n", "<leader>ft")
--- vim.keymap.del("n", "<leader>ft")
-
 -- Navigation
 vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
 vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
@@ -39,17 +32,17 @@ local function get_listed_buffers()
   return buffers
 end
 
--- Utility to clear no name buffers
--- local function clearNoNameBuffers()
---   local buffers = get_listed_buffers()
---   for _, bufnr in ipairs(buffers) do
---     local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
---     local name = vim.api.nvim_buf_get_name(bufnr)
---     if ft == "" and name == "" then
---       vim.api.nvim_buf_delete(bufnr, {})
---     end
---   end
--- end
+-- Command to clear empty buffers
+vim.api.nvim_create_user_command("ClearEmptyBuffers", function()
+  local buffers = get_listed_buffers()
+  for _, bufnr in ipairs(buffers) do
+    local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
+    local name = vim.api.nvim_buf_get_name(bufnr)
+    if ft == "" and name == "" then
+      vim.api.nvim_buf_delete(bufnr, {})
+    end
+  end
+end, { desc = "Clear [No Name] buffers" })
 
 -- Command to delete all buffers
 vim.api.nvim_create_user_command("BDeleteAll", function()
@@ -81,7 +74,6 @@ vim.keymap.set("n", "<leader>0", "<cmd>BufferLineGoToBuffer 10<CR>", { desc = "G
 vim.keymap.set("n", "[", "<cmd>BufferLineCycleNext<CR>", { desc = "Next Buffer" })
 vim.keymap.set("n", "]", "<cmd>BufferLineCyclePrev<CR>", { desc = "Prev Buffer" })
 
--- Tmux require("lsp_lines").toggle()
 -- Helper function to open tmux window in current buffer's directory
 local function tmux_split_window(orientation, size)
   local current_dir = vim.fn.expand("%:p:h")

@@ -8,6 +8,7 @@ return {
         sorting_strategy = "ascending",
         layout_config = {
           prompt_position = "top",
+          mirror = true,
         },
       },
     },

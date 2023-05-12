@@ -28,13 +28,22 @@ ZSH_PYENV_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git nvm pyenv direnv thefuck fzf aws rust)
+plugins=(git nvm pyenv direnv thefuck fzf aws vi-mode)
+
+# vi-mode 
+VI_MODE_SET_CURSOR=true
+VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
+MODE_INDICATOR="%F{white}<NORMAL>%f"
+INSERT_MODE_INDICATOR="%F{yellow}<INSERT>%f"
 
 # We need to do some fuckery to get rid of the aliases ohmyzsh injects.
 # https://newbedev.com/clear-or-disable-aliases-in-zsh
 save_aliases=$(alias -L)
 # This line loads ohmyzsh
 source $ZSH/oh-my-zsh.sh
+
+RPROMPT="\$(vi_mode_prompt_info)$RPROMPT"
+
 # Unalias all the aliases zsh adds then restore existing aliases.
 unalias -m "*"
 eval $save_aliases; unset save_aliases

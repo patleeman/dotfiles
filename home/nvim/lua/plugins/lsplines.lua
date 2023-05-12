@@ -9,4 +9,7 @@ return {
     })
     require("lsp_lines").setup()
   end,
+  keys = {
+    { "<leader>ct", '<cmd>lua require("lsp_lines").toggle()<cr>', desc = "Toggle lsp_lines diagnostics" },
+  },
 }

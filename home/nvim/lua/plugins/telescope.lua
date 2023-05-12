@@ -14,6 +14,7 @@ return {
     keys = {
       { "<leader><space>", "<cmd>Telescope file_browser<cr>", desc = "Telescope file browser" },
       { "<leader>bf", "<cmd>Telescope buffers<cr>", desc = "Switch Buffer" },
+      { "<leader>sn", "<cmd>Telescope notify<cr>", desc = "See all notifications" },
     },
   },
   {

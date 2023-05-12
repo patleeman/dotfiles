@@ -15,9 +15,6 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move line down" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block left" })
 vim.keymap.set("v", ">", ">gv", { desc = "Move block right" })
 
--- LSP Lines, toggle diagnostics on or off
-vim.keymap.set("n", "<leader>ct", 'lua require("lsp_lines").toggle()', { desc = "Toggle lsp_lines diagnostics" })
-
 -- Utility to get listed buffers
 local function get_listed_buffers()
   local buffers = {}
@@ -55,24 +52,9 @@ vim.api.nvim_create_user_command("BDeleteAll", function()
     end
   end
 end, { desc = "Delete all buffers" })
-
 -- Buffers
 vim.keymap.set("n", "<leader>bw", "<cmd>BDeleteAll<CR>", { desc = "Close all unsaved buffers" })
 vim.keymap.set("n", "<leader>bn", "<cmd>enew<CR>", { desc = "Create a new buffer" })
-
--- Bufferline
-vim.keymap.set("n", "<leader>1", "<cmd>BufferLineGoToBuffer 1<CR>", { desc = "Go to buffer 1" })
-vim.keymap.set("n", "<leader>2", "<cmd>BufferLineGoToBuffer 2<CR>", { desc = "Go to buffer 2" })
-vim.keymap.set("n", "<leader>3", "<cmd>BufferLineGoToBuffer 3<CR>", { desc = "Go to buffer 3" })
-vim.keymap.set("n", "<leader>4", "<cmd>BufferLineGoToBuffer 4<CR>", { desc = "Go to buffer 4" })
-vim.keymap.set("n", "<leader>5", "<cmd>BufferLineGoToBuffer 5<CR>", { desc = "Go to buffer 5" })
-vim.keymap.set("n", "<leader>6", "<cmd>BufferLineGoToBuffer 6<CR>", { desc = "Go to buffer 6" })
-vim.keymap.set("n", "<leader>7", "<cmd>BufferLineGoToBuffer 7<CR>", { desc = "Go to buffer 7" })
-vim.keymap.set("n", "<leader>8", "<cmd>BufferLineGoToBuffer 8<CR>", { desc = "Go to buffer 8" })
-vim.keymap.set("n", "<leader>9", "<cmd>BufferLineGoToBuffer 9<CR>", { desc = "Go to buffer 9" })
-vim.keymap.set("n", "<leader>0", "<cmd>BufferLineGoToBuffer 10<CR>", { desc = "Go to buffer 10" })
-vim.keymap.set("n", "[", "<cmd>BufferLineCycleNext<CR>", { desc = "Next Buffer" })
-vim.keymap.set("n", "]", "<cmd>BufferLineCyclePrev<CR>", { desc = "Prev Buffer" })
 
 -- Helper function to open tmux window in current buffer's directory
 local function tmux_split_window(orientation, size)
@@ -89,7 +71,6 @@ local function tmux_split_window(orientation, size)
 
   vim.fn.system(cmd)
 end
-
 -- Use tmux instead of vim terminal
 vim.keymap.set("n", "<leader>tt", function()
   tmux_split_window("v", 25)

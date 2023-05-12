@@ -61,4 +61,7 @@ return {
       },
     },
   },
+  {
+    "sitiom/nvim-numbertoggle",
+  },
 }

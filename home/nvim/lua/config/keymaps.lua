@@ -71,16 +71,28 @@ local function tmux_split_window(orientation, size)
 
   vim.fn.system(cmd)
 end
+
+local function create_tmux_split_command(orientation, size)
+  return function()
+    local current_dir = vim.fn.expand("%:p:h")
+    local cmd = "tmux split-window -c " .. vim.fn.shellescape(current_dir)
+
+    -- Add orientation and size options if specified
+    if orientation then
+      cmd = cmd .. " -" .. orientation
+    end
+    if size then
+      cmd = cmd .. " -p " .. size
+    end
+
+    vim.fn.system(cmd)
+  end
+end
+
 -- Use tmux instead of vim terminal
-vim.keymap.set("n", "<leader>tt", function()
-  tmux_split_window("v", 25)
-end, { desc = "Open a vertical tmux pane" })
-vim.keymap.set("n", "<leader>tv", function()
-  tmux_split_window("v")
-end, { desc = "Open a vertical tmux pane" })
-vim.keymap.set("n", "<leader>th", function()
-  tmux_split_window("h")
-end, { desc = "Open a horizontal tmux pane" })
+vim.keymap.set("n", "<leader>tt", create_tmux_split_command("v", 25), { desc = "Open a vertical tmux pane" })
+vim.keymap.set("n", "<leader>t-", create_tmux_split_command("v"), { desc = "Open a vertical tmux pane" })
+vim.keymap.set("n", "<leader>t|", create_tmux_split_command("h"), { desc = "Open a horizontal tmux pane" })
 
 -- Open URL under cursor https://sbulav.github.io/vim/neovim-opening-urls/
 if vim.fn.has("mac") == 1 then

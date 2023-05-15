@@ -10,6 +10,16 @@ return {
           prompt_position = "top",
           mirror = true,
         },
+        mappings = {
+          ["i"] = {
+            ["<C-l>"] = require("telescope.actions").select_default,
+            ["<C-h>"] = require("telescope.actions").select_default,
+          },
+          ["n"] = {
+            ["l"] = require("telescope.actions").select_default,
+            ["h"] = require("telescope.actions").select_default,
+          },
+        },
       },
     },
     keys = {
@@ -37,6 +47,14 @@ return {
             hidden = {
               file_browser = false,
               folder_browser = false,
+            },
+            mappings = {
+              ["i"] = {
+                ["<C-h>"] = require("telescope").extensions.file_browser.actions.backspace,
+              },
+              ["n"] = {
+                ["h"] = require("telescope").extensions.file_browser.actions.backspace,
+              },
             },
           },
         },

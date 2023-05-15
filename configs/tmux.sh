@@ -8,7 +8,7 @@ else
 fi
 
 if
-	command -v tmux >/dev/null && [ "$ALACRITTY" = "alacritty" ]
+	command -v tmux >/dev/null && [ -z "$TMUX" ] && [ "$ALACRITTY" = "alacritty" ]
 then
 	tmux attach -t default || tmux new -s default
 fi

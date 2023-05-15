@@ -7,10 +7,8 @@ else
 	export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
 fi
 
-AUTO_ATTACH=$([ "$LC_TERMINAL" = "iTerm2" ] || [ "$ALACRITTY" = "alacritty" ])
-
 if
-	command -v tmux >/dev/null && [ -z "$TMUX" ] && $AUTO_ATTACH
+	command -v tmux >/dev/null && [ "$ALACRITTY" = "alacritty" ]
 then
 	tmux attach -t default || tmux new -s default
 fi

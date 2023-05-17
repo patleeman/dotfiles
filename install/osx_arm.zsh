@@ -17,7 +17,6 @@ brew install \
   thefuck \
   tldr \
   docker \
-  nvm \
   pyenv \
   pyenv-virtualenv \
   direnv \
@@ -40,10 +39,13 @@ brew install --cask font-fira-code-nerd-font
 brew install --cask linearmouse
 brew install --cask alacritty
 
+# Install zsh-nvm
+git clone https://github.com/lukechilds/zsh-nvm ~/.oh-my-zsh/custom/plugins/zsh-nvm
+
 # Set up node
-nvm install --lts
-nvm use --lts
-nvm alias default node
+# nvm install --lts
+# nvm use --lts
+# nvm alias default node
 
 # Set up pyenv
 pyenv install 3

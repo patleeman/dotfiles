@@ -17,8 +17,8 @@ export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
 
 # NVM
-zstyle ':omz:plugins:nvm' lazy yes
-zstyle ':omz:plugins:nvm' lazy-cmd nvim 
+export NVM_LAZY_LOAD=true
+export NVM_COMPLETION=true
 
 # Pyenv quiet
 ZSH_PYENV_QUIET=true
@@ -28,13 +28,13 @@ ZSH_PYENV_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git nvm pyenv direnv thefuck fzf aws vi-mode)
+plugins=(git pyenv direnv thefuck fzf aws vi-mode zsh-nvm)
 
 # vi-mode 
 VI_MODE_SET_CURSOR=true
 VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
-MODE_INDICATOR="%F{white}<NORMAL>%f"
-INSERT_MODE_INDICATOR="%F{yellow}<INSERT>%f"
+MODE_INDICATOR="%F{white}-N-%f"
+INSERT_MODE_INDICATOR="%F{yellow}-I-%f"
 
 # We need to do some fuckery to get rid of the aliases ohmyzsh injects.
 # https://newbedev.com/clear-or-disable-aliases-in-zsh

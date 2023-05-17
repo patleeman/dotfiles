@@ -25,6 +25,7 @@ gi() {
 }
 
 git_ignore() {
+	echo "Select file types to add to gitignore. Use <Tab> to mark for multiselect"
 	if [ -z "$*" ]; then
 		args=$(gi "list" | tr "," "\n" | fzf --multi --height 20% --reverse | tr '\n' ',' | sed 's/,$/\n/')
 	else
@@ -32,41 +33,11 @@ git_ignore() {
 	fi
 
 	if [ -z "$args" ]; then
-		exit 1
+		return 0
 	fi
 
-	gi "$args"
-}
-
-# FZF Git commands
-# https://github.com/junegunn/fzf/wiki/Examples#git
-# fbr - checkout git branch (including remote branches), sorted by most recent commit, limit 30 last branches
-fgit_branch_checkout() {
-	local branches branch
-	branches=$(git for-each-ref --count=30 --sort=-committerdate refs/heads/ --format="%(refname:short)") &&
-		branch=$(echo "$branches" |
-			fzf-tmux -d $((2 + $(wc -l <<<"$branches"))) +m) &&
-		git checkout "$(echo "$branch" | sed "s/.* //" | sed "s#remotes/[^/]*/##")"
-}
-
-# fcoc - checkout git commit
-fgit_commit_checkout() {
-	local commits commit
-	commits=$(git log --pretty=oneline --abbrev-commit --reverse) &&
-		commit=$(echo "$commits" | fzf --tac +s +m -e) &&
-		git checkout "$(echo "$commit" | sed "s/ .*//")"
-}
-
-# fshow - git commit browser
-fgit_commits_browse() {
-	git log --graph --color=always \
-		--format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
-		fzf --ansi --no-sort --reverse --tiebreak=index --bind=ctrl-s:toggle-sort \
-			--bind "ctrl-m:execute:
-                (grep -o '[a-f0-9]\{7\}' | head -1 |
-                xargs -I % sh -c 'git show --color=always % | less -R') << 'FZF-EOF'
-                {}
-FZF-EOF"
+	gi "$args" >".gitignore"
+	echo "Generated .gitignore file with ${args}"
 }
 
 # vim to nvim
@@ -74,7 +45,6 @@ alias vim="nvim"
 alias vi="nvim"
 
 # Quick edit
-alias edit_dotfiles='cd $DOTFILES_DIR && nvim .'
 alias dotfiles='cd $DOTFILES_DIR && nvim .'
 alias notes='cd ~/Dropbox/Notes && nvim .'
 alias blog='cd "$BLOG_PATH" && nvim .'

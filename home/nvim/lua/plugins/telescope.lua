@@ -51,9 +51,11 @@ return {
             mappings = {
               ["i"] = {
                 ["<C-h>"] = require("telescope").extensions.file_browser.actions.backspace,
+                ["<C-H>"] = require("telescope").extensions.file_browser.actions.toggle_hidden,
               },
               ["n"] = {
                 ["h"] = require("telescope").extensions.file_browser.actions.backspace,
+                ["H"] = require("telescope").extensions.file_browser.actions.toggle_hidden,
               },
             },
           },

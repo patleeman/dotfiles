@@ -20,6 +20,9 @@ ZSH_THEME="robbyrussell"
 export NVM_LAZY_LOAD=true
 export NVM_COMPLETION=true
 
+# Set the editor
+export EDITOR=nvim
+
 # Pyenv quiet
 ZSH_PYENV_QUIET=true
 
@@ -28,13 +31,12 @@ ZSH_PYENV_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git pyenv direnv thefuck fzf aws vi-mode zsh-nvm)
+plugins=(zsh-nvm git pyenv direnv fzf vi-mode)
 
 # vi-mode 
 VI_MODE_SET_CURSOR=true
-VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
-MODE_INDICATOR="%F{white}-N-%f"
-INSERT_MODE_INDICATOR="%F{yellow}-I-%f"
+VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=false
+
 
 # We need to do some fuckery to get rid of the aliases ohmyzsh injects.
 # https://newbedev.com/clear-or-disable-aliases-in-zsh

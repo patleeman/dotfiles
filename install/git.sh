@@ -7,3 +7,6 @@ git config --global user.email "git@patricklee.nyc"
 git config --global push.default current
 git config --global pull.rebase true
 git config --global code.editor "nvim"
+
+# Conform Git branch names to main
+git config --global init.defaultBranch main

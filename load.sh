@@ -34,3 +34,5 @@ for f in "$DOTFILES_DIR"{configs,local}/*.{$ext,sh}; do
 		. "$f"
 	fi
 done
+
+check_for_updates

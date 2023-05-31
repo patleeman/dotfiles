@@ -30,9 +30,11 @@ function setup_ssh_key {
 
 ssh -T git@github.com &>/dev/null
 if [ "$?" == "255" ]; then
+	echo "SSH key not set up, generating new ssh key."
 	setup_ssh_key
 fi
 
-# Clone down the
+echo "Cloning dotfiles repo to ~/dotfiles/"
 git clone git@github.com:patleeman/dotfiles.git ~/dotfiles/
+echo "Launching install script"
 . ~/dotfiles/install.sh

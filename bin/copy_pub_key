@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+echo "Select the file you'd like to copy."
+PS3="Select ssh public key to copy, or 0 to exit: "
+files=("$HOME"/.ssh/*.pub)
+select file in "${files[@]}"; do
+	if [[ $REPLY == "0" ]]; then
+		break
+	fi
+	if [[ -n "$file" ]]; then
+		key=$(cat "$file")
+		if [[ $OSTYPE == darwin* ]]; then
+			pbcopy < <(echo "$key")
+		else
+			# Else assumes you're on a linux system that supports xclip
+			echo "$key" | xclip -selection clipboard
+		fi
+		echo "$file copied to system clipboard."
+		break
+	fi
+done

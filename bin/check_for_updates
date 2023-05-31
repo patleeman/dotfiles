@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Command to update dotfiles repository
+# https://github.com/jez/dotfiles/blob/master/util/auto-update.sh
 
 function update_dotfiles() {
     git -C "$DOTFILES_DIR" fetch -q >> /dev/null 2>&1
@@ -19,7 +21,6 @@ function update_dotfiles() {
     fi
 }
 
-# https://github.com/jez/dotfiles/blob/master/util/auto-update.sh
 function check_for_updates() {
     update_threshold=86400
     last_update_file="$DOTFILES_DIR/.last_update"

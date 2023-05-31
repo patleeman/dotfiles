@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# Handy utility to time how long it takes to start up the shell
+# https://blog.mattclemente.com/2020/06/26/oh-my-zsh-slow-to-load/
+shell=${1-$SHELL}
+for _ in $(seq 1 10); do /usr/bin/time "$shell" -i -c exit; done

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# https://docs.gitignore.io/install/command-line
+# Generate a gitignore file using gitignore.io
+gi() {
+	curl -sL "https://www.toptal.com/developers/gitignore/api/$*"
+}
+
+echo "Select file types to add to gitignore. Use <Tab> to mark for multiselect"
+if [ -z "$*" ]; then
+	args=$(gi "list" | tr "," "\n" | fzf --multi --height 20% --reverse | tr '\n' ',' | sed 's/,$/\n/')
+else
+	args="$*"
+fi
+
+if [ -z "$args" ]; then
+	return 0
+fi
+
+gi "$args" >".gitignore"
+echo "Generated .gitignore file with ${args}"

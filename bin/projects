@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+
+find $WORKING_DIR -maxdepth 1 -type d | fzf --print0 --height 20% --reverse | xargs -0 -o nvim

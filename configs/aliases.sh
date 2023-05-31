@@ -11,7 +11,6 @@ alias tree="exa -laT"
 
 # Folder aliases
 alias wd='cd $WORKING_DIR'
-alias projects='find $WORKING_DIR -maxdepth 1 -type d | fzf --print0 --height 20% --reverse | xargs -0 -o nvim'
 
 # Git
 alias gs="git status"

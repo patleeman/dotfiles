@@ -5,7 +5,7 @@ Personal collection of dotfiles.
 # Quickstart
 
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/setup_scripts/HEAD/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/patleeman/dotfiles/master/bootstrap.sh)"
 ```
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
+# Pre-install
 . "${DOTFILES_DIR}/install/setup_scripts/dir.sh"
-. "${DOTFILES_DIR}/install/setup_scripts/setup_load_script.sh"
 . "${DOTFILES_DIR}/install/setup_scripts/symlinks.sh"
 . "${DOTFILES_DIR}/install/setup_scripts/git.sh"
 
@@ -19,6 +19,7 @@ brew tap homebrew/cask-versions
 brew tap homebrew/cask-fonts
 
 brew install \
+  mas \
   thefuck \
   tldr \
   docker \
@@ -38,14 +39,22 @@ brew install \
   fzf \
   shellcheck \
   koekeishiya/formulae/yabai 
-brew install --cask fork
-brew install --cask font-fira-code
-brew install --cask font-fira-code-nerd-font
-brew install --cask linearmouse
-brew install --cask alacritty
+
+brew install --cask fork \
+  font-fira-code \
+  font-fira-code-nerd-font \
+  linearmouse \ 
+  alacritty
 
 # Install zsh-nvm
 git clone https://github.com/lukechilds/zsh-nvm ~/.oh-my-zsh/custom/plugins/zsh-nvm
+
+# Install InYourFace
+mas install 1476964367
+
+# Post-install
+. "${DOTFILES_DIR}/install/setup_scripts/setup_load_script.sh"
+. "${DOTFILES_DIR}/install/setup_scripts/work.sh"
 
 # Set up node
 nvm install --lts
@@ -56,11 +65,5 @@ nvm alias default node
 pyenv install 3
 pyenv global 3
 
-# Install InYourFace
-mas install 1476964367
-
 # https://github.com/mhinz/neovim-remote
 pip3 install neovim-remote
-
-. setup_scripts/work.sh
-

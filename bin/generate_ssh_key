@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+EMAIL=${1:-git@patricklee.nyc}
+
+# TODO: Set up a fzf to select different schemes
+ssh-keygen -t ed25519 -C "$EMAIL"

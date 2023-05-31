@@ -15,8 +15,3 @@ case $input in
 	exit 1
 	;;
 esac
-
-. install/setup_load_script.sh
-. install/home.sh
-. install/dir.sh
-. install/git.sh

@@ -1,7 +1,12 @@
 #!/usr/bin/env zsh
 
+. setup_scripts/dir.sh
+. setup_scripts/setup_load_script.sh
+. setup_scripts/symlinks.sh
+. setup_scripts/git.sh
+
 # Install homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/setup_scripts/HEAD/install.sh)"
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Oh-my-zsh
@@ -43,9 +48,9 @@ brew install --cask alacritty
 git clone https://github.com/lukechilds/zsh-nvm ~/.oh-my-zsh/custom/plugins/zsh-nvm
 
 # Set up node
-# nvm install --lts
-# nvm use --lts
-# nvm alias default node
+nvm install --lts
+nvm use --lts
+nvm alias default node
 
 # Set up pyenv
 pyenv install 3
@@ -59,3 +64,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # https://github.com/mhinz/neovim-remote
 pip3 install neovim-remote
+
+
+. setup_scripts/work.sh
+

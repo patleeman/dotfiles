@@ -1,3 +1,0 @@
-#!/usr/bin/env zsh
-
-npx ts-node "$HOME/dotfiles/scripts/date-cli/index.ts" "$@"

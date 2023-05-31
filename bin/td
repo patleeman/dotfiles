@@ -1,3 +1,0 @@
-#!/usr/bin/env zsh
-
-python "$HOME/dotfiles/scripts/md-todo/td.py"

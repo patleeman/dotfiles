@@ -4,6 +4,11 @@ Personal collection of dotfiles.
 
 # Quickstart
 
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/setup_scripts/HEAD/install.sh)"
+```
+
+
 Clone this repo into the home directory and run the appropriate install script for the system you're trying to install on.
 
 ```

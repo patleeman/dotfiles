@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 
-. setup_scripts/dir.sh
-. setup_scripts/setup_load_script.sh
-. setup_scripts/symlinks.sh
-. setup_scripts/git.sh
+. "${DOTFILES_DIR}/install/setup_scripts/dir.sh"
+. "${DOTFILES_DIR}/install/setup_scripts/setup_load_script.sh"
+. "${DOTFILES_DIR}/install/setup_scripts/symlinks.sh"
+. "${DOTFILES_DIR}/install/setup_scripts/git.sh"
 
 # Install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/setup_scripts/HEAD/install.sh)"
@@ -59,12 +59,8 @@ pyenv global 3
 # Install InYourFace
 mas install 1476964367
 
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
 # https://github.com/mhinz/neovim-remote
 pip3 install neovim-remote
-
 
 . setup_scripts/work.sh
 

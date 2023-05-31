@@ -9,7 +9,7 @@ echo "Which system would you like to setup?"
 echo "1. MacOS [ARM]"
 read -r input
 case $input in
-1) . "${DOTFILES_DIR}/install/osx_arm.zsh" ;;
+1) . "${DOTFILES_DIR}install/osx_arm.zsh" ;;
 *)
 	echo "Option not valid, exiting"
 	exit 1

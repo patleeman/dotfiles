@@ -29,6 +29,7 @@ brew install \
   awscli \
   pandoc \
   exa \
+  bat \
   jq \
   neovim \
   fd \

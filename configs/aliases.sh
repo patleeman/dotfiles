@@ -8,6 +8,7 @@ export WORKING_DIR="$HOME/workingdir"
 # Remap ls to use exa for nicer output
 alias ls="exa -lh"
 alias tree="exa -laT"
+alias cat="bat"
 
 # Folder aliases
 alias wd='cd $WORKING_DIR'

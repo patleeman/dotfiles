@@ -29,6 +29,8 @@ alias blog='cd "$BLOG_PATH" && nvim .'
 
 # Yabai
 alias yabai_restart='launchctl kickstart -k "gui/${UID}/homebrew.mxcl.yabai"'
+alias yabai_stop='yabai -m space --layout float'
+alias yabai_start='yabai -m space --layout bsp'
 
 # System
 alias du="du -ach | sort -h"

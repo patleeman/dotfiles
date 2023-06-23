@@ -11,22 +11,6 @@ return {
   {
     "nvim-neo-tree/neo-tree.nvim",
     enabled = false,
-    config = function()
-      require("neo-tree").setup({
-        window = {
-          position = "left",
-          width = 30,
-        },
-        filesystem = {
-          follow_current_file = true,
-          use_libuv_file_watcher = true,
-          filtered_items = {
-            hide_dotfiles = true,
-            hide_hidden = false,
-          },
-        },
-      })
-    end,
   },
   {
     "goolord/alpha-nvim",

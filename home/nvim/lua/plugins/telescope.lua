@@ -71,4 +71,13 @@ return {
       },
     },
   },
+  {
+    "benfowler/telescope-luasnip.nvim",
+    config = function()
+      require("telescope").load_extension("luasnip")
+    end,
+    keys = {
+      { "<leader>fs", "<cmd>Telescope luasnip<cr>", desc = "Find Snippets" },
+    },
+  },
 }

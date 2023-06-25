@@ -117,16 +117,3 @@ else
     { desc = "Open URI under cursor" }
   )
 end
-
--- Ask for a string to parse into a date time object using script
-local function parse_dt(prompt)
-  vim.ui.input({ prompt = prompt }, function(input)
-    local cmd = vim.fn.system('dt -q ymd "' .. input .. '"')
-    local date = vim.fn.split(cmd, "\n")
-    local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-    vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, date)
-  end)
-end
-vim.keymap.set("n", "<leader>dd", function()
-  parse_dt("Parse to date: ")
-end, { desc = "Insert date from natural language" })

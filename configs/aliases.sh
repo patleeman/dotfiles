@@ -9,6 +9,7 @@ export WORKING_DIR="$HOME/workingdir"
 alias ls="exa -lh"
 alias tree="exa -laT"
 alias cat="bat"
+alias lg="lazygit"
 
 # Folder aliases
 alias wd='cd $WORKING_DIR'

@@ -1,51 +1,44 @@
-"" -- Suggested options --
-" Show a few lines of context around the cursor. Note that this makes the
-" text scroll if you mouse-click near the start or end of the window.
+" Inspo: https://towardsdatascience.com/the-essential-ideavim-remaps-291d4cd3971b
 set scrolloff=5
-
-" Do incremental searching.
 set incsearch
+set ideajoin
+set idearefactormode=keep
 
-" Don't use Ex mode, use Q for formatting.
 map Q gq
-
 
 " Highlight copied text
 Plug 'machakann/vim-highlightedyank'
 " Commentary plugin
 Plug 'tpope/vim-commentary'
 
-
-" Inspo: https://towardsdatascience.com/the-essential-ideavim-remaps-291d4cd3971b
 let mapleader=" "
 
-nnoremap <c-|> :action SplitVertically<CR>
+" Buffer and tooling
+nnoremap <TAB> :action PreviousTab<CR>
+nnoremap <s-TAB> :action NextTab<CR>
+nnoremap <leader>bd :action CloseActiveTab<CR>
+nnoremap <leader>bw :action CloseAllEditorsButActive<CR>
+nnoremap <leader><leader> :action SearchEverywhere<CR>
+nnoremap <c-\> :action SplitVertically<CR>
 nnoremap <c--> :action SplitHorizontally<CR>
 
-sethandler <c-j> a:vim
-sethandler <c-k> a:vim
-
+" Editing
 nnoremap <c-h> <c-w>h
 nnoremap <c-l> <c-w>l
 nnoremap <c-j> <c-w>j
 nnoremap <c-k> <c-w>k
-
-nnoremap <TAB> :action PreviousTab<CR>
-nnoremap <s-TAB> :action NextTab<CR>
-
-set ideajoin
-set idearefactormode=keep
 vnoremap < <gv
 vnoremap > >gv
-
-nnoremap <Leader>=  :action ReformatCode<CR>
-nnoremap <leader>o :action OptimizeImports<CR>
-
 nnoremap <leader>rr :action RenameElement<CR>
-nnoremap <leader>bd :action CloseActiveTab<CR>
-nnoremap <leader>bw :action CloseAllEditorsButActive<CR>
+nnoremap <leader>o :action OptimizeImports<CR>
+nnoremap <Leader>= :action ReformatCode<CR>
 
-nnoremap <leader><leader> :action Find<CR>
-
+" Code navigation
 nnoremap gd :action GotoDeclaration<CR>
 
+" Debugging
+nnoremap <leader>dn :action StepOver<CR>
+nnoremap <leader>di :action StepInto<CR>
+nnoremap <leader>do :action StepOut<CR>
+nnoremap <leader>dc :action Resume<CR>
+nnoremap <leader>db :action ToggleLineBreakpoint<CR>

@@ -22,18 +22,23 @@ nnoremap <leader><leader> :action SearchEverywhere<CR>
 nnoremap <c-\> :action SplitVertically<CR>
 nnoremap <c--> :action SplitHorizontally<CR>
 
-" Editing
+" Editing and navigating
 nnoremap <c-h> <c-w>h
 nnoremap <c-l> <c-w>l
 nnoremap <c-j> <c-w>j
 nnoremap <c-k> <c-w>k
+nnoremap <c-d> <c-d>zz
+nnoremap <c-u> <c-u>zz
+nnoremap n nzzzv
+nnoremap N Nzzzv
 vnoremap < <gv
 vnoremap > >gv
+vnoremap J :m '>+1<CR>gv=gv
+vnoremap K :m '<-2<CR>gv=gv
+
 nnoremap <leader>rr :action RenameElement<CR>
 nnoremap <leader>o :action OptimizeImports<CR>
 nnoremap <Leader>= :action ReformatCode<CR>
-
-" Code navigation
 nnoremap gd :action GotoDeclaration<CR>
 
 " Debugging

@@ -41,6 +41,7 @@ return {
             auto_depth = true,
             collapse_dirs = true,
             select_buffer = true,
+            respect_gitignore = false,
             display_stat = {
               mode = false,
             },

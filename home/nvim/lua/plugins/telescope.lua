@@ -23,7 +23,11 @@ return {
       },
     },
     keys = {
-      { "<leader><space>", "<cmd>Telescope file_browser<cr>", desc = "Telescope file browser" },
+      {
+        "<leader><space>",
+        ":Telescope file_browser<CR>",
+        desc = "Telescope file browser",
+      },
       { "<leader>bf", "<cmd>Telescope buffers<cr>", desc = "Switch Buffer" },
       { "<leader>n", "<cmd>Telescope notify<cr>", desc = "See all notifications" },
     },
@@ -67,7 +71,7 @@ return {
     keys = {
       {
         "<leader>e",
-        "<cmd>Telescope file_browser path=%:p:h select_buffer=true<CR>",
+        ":Telescope file_browser path=%:p:h select_buffer=true<CR>",
         desc = "Telescope file browser (cwd)",
       },
     },

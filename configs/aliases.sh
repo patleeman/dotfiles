@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 # Environment Variables
-export BLOG_PATH="$HOME/workingdir/patricklee.nyc"
-export WORKING_DIR="$HOME/workingdir"
+export BLOG_DIR="${BLOG_PATH:-$HOME/workingdir/patricklee.nyc}"
+export WORKING_DIR="${WORKING_DIR:-$HOME/workingdir}"
+export NOTES_DIR="${NOTES_DIR:-$HOME/Dropbox/Notes}"
 
 # Aliases
 # Remap ls to use exa for nicer output
@@ -25,7 +26,7 @@ alias vi="nvim"
 
 # Quick edit
 alias dotfiles='cd $DOTFILES_DIR && nvim .'
-alias notes='cd ~/Dropbox/Notes && nvim .'
+alias notes='cd $NOTES_DIR && nvim .'
 alias blog='cd "$BLOG_PATH" && nvim .'
 
 # Yabai

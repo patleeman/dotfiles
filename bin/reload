@@ -1,0 +1,5 @@
+#/usr/bin/env zsh
+
+# Small utility to reload zshrc and clear console
+clear
+source $HOME/.zshrc

@@ -21,6 +21,11 @@ return {
           },
         },
       },
+      pickers = {
+        find_files = {
+          find_command = { "rg", "--files", "--hidden", "-g", "!.git" },
+        },
+      },
     },
     keys = {
       {
@@ -43,7 +48,7 @@ return {
             hijack_netrw = true,
             grouped = true,
             auto_depth = true,
-            collapse_dirs = true,
+            collapse_dirs = false,
             select_buffer = true,
             respect_gitignore = false,
             display_stat = {

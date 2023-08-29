@@ -10,6 +10,7 @@ echo "1. MacOS [ARM]"
 read -r input
 case $input in
 1) . "${DOTFILES_DIR}install/osx_arm.zsh" ;;
+2) . "${DOTFILES_DIR}install/ubuntu.bash" ;;
 *)
 	echo "Option not valid, exiting"
 	exit 1

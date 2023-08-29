@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # Environment Variables
 export BLOG_DIR="${BLOG_PATH:-$HOME/workingdir/patricklee.nyc}"
 export WORKING_DIR="${WORKING_DIR:-$HOME/workingdir}"
@@ -7,8 +6,9 @@ export NOTES_DIR="${NOTES_DIR:-$HOME/Dropbox/Notes}"
 
 # Aliases
 # Remap ls to use exa for nicer output
-alias ls="exa -lh"
+alias ls="exa -lah"
 alias tree="exa -laT"
+alias bat="batcat"
 alias cat="bat"
 alias lg="lazygit"
 

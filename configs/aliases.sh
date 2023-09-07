@@ -6,8 +6,7 @@ export NOTES_DIR="${NOTES_DIR:-$HOME/Dropbox/Notes}"
 
 # Aliases
 # Remap ls to use exa for nicer output
-alias ls="exa -lah"
-alias tree="exa -laT"
+alias ls="ls -la"
 alias bat="batcat"
 alias cat="bat"
 alias lg="lazygit"

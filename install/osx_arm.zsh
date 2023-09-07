@@ -28,7 +28,6 @@ brew install \
   direnv \
   awscli \
   pandoc \
-  exa \
   bat \
   jq \
   neovim \

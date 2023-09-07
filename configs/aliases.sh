@@ -13,6 +13,8 @@ alias lg="lazygit"
 
 # Folder aliases
 alias wd='cd $WORKING_DIR'
+alias df="cd $DOTFILES_DIR"
+alias nd="cd $NOTES_DIR"
 
 # Git
 alias gs="git status"

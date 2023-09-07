@@ -3,6 +3,7 @@ set scrolloff=5
 set incsearch
 set ideajoin
 set idearefactormode=keep
+set ignorecase smartcase
 
 map Q gq
 

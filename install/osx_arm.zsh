@@ -38,13 +38,14 @@ brew install \
   tmux \
   fzf \
   shellcheck \
+  jless \
   koekeishiya/formulae/yabai 
 
 brew install --cask fork
 brew install --cask font-fira-code
-brew install --cask  font-fira-code-nerd-font
-brew install --cask  linearmouse
-brew install --cask  alacritty
+brew install --cask font-fira-code-nerd-font
+brew install --cask linearmouse
+brew install --cask alacritty
 
 # Install zsh-nvm
 git clone https://github.com/lukechilds/zsh-nvm ~/.oh-my-zsh/custom/plugins/zsh-nvm

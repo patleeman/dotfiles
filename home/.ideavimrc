@@ -15,8 +15,6 @@ Plug 'tpope/vim-commentary'
 let mapleader=" "
 
 " Buffer and tooling
-nnoremap <TAB> :action PreviousTab<CR>
-nnoremap <s-TAB> :action NextTab<CR>
 nnoremap <leader>bd :action CloseActiveTab<CR>
 nnoremap <leader>bw :action CloseAllEditorsButActive<CR>
 nnoremap <leader><leader> :action SearchEverywhere<CR>

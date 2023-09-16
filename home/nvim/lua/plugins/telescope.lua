@@ -11,10 +11,6 @@ return {
           mirror = true,
         },
         mappings = {
-          ["i"] = {
-            ["<C-l>"] = require("telescope.actions").select_default,
-            ["<C-h>"] = require("telescope.actions").select_default,
-          },
           ["n"] = {
             ["l"] = require("telescope.actions").select_default,
             ["h"] = require("telescope.actions").select_default,
@@ -30,6 +26,11 @@ return {
     keys = {
       {
         "<leader><space>",
+        ":Telescope file_browser path=%:p:h select_buffer=true<CR>",
+        desc = "Telescope file browser (cwd)",
+      },
+      {
+        "<leader>e",
         ":Telescope file_browser<CR>",
         desc = "Telescope file browser",
       },
@@ -73,13 +74,7 @@ return {
       })
       require("telescope").load_extension("file_browser")
     end,
-    keys = {
-      {
-        "<leader>e",
-        ":Telescope file_browser path=%:p:h select_buffer=true<CR>",
-        desc = "Telescope file browser (cwd)",
-      },
-    },
+    keys = {},
   },
   {
     "benfowler/telescope-luasnip.nvim",

@@ -7,6 +7,7 @@ vim.keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Jump down and center" })
 vim.keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Jump up and center" })
 vim.keymap.set("n", "n", "nzzzv", { desc = "Search down and center" })
 vim.keymap.set("n", "N", "Nzzzv", { desc = "Search up and center" })
+vim.keymap.set("n", "gh", ":OpenInGHRepo<CR>", { desc = "Open in GitHub repo" })
 
 -- Editing
 vim.keymap.set("n", "d", '"_d', { desc = "Delete into the black hole register" })
@@ -29,18 +30,6 @@ local function get_listed_buffers()
   return buffers
 end
 
--- Command to clear empty buffers
-vim.api.nvim_create_user_command("ClearEmptyBuffers", function()
-  local buffers = get_listed_buffers()
-  for _, bufnr in ipairs(buffers) do
-    local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
-    local name = vim.api.nvim_buf_get_name(bufnr)
-    if ft == "" and name == "" then
-      vim.api.nvim_buf_delete(bufnr, {})
-    end
-  end
-end, { desc = "Clear [No Name] buffers" })
-
 -- Command to delete all buffers
 vim.api.nvim_create_user_command("BDeleteAll", function()
   local buffers = get_listed_buffers()
@@ -55,44 +44,6 @@ end, { desc = "Delete all buffers" })
 -- Buffers
 vim.keymap.set("n", "<leader>bw", "<cmd>BDeleteAll<CR>", { desc = "Close all unsaved buffers" })
 vim.keymap.set("n", "<leader>bn", "<cmd>enew<CR>", { desc = "Create a new buffer" })
-
--- Helper function to open tmux window in current buffer's directory
-local function tmux_split_window(orientation, size)
-  local current_dir = vim.fn.expand("%:p:h")
-  local cmd = "tmux split-window -c " .. vim.fn.shellescape(current_dir)
-
-  -- Add orientation and size options if specified
-  if orientation then
-    cmd = cmd .. " -" .. orientation
-  end
-  if size then
-    cmd = cmd .. " -p " .. size
-  end
-
-  vim.fn.system(cmd)
-end
-
-local function create_tmux_split_command(orientation, size)
-  return function()
-    local current_dir = vim.fn.expand("%:p:h")
-    local cmd = "tmux split-window -c " .. vim.fn.shellescape(current_dir)
-
-    -- Add orientation and size options if specified
-    if orientation then
-      cmd = cmd .. " -" .. orientation
-    end
-    if size then
-      cmd = cmd .. " -p " .. size
-    end
-
-    vim.fn.system(cmd)
-  end
-end
-
--- Use tmux instead of vim terminal
-vim.keymap.set("n", "<leader>tt", create_tmux_split_command("v", 25), { desc = "Open a vertical tmux pane" })
-vim.keymap.set("n", "<leader>t-", create_tmux_split_command("v"), { desc = "Open a vertical tmux pane" })
-vim.keymap.set("n", "<leader>t|", create_tmux_split_command("h"), { desc = "Open a horizontal tmux pane" })
 
 -- Open URL under cursor https://sbulav.github.io/vim/neovim-opening-urls/
 if vim.fn.has("mac") == 1 then

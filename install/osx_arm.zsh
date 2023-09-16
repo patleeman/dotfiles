@@ -39,7 +39,9 @@ brew install \
   fzf \
   shellcheck \
   jless \
-  koekeishiya/formulae/yabai 
+  koekeishiya/formulae/yabai \
+  koekeishiya/formulae/skhd
+
 
 brew install --cask fork
 brew install --cask font-fira-code
@@ -64,3 +66,8 @@ pyenv global 3
 
 # https://github.com/mhinz/neovim-remote
 pip3 install neovim-remote
+
+
+yabai --start-service
+skhd --start-service
+

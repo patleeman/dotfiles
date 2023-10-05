@@ -19,20 +19,22 @@ elif [ -n "$BASH_VERSION" ]; then
 	ext="bash"
 fi
 
-# Add homebrew to path
-if [[ $OSTYPE == darwin* ]]; then
-	export PATH="/opt/homebrew/bin:$PATH"
-fi
-
 # Add scripts to path
 export PATH="$HOME/dotfiles/bin:$PATH"
 
-# Source configs
-for f in "$DOTFILES_DIR"{configs,local}/*.{$ext,sh}; do
-	if [[ -r $f ]] && [[ -f $f ]]; then
-		# shellcheck disable=SC1090
-		. "$f"
-	fi
-done
+# Add homebrew to path
+if [[ $OSTYPE == darwin* ]]; then
+	export PATH="/opt/homebrew/bin:$PATH"
+
+	# Source configs
+	for f in "$DOTFILES_DIR"{configs,local}/*.{$ext,sh}; do
+		if [[ -r $f ]] && [[ -f $f ]]; then
+			# shellcheck disable=SC1090
+			. "$f"
+		fi
+	done
+else
+	source "$DOTFILES_DIR/configs/"*.sh
+fi
 
 check_for_updates

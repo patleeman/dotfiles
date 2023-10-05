@@ -5,10 +5,6 @@ export WORKING_DIR="${WORKING_DIR:-$HOME/workingdir}"
 export NOTES_DIR="${NOTES_DIR:-$HOME/Dropbox/Notes}"
 
 # Aliases
-# Remap ls to use exa for nicer output
-alias ls="ls --color=auto"
-alias ll="ls -la --color=auto"
-alias cat="bat"
 alias lg="lazygit"
 
 # Folder aliases
@@ -39,3 +35,19 @@ alias yabai_start='yabai -m space --layout bsp'
 alias du="du -ach | sort -h"
 alias ps="ps aux"
 alias mkdir="mkdir -pv"
+
+function ls {
+	if command -v eza &>/dev/null; then
+		eza -la "$@"
+	else
+		ls -la --color=auto "$@"
+	fi
+}
+
+function cat {
+	if command -v bat &>/dev/null; then
+		bat "$@"
+	else
+		cat "$@"
+	fi
+}

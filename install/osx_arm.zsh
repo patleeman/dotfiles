@@ -40,6 +40,7 @@ brew install \
   shellcheck \
   jless \
   koekeishiya/formulae/yabai \
+  eza \
   koekeishiya/formulae/skhd
 
 

@@ -1,0 +1,20 @@
+[user]
+  name = Patrick Lee
+  email = git@patricklee.nyc
+[push]
+  default = current
+[pull]
+  rebase = true
+[code]
+  editor = nvim
+[init]
+  defaultBranch = main
+[diff]
+  tool = difftastic
+[difftool]
+  prompt = false
+[difftool "difftastic"]
+  cmd = difft "$LOCAL" "$REMOTE"
+[pager]
+  difftool = true
+

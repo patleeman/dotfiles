@@ -40,14 +40,6 @@ function ls {
 	if command -v eza &>/dev/null; then
 		eza -la "$@"
 	else
-		ls -la --color=auto "$@"
-	fi
-}
-
-function cat {
-	if command -v bat &>/dev/null; then
-		bat "$@"
-	else
-		cat "$@"
+		/bin/ls -la --color=auto "$@"
 	fi
 }

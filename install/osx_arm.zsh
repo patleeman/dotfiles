@@ -39,9 +39,8 @@ brew install \
   fzf \
   shellcheck \
   jless \
-  koekeishiya/formulae/yabai \
   eza \
-  koekeishiya/formulae/skhd
+  difftastic
 
 
 brew install --cask fork

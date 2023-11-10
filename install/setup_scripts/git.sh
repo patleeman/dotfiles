@@ -10,3 +10,6 @@ git config --global code.editor "nvim"
 
 # Conform Git branch names to main
 git config --global init.defaultBranch main
+
+# Auto prune
+git config remote.origin.prune true

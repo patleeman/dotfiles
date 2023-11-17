@@ -40,7 +40,8 @@ brew install \
   shellcheck \
   jless \
   eza \
-  difftastic
+  difftastic \
+  saulpw/vd/visidata
 
 
 brew install --cask fork

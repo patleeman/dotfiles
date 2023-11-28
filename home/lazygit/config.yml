@@ -1,0 +1,12 @@
+customCommands:
+  - key: 'C'
+    description: "Commit with AI generated commit message"
+    context: 'global'
+    command: 'git commit -m {{.Form.AiCommitMessage}}'
+    loadingText: "Generating commit message..."
+    prompts:
+      - type: 'input'
+        title: 'Commit message'
+        key: 'AiCommitMessage'
+        suggestions:
+          command: "commit_message_options"

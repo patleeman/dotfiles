@@ -1,5 +1,25 @@
 #!/usr/bin/env bash
 
+# Default value for n
+n=1
+
+# Check for command-line arguments
+while getopts ":n:" opt; do
+  case $opt in
+    n)
+      n="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
 # This script is used to generate a commit message for a pull request.
 
 # Check for staged changes
@@ -16,7 +36,7 @@ diff_json=$(echo "$diff" | jq -aRs .)
 json_payload=$(jq -n \
                   --arg diff "$diff_json" \
                   --arg model "gpt-4" \
-                  --argjson n 3 \
+                  --argjson n "$n" \
                   --argjson temperature 0.7 \
                   '{model: $model, messages: [{"role":"system","content":"Write a short and concise commit message for the following diff."}, {"role":"user","content":$diff}], n: $n, temperature: $temperature}')
 

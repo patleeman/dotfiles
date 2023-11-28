@@ -9,4 +9,4 @@ customCommands:
         title: 'Commit message'
         key: 'AiCommitMessage'
         suggestions:
-          command: "commit_message_options"
+          command: "ai_commit_message -n 3"

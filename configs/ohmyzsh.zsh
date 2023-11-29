@@ -31,7 +31,7 @@ ZSH_PYENV_QUIET=true
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(zsh-nvm git pyenv direnv fzf vi-mode)
+plugins=(zsh-nvm git pyenv direnv fzf vi-mode thefuck)
 
 # vi-mode 
 VI_MODE_SET_CURSOR=true

@@ -43,3 +43,4 @@ function ls {
 		/bin/ls -la --color=auto "$@"
 	fi
 }
+alias ll="/bin/ls"

@@ -60,7 +60,7 @@ non-empty-workspaces-root-containers-layout-on-startup = 'smart'
 # All possible commands: https://nikitabobko.github.io/AeroSpace/commands.html
 
 # See: https://nikitabobko.github.io/AeroSpace/commands.html#exec-and-forget
-alt-enter = 'exec-and-forget source ~/dotfiles/bin/arc_new_window'
+# alt-enter = 'exec-and-forget source ~/dotfiles/bin/arc_new_window'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands.html#focus
 alt-h = 'focus left'
@@ -111,6 +111,10 @@ alt-shift-tab = 'workspace prev'
 # codesign -dr - /path/to/yourapp.app to get the app id
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
+run = ['move-node-to-workspace 9']
+
+[[on-window-detected]]
+if.app-id = 'company.thebrowser.Browser'
 run = ['move-node-to-workspace 1']
 
 [[on-window-detected]]
@@ -123,7 +127,7 @@ run = ['move-node-to-workspace 3']
 
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = ['move-node-to-workspace 0']
+run = ['move-node-to-workspace 10']
 
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'

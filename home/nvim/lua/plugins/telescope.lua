@@ -16,6 +16,10 @@ return {
             ["h"] = require("telescope.actions").select_default,
           },
         },
+        file_ignore_patterns = {
+          ".git/",
+          "out/",
+        },
       },
       pickers = {
         find_files = {
@@ -75,14 +79,5 @@ return {
       require("telescope").load_extension("file_browser")
     end,
     keys = {},
-  },
-  {
-    "benfowler/telescope-luasnip.nvim",
-    config = function()
-      require("telescope").load_extension("luasnip")
-    end,
-    keys = {
-      { "<leader>fs", "<cmd>Telescope luasnip<cr>", desc = "Find Snippets" },
-    },
   },
 }

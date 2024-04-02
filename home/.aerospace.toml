@@ -111,7 +111,7 @@ alt-shift-tab = 'workspace prev'
 # codesign -dr - /path/to/yourapp.app to get the app id
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
-run = ['move-node-to-workspace 9']
+run = ['move-node-to-workspace 5']
 
 [[on-window-detected]]
 if.app-id = 'company.thebrowser.Browser'
@@ -127,7 +127,7 @@ run = ['move-node-to-workspace 3']
 
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = ['move-node-to-workspace 10']
+run = ['move-node-to-workspace 6']
 
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'

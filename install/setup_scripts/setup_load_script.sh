@@ -18,8 +18,15 @@ if command -v zsh --version >/dev/null 2>&1; then
 fi
 
 if command -v bash --version >/dev/null 2>&1; then
-	mv ~/.bashrc ~/.bashrc.bak
 	touch ~/.bashrc
-	echo "$LOAD_COMMAND" >~/.bashrc
+	LOAD_COMMAND=$(
+		cat <<EOF
+		
+# load dotfiles
+export DOTFILES_DIR="$DOTFILES_DIR"
+. "$DOTFILES_DIR/load-ubuntu.sh"
+EOF
+	)
+	echo "$LOAD_COMMAND" >>~/.bashrc
 	echo "Installed load script in ~/.bashrc"
 fi

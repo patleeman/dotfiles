@@ -41,11 +41,6 @@ gaps.outer.bottom =     0
 gaps.outer.top =        0
 gaps.outer.right =      0
 
-# Visual indent makes it easier to understand that containers of the same orientation are nested.
-# If you have 'enable-normalization-opposite-orientation-for-nested-containers' enabled then
-# there is no way to observe the indent
-indent-for-nested-containers-with-the-same-orientation = 30
-
 # Layout of root containers of non-empty workspaces. The layout is applied only on startup
 # Possible values: smart|tiles|accordion
 # - 'tiles' and 'accordion' are self-describing
@@ -101,7 +96,7 @@ alt-shift-7 = 'move-node-to-workspace 7'
 alt-shift-8 = 'move-node-to-workspace 8'
 alt-shift-9 = 'move-node-to-workspace 9'
 alt-shift-0 = 'move-node-to-workspace 10'
-#
+
 # See: https://nikitabobko.github.io/AeroSpace/commands.html#workspace-back-and-forth
 alt-tab = 'workspace next'
 # See: https://nikitabobko.github.io/AeroSpace/commands.html#move-workspace-to-monitor
@@ -141,4 +136,6 @@ run = 'layout floating'
 if.app-id = 'com.apple.MobileSMS'
 run = 'layout floating'
 
-
+[[on-window-detected]]
+if.app-id = 'com.openai.chat'
+run = 'layout floating'

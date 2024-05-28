@@ -41,7 +41,9 @@ brew install \
   jless \
   eza \
   difftastic \
-  saulpw/vd/visidata
+  saulpw/vd/visidata \
+  jesseduffield/lazydocker/lazydocker
+
 
 brew install --no-quarantine --cask nikitabobko/tap/aerospace
 brew install --cask fork

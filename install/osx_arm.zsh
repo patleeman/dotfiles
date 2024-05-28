@@ -2,8 +2,6 @@
 
 # Pre-install
 . "${DOTFILES_DIR}/install/setup_scripts/dir.sh"
-. "${DOTFILES_DIR}/install/setup_scripts/symlinks.sh"
-. "${DOTFILES_DIR}/install/setup_scripts/git.sh"
 
 # Install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/setup_scripts/HEAD/install.sh)"
@@ -15,8 +13,7 @@ sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.
 # https://github.com/zsh-users/zsh-completions/issues/433#issuecomment-799542335
 chmod -R go-w "$(brew --prefix)/share"
 
-brew tap homebrew/cask-versions
-brew tap homebrew/cask-fonts
+brew tap homebrew/cask-versions brew tap homebrew/cask-fonts
 
 brew install \
   mas \
@@ -31,6 +28,7 @@ brew install \
   neovim \
   fd \
   gnu-sed \
+  stow \
   ripgrep \
   lazygit \
   tmux \
@@ -64,3 +62,9 @@ pyenv global 3
 
 # https://github.com/mhinz/neovim-remote
 pip3 install neovim-remote
+
+
+# Post-install
+. "${DOTFILES_DIR}/install/setup_scripts/symlinks.sh"
+. "${DOTFILES_DIR}/install/setup_scripts/git.sh"
+

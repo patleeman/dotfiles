@@ -60,8 +60,8 @@ return {
               mode = false,
             },
             hidden = {
-              file_browser = false,
-              folder_browser = false,
+              file_browser = true,
+              folder_browser = true,
             },
             mappings = {
               ["i"] = {

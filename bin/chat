@@ -1,3 +1,0 @@
-#!/usr/bin/env zsh
-
-bash "$HOME/dotfiles/scripts/chatGPT-shell-cli/chatgpt.sh" "$@"

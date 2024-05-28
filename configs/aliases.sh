@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # Environment Variables
-export BLOG_DIR="${BLOG_PATH:-$HOME/workingdir/patricklee.nyc}"
 export WORKING_DIR="${WORKING_DIR:-$HOME/workingdir}"
-export NOTES_DIR="${NOTES_DIR:-$HOME/Dropbox/Notes}"
 
 # Aliases
 alias lg="lazygit"
+alias ld="lazydocker"
 
 # Folder aliases
 alias wd='cd $WORKING_DIR'
@@ -23,13 +22,6 @@ alias vi="nvim"
 
 # Quick edit
 alias dotfiles='cd $DOTFILES_DIR && nvim .'
-alias notes='cd $NOTES_DIR && nvim .'
-alias blog='cd "$BLOG_PATH" && nvim .'
-
-# Yabai
-alias yabai_restart='launchctl kickstart -k "gui/${UID}/homebrew.mxcl.yabai"'
-alias yabai_stop='yabai -m space --layout float'
-alias yabai_start='yabai -m space --layout bsp'
 
 # System
 alias du="du -ach | sort -h"

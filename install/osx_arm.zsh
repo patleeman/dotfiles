@@ -21,14 +21,12 @@ brew tap homebrew/cask-fonts
 brew install \
   mas \
   thefuck \
-  tldr \
   docker \
   pyenv \
   pyenv-virtualenv \
   direnv \
   awscli \
   pandoc \
-  bat \
   jq \
   neovim \
   fd \
@@ -38,10 +36,8 @@ brew install \
   tmux \
   fzf \
   shellcheck \
-  jless \
   eza \
   difftastic \
-  saulpw/vd/visidata \
   jesseduffield/lazydocker/lazydocker
 
 
@@ -68,8 +64,3 @@ pyenv global 3
 
 # https://github.com/mhinz/neovim-remote
 pip3 install neovim-remote
-
-
-yabai --start-service
-skhd --start-service
-

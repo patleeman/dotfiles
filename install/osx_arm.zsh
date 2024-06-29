@@ -38,7 +38,6 @@ brew install \
   difftastic \
   jesseduffield/lazydocker/lazydocker
 
-
 brew install --no-quarantine --cask nikitabobko/tap/aerospace
 brew install --cask fork
 brew install --cask font-fira-code
@@ -54,7 +53,7 @@ mas install 1476964367
 
 # Post-install
 . "${DOTFILES_DIR}/install/setup_scripts/setup_load_script.sh"
-. "${DOTFILES_DIR}/install/setup_scripts/work.sh"
+. "${DOTFILES_DIR}/install/setup_scripts/symlinks.sh"
 
 # Set up pyenv
 pyenv install 3
@@ -63,8 +62,6 @@ pyenv global 3
 # https://github.com/mhinz/neovim-remote
 pip3 install neovim-remote
 
-
 # Post-install
 . "${DOTFILES_DIR}/install/setup_scripts/symlinks.sh"
 . "${DOTFILES_DIR}/install/setup_scripts/git.sh"
-

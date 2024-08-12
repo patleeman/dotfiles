@@ -29,8 +29,8 @@ alias ps="ps aux"
 alias mkdir="mkdir -pv"
 
 function ls {
-	if command -v eza &>/dev/null; then
-		eza -la "$@"
+	if command -v exa &>/dev/null; then
+		exa -la "$@"
 	else
 		/bin/ls -la --color=auto "$@"
 	fi

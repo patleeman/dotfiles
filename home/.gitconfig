@@ -1,25 +1,11 @@
 [user]
-  name = Patrick Lee
-  email = git@patricklee.nyc
+	name = Patrick Lee
+	email = git@patricklee.nyc
 [push]
-  default = current
+	default = current
 [pull]
-  rebase = true
+	rebase = true
 [code]
-  editor = nvim
+	editor = nvim
 [init]
-  defaultBranch = main
-[diff]
-  tool = difftastic
-[difftool]
-  prompt = false
-[difftool "difftastic"]
-  cmd = difft "$LOCAL" "$REMOTE"
-[pager]
-  difftool = true
-
-[filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+	defaultBranch = main

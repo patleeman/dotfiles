@@ -1,27 +1,18 @@
 {
-  "$schema" : "https:\/\/schema.linearmouse.app\/0.9.5",
+  "$schema" : "https:\/\/schema.linearmouse.app\/0.10.0",
   "schemes" : [
     {
-      "pointer" : {
-        "speed" : 0.15,
-        "disableAcceleration" : false,
-        "acceleration" : 0.8
+      "scrolling" : {
+        "reverse" : {
+          "vertical" : true
+        }
       },
       "if" : {
         "device" : {
           "vendorID" : "0x258a",
-          "productName" : "Model D Wireless",
-          "serialNumber" : "000000000000",
-          "category" : "mouse",
-          "productID" : "0x2012"
-        }
-      },
-      "scrolling" : {
-        "reverse" : {
-          "vertical" : true
-        },
-        "acceleration" : {
-          "vertical" : 1
+          "productID" : "0x36",
+          "productName" : "Wired Gaming Mouse",
+          "category" : "mouse"
         }
       }
     }

@@ -12,7 +12,6 @@ export DOTFILES="$DOTFILES_DIR"
 export PATH="$DOTFILES_DIR/bin:$PATH"
 
 source $DOTFILES_DIR/configs/aliases.sh
-source $DOTFILES_DIR/configs/java.sh
 source $DOTFILES_DIR/configs/tmux.sh
 
 check_for_updates

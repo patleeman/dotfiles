@@ -7,6 +7,7 @@ echo "Starting system setup"
 
 echo "Which system would you like to setup?"
 echo "1. MacOS [ARM]"
+echo "2. Ubuntu"
 read -r input
 case $input in
 1) . "${DOTFILES_DIR}install/osx_arm.zsh" ;;

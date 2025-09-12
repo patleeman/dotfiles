@@ -1,11 +1,34 @@
-[user]
-	name = Patrick Lee
-	email = git@patricklee.nyc
+[core]
+  fsmonitor = true
+  untrackedCache = true 
+[feature]
+  manyFiles = true
+[column]
+  ui = auto
+[color]
+  ui = auto
+[rerere]
+  enabled = true
+[fetch]
+  prune = true
+  writeCommitGraph = true
 [push]
-	default = current
+  autoSetupRemote = true
 [pull]
-	rebase = true
-[code]
-	editor = nvim
-[init]
-	defaultBranch = main
+  ff = only
+  rebase = true
+[rebase]
+  autoStash = true
+[help]
+  autocorrect = 1
+[diff "ipynb"]
+  textconv = jupyter nbconvert --to markdown --stdout
+[merge]
+  conflictstyle = diff3
+[alias]
+  prune-gone = "!git pull fetch --prune && git branch -vv | awk '/: gone]/{print $1}' | xargs -r git branch -D"
+  prune-merged = "!git fetch --prune && git branch --merged origin/main | egrep -v '(^\\*| main$| develop$|^  release/)' | xargs -r git branch -d"
+  prune-merged-dry-run = "!git branch --merged origin/main | grep -vE '(^\\*|main$|develop$)'"
+  nb = !sh ~/.dotfiles/bin/git_new_named_branch
+  recent = "!git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' | head -n 15"
+  lg = log --graph --decorate --oneline --all

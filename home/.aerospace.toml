@@ -15,11 +15,11 @@ after-login-command = []
 after-startup-command = []
 
 # Start AeroSpace at login
-start-at-login = false
+start-at-login = true
 
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide.html#normalization
 enable-normalization-flatten-containers = true
-enable-normalization-opposite-orientation-for-nested-containers = true 
+enable-normalization-opposite-orientation-for-nested-containers = true
 
 # See: https://nikitabobko.github.io/AeroSpace/guide.html#layouts
 # The 'accordion-padding' specifies the size of accordion padding
@@ -35,27 +35,18 @@ default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
 
 gaps.inner.horizontal = 0
-gaps.inner.vertical =   0
-gaps.outer.left =       0
-gaps.outer.bottom =     0
-gaps.outer.top =        0
-gaps.outer.right =      0
+gaps.inner.vertical = 0
+gaps.outer.left = 0
+gaps.outer.bottom = 0
+gaps.outer.top = 0
+gaps.outer.right = 0
 
-# Layout of root containers of non-empty workspaces. The layout is applied only on startup
-# Possible values: smart|tiles|accordion
-# - 'tiles' and 'accordion' are self-describing
-# - 'smart' means some "smart logic". Currently, 3 and less windows will get 'tiles' layout,
-#   4 and more will get 'accordion' layout. 'smart' can change its behavior in future versions
-non-empty-workspaces-root-containers-layout-on-startup = 'smart'
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide.html#binding-modes
 # 'main' binding mode must be always presented
 [mode.main.binding]
 # All possible commands: https://nikitabobko.github.io/AeroSpace/commands.html
-
-# See: https://nikitabobko.github.io/AeroSpace/commands.html#exec-and-forget
-# alt-enter = 'exec-and-forget source ~/dotfiles/bin/arc_new_window'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands.html#focus
 alt-h = 'focus left'
@@ -85,6 +76,7 @@ alt-8 = 'workspace 8'
 alt-9 = 'workspace 9'
 alt-0 = 'workspace 10'
 
+
 # See: https://nikitabobko.github.io/AeroSpace/commands.html#move-node-to-workspace
 alt-shift-1 = 'move-node-to-workspace 1'
 alt-shift-2 = 'move-node-to-workspace 2'
@@ -102,27 +94,37 @@ alt-tab = 'workspace next'
 # See: https://nikitabobko.github.io/AeroSpace/commands.html#move-workspace-to-monitor
 alt-shift-tab = 'workspace prev'
 
+alt-slash = 'layout tiles horizontal vertical'
+alt-comma = 'layout accordion horizontal vertical'
+
 # App specific configs
 # codesign -dr - /path/to/yourapp.app to get the app id
+
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+run = ['move-node-to-workspace 1']
+
+[[on-window-detected]]
+# Cursor
+if.app-id = 'com.todesktop.230313mzl4w4u92'
+run = ['move-node-to-workspace 2']
+
+[[on-window-detected]]
+if.app-id = 'com.github.wez.wezterm'
+run = ['move-node-to-workspace 3']
+
+# [[on-window-detected]]
+# if.app-id = ''
+# run = ['move-node-to-workspace 4']
+
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
 run = ['move-node-to-workspace 5']
 
 [[on-window-detected]]
-if.app-id = 'company.thebrowser.Browser'
-run = ['move-node-to-workspace 1']
-
-[[on-window-detected]]
-if.app-id = 'com.microsoft.VSCode'
-run = ['move-node-to-workspace 2']
-
-[[on-window-detected]]
-if.app-id = 'com.jetbrains.intellij'
-run = ['move-node-to-workspace 3']
-
-[[on-window-detected]]
-if.app-id = 'com.spotify.client'
+if.app-id = 'app.zen-browser.zen'
 run = ['move-node-to-workspace 6']
+
 
 [[on-window-detected]]
 if.app-id = 'com.1password.1password'
@@ -130,12 +132,4 @@ run = 'layout floating'
 
 [[on-window-detected]]
 if.app-id = 'com.apple.systempreferences'
-run = 'layout floating'
-
-[[on-window-detected]]
-if.app-id = 'com.apple.MobileSMS'
-run = 'layout floating'
-
-[[on-window-detected]]
-if.app-id = 'com.openai.chat'
 run = 'layout floating'

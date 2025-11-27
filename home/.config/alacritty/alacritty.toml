@@ -1,8 +1,0 @@
-[env]
-ALACRITTY = "alacritty"
-
-[font]
-size = 14.0
-
-[font.normal]
-family = "FiraCode Nerd Font Mono"

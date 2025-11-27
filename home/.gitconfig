@@ -21,8 +21,6 @@
   autoStash = true
 [help]
   autocorrect = 1
-[diff "ipynb"]
-  textconv = jupyter nbconvert --to markdown --stdout
 [merge]
   conflictstyle = diff3
 [alias]
@@ -32,3 +30,7 @@
   nb = !sh ~/.dotfiles/bin/git_new_named_branch
   recent = "!git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' | head -n 15"
   lg = log --graph --decorate --oneline --all
+  co = "!f() { b=\"$1\"; shift || true; git checkout \"$b\" \"$@\" 2>/dev/null && exit 0; git fetch origin \"$b\" --prune 2>/dev/null || exit 1; git rev-parse --verify \"$b\" >/dev/null 2>&1 && { git branch --set-upstream-to=origin/\"$b\" \"$b\" 2>/dev/null || true; exec git checkout \"$b\" \"$@\"; }; exec git checkout -b \"$b\" --track origin/\"$b\" \"$@\"; }; f"
+[user]
+	name = Patrick Lee
+	email = me@patricklee.nyc

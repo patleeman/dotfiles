@@ -1,0 +1,2 @@
+432:            className="flex-1 bg-transparent border-none outline-none text-[12px] text-[#e2e8f0] placeholder:text-[#475569]"
+433:            placeholder="Search agents or commands..."

@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/go-backend/internal/tools/tools_test.go has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    20→		return "sub-123", nil
+    21→	}
+    22→
+    23→	tool := NewSpawnSubAgentTool(spawner)
+    24→	args := map[string]interface{}{
+    25→		"name":              "TestAgent",
+    26→		"prompt":            "Test Prompt",
+    27→		"objective":         "Test Objective",
+    28→		"working_directory": "/tmp/work",
+    29→	}
+    30→	toolCtx := map[string]interface{}{
+    31→		"agent_id": "parent-456",
+    32→	}
+    33→

@@ -1,0 +1,543 @@
+package tools
+
+import (
+	"context"
+	"testing"
+)
+
+// MockTool implements the Tool interface for testing
+type MockTool struct {
+	nameVal          string
+	description      string
+	parameters       map[string]interface{}
+	requiresApproval bool
+	executeFn        func(ctx context.Context, arguments map[string]interface{}, toolContext map[string]interface{}) (ToolResult, error)
+}
+
+func (m *MockTool) Name() string {
+	return m.nameVal
+}
+
+func (m *MockTool) Definition() map[string]interface{} {
+	return map[string]interface{}{
+		"type": "function",
+		"function": map[string]interface{}{
+			"name":        m.nameVal,
+			"description": m.description,
+			"parameters":  m.parameters,
+		},
+	}
+}
+
+func (m *MockTool) Execute(ctx context.Context, arguments map[string]interface{}, toolContext map[string]interface{}) (ToolResult, error) {
+	if m.executeFn != nil {
+		return m.executeFn(ctx, arguments, toolContext)
+	}
+	return ToolResult{Content: "mock result"}, nil
+}
+
+func (m *MockTool) RequiresApproval(arguments map[string]interface{}) bool {
+	return m.requiresApproval
+}
+
+func TestNewRegistry(t *testing.T) {
+	reg := NewRegistry()
+	if reg == nil {
+		t.Fatal("expected non-nil Registry")
+	}
+	if reg.tools == nil {
+		t.Error("expected tools map to be initialized")
+	}
+	if len(reg.tools) != 0 {
+		t.Error("expected empty tools map")
+	}
+}
+
+func TestRegistry_Register(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1", description: "First tool"}
+	tool2 := &MockTool{nameVal: "tool2", description: "Second tool"}
+
+	reg.Register(tool1)
+	reg.Register(tool2)
+
+	if len(reg.tools) != 2 {
+		t.Errorf("expected 2 tools, got %d", len(reg.tools))
+	}
+
+	if reg.tools["tool1"] != tool1 {
+		t.Error("expected tool1 to be registered")
+	}
+	if reg.tools["tool2"] != tool2 {
+		t.Error("expected tool2 to be registered")
+	}
+}
+
+func TestRegistry_Register_Overwrite(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1", description: "First tool"}
+	tool2 := &MockTool{nameVal: "tool1", description: "Second tool (overwrites)"}
+
+	reg.Register(tool1)
+	reg.Register(tool2)
+
+	if len(reg.tools) != 1 {
+		t.Errorf("expected 1 tool (overwritten), got %d", len(reg.tools))
+	}
+
+	if reg.tools["tool1"] != tool2 {
+		t.Error("expected tool2 to overwrite tool1")
+	}
+}
+
+func TestRegistry_ListTools(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1"}
+	tool2 := &MockTool{nameVal: "tool2"}
+	tool3 := &MockTool{nameVal: "tool3"}
+
+	reg.Register(tool1)
+	reg.Register(tool2)
+	reg.Register(tool3)
+
+	tools := reg.ListTools()
+
+	if len(tools) != 3 {
+		t.Errorf("expected 3 tools, got %d", len(tools))
+	}
+
+	// Check all tools are present (order may vary)
+	toolMap := make(map[string]bool)
+	for _, name := range tools {
+		toolMap[name] = true
+	}
+
+	if !toolMap["tool1"] {
+		t.Error("expected tool1 in list")
+	}
+	if !toolMap["tool2"] {
+		t.Error("expected tool2 in list")
+	}
+	if !toolMap["tool3"] {
+		t.Error("expected tool3 in list")
+	}
+}
+
+func TestRegistry_ListTools_Empty(t *testing.T) {
+	reg := NewRegistry()
+
+	tools := reg.ListTools()
+
+	if len(tools) != 0 {
+		t.Errorf("expected empty list, got %d tools", len(tools))
+	}
+}
+
+func TestRegistry_GetTool(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1"}
+	reg.Register(tool1)
+
+	// Get existing tool
+	got, ok := reg.GetTool("tool1")
+	if !ok {
+		t.Error("expected tool1 to be found")
+	}
+	if got != tool1 {
+		t.Error("expected tool1 to be returned")
+	}
+
+	// Get non-existent tool
+	_, ok = reg.GetTool("nonexistent")
+	if ok {
+		t.Error("expected nonexistent tool to not be found")
+	}
+}
+
+func TestRegistry_GetToolDefinitions(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{
+		nameVal:     "tool1",
+		description: "First tool",
+		parameters: map[string]interface{}{
+			"type": "object",
+		},
+	}
+	tool2 := &MockTool{
+		nameVal:     "tool2",
+		description: "Second tool",
+		parameters: map[string]interface{}{
+			"type": "object",
+		},
+	}
+
+	reg.Register(tool1)
+	reg.Register(tool2)
+
+	defs := reg.GetToolDefinitions()
+
+	if len(defs) != 2 {
+		t.Errorf("expected 2 definitions, got %d", len(defs))
+	}
+
+	// Verify structure
+	for _, def := range defs {
+		defMap, ok := def.(map[string]interface{})
+		if !ok {
+			t.Error("expected definition to be map")
+			continue
+		}
+
+		if defMap["type"] != "function" {
+			t.Error("expected type to be 'function'")
+		}
+
+		fn, ok := defMap["function"].(map[string]interface{})
+		if !ok {
+			t.Error("expected function to be map")
+			continue
+		}
+
+		if fn["name"] == nil {
+			t.Error("expected function to have name")
+		}
+		if fn["description"] == nil {
+			t.Error("expected function to have description")
+		}
+		if fn["parameters"] == nil {
+			t.Error("expected function to have parameters")
+		}
+	}
+}
+
+func TestRegistry_GetFilteredToolDefinitions_All(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1"}
+	tool2 := &MockTool{nameVal: "tool2"}
+	reg.Register(tool1)
+	reg.Register(tool2)
+
+	defs := reg.GetFilteredToolDefinitions([]string{"*"})
+
+	if len(defs) != 2 {
+		t.Errorf("expected 2 definitions with wildcard, got %d", len(defs))
+	}
+}
+
+func TestRegistry_GetFilteredToolDefinitions_Specific(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1"}
+	tool2 := &MockTool{nameVal: "tool2"}
+	tool3 := &MockTool{nameVal: "tool3"}
+	reg.Register(tool1)
+	reg.Register(tool2)
+	reg.Register(tool3)
+
+	defs := reg.GetFilteredToolDefinitions([]string{"tool1", "tool3"})
+
+	if len(defs) != 2 {
+		t.Errorf("expected 2 definitions, got %d", len(defs))
+	}
+
+	// Verify correct tools are included
+	toolNames := make(map[string]bool)
+	for _, def := range defs {
+		defMap := def.(map[string]interface{})
+		fn := defMap["function"].(map[string]interface{})
+		toolNames[fn["name"].(string)] = true
+	}
+
+	if !toolNames["tool1"] {
+		t.Error("expected tool1 to be included")
+	}
+	if !toolNames["tool3"] {
+		t.Error("expected tool3 to be included")
+	}
+	if toolNames["tool2"] {
+		t.Error("expected tool2 to be excluded")
+	}
+}
+
+func TestRegistry_GetFilteredToolDefinitions_PrefixPattern(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "agent_spawn"}
+	tool2 := &MockTool{nameVal: "agent_plan"}
+	tool3 := &MockTool{nameVal: "workspace_read"}
+	tool4 := &MockTool{nameVal: "workspace_write"}
+	tool5 := &MockTool{nameVal: "schedule_create"}
+	tool6 := &MockTool{nameVal: "other_tool"}
+	reg.Register(tool1)
+	reg.Register(tool2)
+	reg.Register(tool3)
+	reg.Register(tool4)
+	reg.Register(tool5)
+	reg.Register(tool6)
+
+	// Test agent_* pattern
+	defs := reg.GetFilteredToolDefinitions([]string{"agent_*"})
+	if len(defs) != 2 {
+		t.Errorf("expected 2 agent tools, got %d", len(defs))
+	}
+
+	// Test workspace_* pattern
+	defs = reg.GetFilteredToolDefinitions([]string{"workspace_*"})
+	if len(defs) != 2 {
+		t.Errorf("expected 2 workspace tools, got %d", len(defs))
+	}
+
+	// Test schedule_* pattern
+	defs = reg.GetFilteredToolDefinitions([]string{"schedule_*"})
+	if len(defs) != 1 {
+		t.Errorf("expected 1 schedule tool, got %d", len(defs))
+	}
+
+	// Test multiple patterns
+	defs = reg.GetFilteredToolDefinitions([]string{"agent_*", "workspace_*"})
+	if len(defs) != 4 {
+		t.Errorf("expected 4 tools (agent + workspace), got %d", len(defs))
+	}
+}
+
+func TestRegistry_GetFilteredToolDefinitions_PrefixPattern_EdgeCases(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "agent_spawn"}
+	tool2 := &MockTool{nameVal: "agent"}
+	tool3 := &MockTool{nameVal: "agent_extra_long_name"}
+	reg.Register(tool1)
+	reg.Register(tool2)
+	reg.Register(tool3)
+
+	// Test that exact match doesn't match prefix pattern
+	defs := reg.GetFilteredToolDefinitions([]string{"agent_*"})
+	toolNames := make(map[string]bool)
+	for _, def := range defs {
+		defMap := def.(map[string]interface{})
+		fn := defMap["function"].(map[string]interface{})
+		toolNames[fn["name"].(string)] = true
+	}
+
+	if !toolNames["agent_spawn"] {
+		t.Error("expected agent_spawn to match agent_*")
+	}
+	if !toolNames["agent_extra_long_name"] {
+		t.Error("expected agent_extra_long_name to match agent_*")
+	}
+	if toolNames["agent"] {
+		t.Error("expected 'agent' to not match agent_* (no underscore)")
+	}
+}
+
+func TestRegistry_GetFilteredToolDefinitions_EmptyAllowed(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1"}
+	reg.Register(tool1)
+
+	defs := reg.GetFilteredToolDefinitions([]string{})
+
+	if len(defs) != 0 {
+		t.Errorf("expected 0 definitions with empty allowed list, got %d", len(defs))
+	}
+}
+
+func TestRegistry_GetFilteredToolDefinitions_Mixed(t *testing.T) {
+	reg := NewRegistry()
+
+	tool1 := &MockTool{nameVal: "tool1"}
+	tool2 := &MockTool{nameVal: "agent_spawn"}
+	tool3 := &MockTool{nameVal: "agent_plan"}
+	tool4 := &MockTool{nameVal: "workspace_read"}
+	reg.Register(tool1)
+	reg.Register(tool2)
+	reg.Register(tool3)
+	reg.Register(tool4)
+
+	// Mix of specific tool, wildcard, and prefix pattern
+	defs := reg.GetFilteredToolDefinitions([]string{"tool1", "*", "workspace_*"})
+
+	// Should get all tools (wildcard matches all)
+	if len(defs) != 4 {
+		t.Errorf("expected 4 definitions with wildcard, got %d", len(defs))
+	}
+}
+
+func TestRegistry_Execute(t *testing.T) {
+	reg := NewRegistry()
+
+	executed := false
+	tool1 := &MockTool{
+		nameVal: "tool1",
+		executeFn: func(ctx context.Context, arguments map[string]interface{}, toolContext map[string]interface{}) (ToolResult, error) {
+			executed = true
+			return ToolResult{Content: "executed"}, nil
+		},
+	}
+	reg.Register(tool1)
+
+	ctx := context.Background()
+	result, err := reg.Execute(ctx, "tool1", map[string]interface{}{"arg1": "value1"}, map[string]interface{}{})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !executed {
+		t.Error("expected tool to be executed")
+	}
+
+	if result.Content != "executed" {
+		t.Errorf("expected result content 'executed', got %s", result.Content)
+	}
+}
+
+func TestRegistry_Execute_NotFound(t *testing.T) {
+	reg := NewRegistry()
+
+	ctx := context.Background()
+	_, err := reg.Execute(ctx, "nonexistent", map[string]interface{}{}, map[string]interface{}{})
+
+	if err == nil {
+		t.Error("expected error for nonexistent tool")
+	}
+
+	if err.Error() != "tool not found: nonexistent" {
+		t.Errorf("expected specific error message, got %v", err)
+	}
+}
+
+func TestBaseTool_Name(t *testing.T) {
+	tool := &BaseTool{NameVal: "test_tool"}
+	if tool.Name() != "test_tool" {
+		t.Errorf("expected Name() to return 'test_tool', got %s", tool.Name())
+	}
+}
+
+func TestBaseTool_Definition(t *testing.T) {
+	tool := &BaseTool{
+		NameVal:     "test_tool",
+		Description: "A test tool",
+		Parameters: map[string]interface{}{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"arg1": map[string]interface{}{
+					"type": "string",
+				},
+			},
+		},
+	}
+
+	def := tool.Definition()
+
+	if def["type"] != "function" {
+		t.Error("expected type to be 'function'")
+	}
+
+	fn, ok := def["function"].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected function to be map")
+	}
+
+	if fn["name"] != "test_tool" {
+		t.Errorf("expected name 'test_tool', got %v", fn["name"])
+	}
+	if fn["description"] != "A test tool" {
+		t.Errorf("expected description 'A test tool', got %v", fn["description"])
+	}
+	if fn["parameters"] == nil {
+		t.Error("expected parameters to be set")
+	}
+}
+
+func TestBaseTool_RequiresApproval(t *testing.T) {
+	tool := &BaseTool{}
+	if tool.RequiresApproval(map[string]interface{}{}) {
+		t.Error("expected BaseTool to not require approval")
+	}
+}
+
+func TestRegistry_GetFilteredToolDefinitions_ComplexPatterns(t *testing.T) {
+	reg := NewRegistry()
+
+	// Register tools with various naming patterns
+	tools := []*MockTool{
+		{nameVal: "agent_spawn"},
+		{nameVal: "agent_plan"},
+		{nameVal: "agent_message"},
+		{nameVal: "workspace_read"},
+		{nameVal: "workspace_write"},
+		{nameVal: "workspace_ls"},
+		{nameVal: "schedule_create"},
+		{nameVal: "schedule_delete"},
+		{nameVal: "shell_exec"},
+		{nameVal: "browser_goto"},
+	}
+
+	for _, tool := range tools {
+		reg.Register(tool)
+	}
+
+	// Test that prefix patterns work correctly
+	testCases := []struct {
+		allowed  []string
+		expected int
+		name     string
+	}{
+		{[]string{"agent_*"}, 3, "agent prefix"},
+		{[]string{"workspace_*"}, 3, "workspace prefix"},
+		{[]string{"schedule_*"}, 2, "schedule prefix"},
+		{[]string{"agent_*", "workspace_*"}, 6, "multiple prefixes"},
+		{[]string{"shell_exec", "browser_*"}, 2, "specific + prefix"},
+		{[]string{"*"}, 10, "wildcard all"},
+		{[]string{"agent_spawn", "workspace_read", "schedule_create"}, 3, "specific tools"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			defs := reg.GetFilteredToolDefinitions(tc.allowed)
+			if len(defs) != tc.expected {
+				t.Errorf("expected %d definitions for %v, got %d", tc.expected, tc.allowed, len(defs))
+			}
+		})
+	}
+}
+
+func TestRegistry_ConcurrentAccess(t *testing.T) {
+	reg := NewRegistry()
+
+	// Test concurrent registration
+	done := make(chan bool)
+	for i := 0; i < 10; i++ {
+		go func(id int) {
+			tool := &MockTool{nameVal: "tool" + string(rune('0'+id))}
+			reg.Register(tool)
+			done <- true
+		}(i)
+	}
+
+	// Wait for all goroutines
+	for i := 0; i < 10; i++ {
+		<-done
+	}
+
+	// Verify all tools were registered
+	tools := reg.ListTools()
+	if len(tools) != 10 {
+		t.Errorf("expected 10 tools, got %d", len(tools))
+	}
+}
+
+
+
+
+
+
+

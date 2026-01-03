@@ -1,0 +1,104 @@
+src/App.tsx:6:import { FleetSidebar } from './components/Agent/FleetSidebar';
+src/App.tsx:9:import { SettingsSidebar } from './components/Agent/SettingsSidebar';
+src/App.tsx:10:import { SkillsSidebar } from './components/Agent/SkillsSidebar';
+src/App.tsx:16:import { UsageSidebar } from './components/Agent/UsageSidebar';
+src/App.tsx:17:import { TriggersSidebar } from './components/Agent/TriggersSidebar';
+src/App.tsx:119:  const { createAgent, selectAgent, setSidebarCollapsed, isExplorerCollapsed, toggleExplorer, activeAgentId, agents, setFocusedPane } = useAgents();
+src/App.tsx:250:              setSidebarCollapsed(true);
+src/App.tsx:346:            <SettingsSidebar activeTab={activeSettingsTab} onTabChange={setActiveSettingsTab} />
+src/App.tsx:348:            <SkillsSidebar />
+src/App.tsx:350:            <TriggersSidebar />
+src/App.tsx:352:            <SkillsSidebar />
+src/App.tsx:354:            <TriggersSidebar />
+src/App.tsx:356:            <UsageSidebar />
+src/App.tsx:358:            <FleetSidebar />
+src/hooks/useLocalStorage.ts:71:  // Sidebar state
+src/hooks/useLocalStorage.ts:72:  SIDEBAR_COLLAPSED: 'agent-sidebar-collapsed',
+src/hooks/useLocalStorage.ts:75:  SIDEBAR_WIDTH: 'agent-sidebar-width',
+src/context/AgentStore.ts:36:  isSidebarCollapsed: boolean;
+src/context/AgentStore.ts:58:  isSidebarCollapsed: localStorage.getItem('agent-sidebar-collapsed') === 'true',
+src/components/Unibar.tsx:21:  const { agents, selectAgent, createAgent, setSidebarCollapsed, updateAgentState, renameAgent, deleteAgent } = useAgents();
+src/components/Unibar.tsx:134:        setSidebarCollapsed(true);
+src/context/AgentContext.tsx:325:  const toggleSidebar = useCallback(() => {
+src/context/AgentContext.tsx:327:      const newState = !s.isSidebarCollapsed;
+src/context/AgentContext.tsx:328:      localStorage.setItem('agent-sidebar-collapsed', newState.toString());
+src/context/AgentContext.tsx:329:      return { ...s, isSidebarCollapsed: newState };
+src/context/AgentContext.tsx:333:  const setSidebarCollapsed = useCallback((collapsed: boolean) => {
+src/context/AgentContext.tsx:335:      localStorage.setItem('agent-sidebar-collapsed', collapsed.toString());
+src/context/AgentContext.tsx:336:      return { ...s, isSidebarCollapsed: collapsed };
+src/context/AgentContext.tsx:408:    toggleSidebar,
+src/context/AgentContext.tsx:409:    setSidebarCollapsed,
+src/context/AgentContext.tsx:445:    toggleSidebar,
+src/context/AgentContext.tsx:446:    setSidebarCollapsed,
+src/components/ui/SidebarItem.tsx:4:interface SidebarItemProps {
+src/components/ui/SidebarItem.tsx:14:export const SidebarItem: React.FC<SidebarItemProps> = ({
+src/components/ui/index.ts:10:export { SidebarSection } from './SidebarSection';
+src/components/ui/index.ts:11:export { SidebarItem } from './SidebarItem';
+src/components/Agent/FleetSidebar.tsx:9:import { SidebarSection, SidebarItem, Button } from '../ui';
+src/components/Agent/FleetSidebar.tsx:27:export const FleetSidebar: React.FC = () => {
+src/components/Agent/FleetSidebar.tsx:143:            {/* Sidebar Header */}
+src/components/Agent/FleetSidebar.tsx:163:                <SidebarSection title="Views">
+src/components/Agent/FleetSidebar.tsx:164:                    <SidebarItem
+src/components/Agent/FleetSidebar.tsx:173:                    <SidebarItem
+src/components/Agent/FleetSidebar.tsx:179:                </SidebarSection>
+src/components/Agent/FleetSidebar.tsx:204:                <SidebarSection title="Status">
+src/components/Agent/FleetSidebar.tsx:206:                        <SidebarItem
+src/components/Agent/FleetSidebar.tsx:215:                </SidebarSection>
+src/components/Agent/FleetSidebar.tsx:219:                    <SidebarSection title="Group By">
+src/components/Agent/FleetSidebar.tsx:221:                            <SidebarItem
+src/components/Agent/FleetSidebar.tsx:228:                    </SidebarSection>
+src/components/Agent/TriggersView.tsx:11:    const { listTriggers, deleteTrigger, renameTrigger, isExplorerCollapsed, agents, createAgent, selectAgent, setSidebarCollapsed } = useAgents();
+src/components/Agent/TriggersView.tsx:62:                setSidebarCollapsed(true);
+src/components/Agent/SkillsSidebar.tsx:9:export const SkillsSidebar: React.FC = () => {
+src/components/Agent/SkillsSidebar.tsx:10:    const { listSkills, agents, selectAgent, createAgent, setSidebarCollapsed, activeAgentId } = useAgents();
+src/components/Agent/SkillsSidebar.tsx:39:            setSidebarCollapsed(true);
+src/components/Agent/SkillsSidebar.tsx:53:                setSidebarCollapsed(true);
+src/components/Agent/StatusBar.tsx:18:        isSidebarCollapsed,
+src/components/Agent/StatusBar.tsx:19:        toggleSidebar,
+src/components/Agent/StatusBar.tsx:296:                    onClick={() => toggleSidebar()}
+src/components/Agent/StatusBar.tsx:302:                            : !isSidebarCollapsed
+src/components/Agent/StatusBar.tsx:306:                    title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+src/components/ui/SidebarSection.tsx:4:interface SidebarSectionProps {
+src/components/ui/SidebarSection.tsx:10:export const SidebarSection: React.FC<SidebarSectionProps> = ({
+src/components/Agent/AgentDashboard.tsx:18:    setSidebarCollapsed,
+src/components/Agent/AgentDashboard.tsx:94:        setSidebarCollapsed(true);
+src/components/Agent/TriggersSidebar.tsx:9:export const TriggersSidebar: React.FC = () => {
+src/components/Agent/TriggersSidebar.tsx:10:    const { listTriggers, agents, selectAgent, createAgent, setSidebarCollapsed, activeAgentId } = useAgents();
+src/components/Agent/TriggersSidebar.tsx:39:            setSidebarCollapsed(true);
+src/components/Agent/TriggersSidebar.tsx:53:                setSidebarCollapsed(true);
+src/components/Agent/SettingsView.tsx:220:    'toggle_sidebar': 'Cmd+B',
+src/components/Agent/SettingsView.tsx:236:    'toggle_sidebar': 'Toggle Sidebar',
+src/components/Agent/SettingsView.tsx:755:                    {/* Left Sidebar: Providers */}
+src/components/Agent/AgentWorkspace.tsx:21:  const { agents, tasks, updateAgentState, sendMessage, updateScope, logs, clearConversation, isSidebarCollapsed, toggleSidebar, setSidebarCollapsed, activeTab, setActiveTab, approveTool, selectAgent } = useAgents();
+src/components/Agent/AgentWorkspace.tsx:53:  const [sidebarWidth, setSidebarWidth] = useState(() => {
+src/components/Agent/AgentWorkspace.tsx:54:    const saved = localStorage.getItem('agent-sidebar-width');
+src/components/Agent/AgentWorkspace.tsx:63:    localStorage.setItem('agent-sidebar-width', sidebarWidth.toString());
+src/components/Agent/AgentWorkspace.tsx:64:  }, [sidebarWidth]);
+src/components/Agent/AgentWorkspace.tsx:70:  const isResizingSidebar = useRef(false);
+src/components/Agent/AgentWorkspace.tsx:75:      if (isResizingSidebar.current) {
+src/components/Agent/AgentWorkspace.tsx:77:        setSidebarWidth(Math.max(200, Math.min(600, newWidth)));
+src/components/Agent/AgentWorkspace.tsx:89:      isResizingSidebar.current = false;
+src/components/Agent/AgentWorkspace.tsx:140:  const hasSidebarInfo = React.useMemo(() => {
+src/components/Agent/AgentWorkspace.tsx:167:  // Automatically collapse sidebar if empty when switching agents
+src/components/Agent/AgentWorkspace.tsx:171:      if (!hasSidebarInfo && !isSidebarCollapsed) {
+src/components/Agent/AgentWorkspace.tsx:172:        setSidebarCollapsed(true);
+src/components/Agent/AgentWorkspace.tsx:176:      if (hasSidebarInfo || isSidebarCollapsed) {
+src/components/Agent/AgentWorkspace.tsx:180:  }, [agentId, hasSidebarInfo, isSidebarCollapsed, setSidebarCollapsed]);
+src/components/Agent/AgentWorkspace.tsx:280:      if (isHotkey(e, hotkeys['toggle_sidebar'] || 'Cmd+B')) {
+src/components/Agent/AgentWorkspace.tsx:282:        toggleSidebar();
+src/components/Agent/AgentWorkspace.tsx:335:  }, [toggleSidebar, agent, updateAgentState, displayLogs, approveTool, config]);
+src/components/Agent/AgentWorkspace.tsx:515:            {!isSidebarCollapsed && (
+src/components/Agent/AgentWorkspace.tsx:520:                  isResizingSidebar.current = true;
+src/components/Agent/AgentWorkspace.tsx:527:            {/* Right Panel: Intent & Execution Sidebar */}
+src/components/Agent/AgentWorkspace.tsx:529:              style={{ width: isSidebarCollapsed ? 0 : sidebarWidth }}
+src/components/Agent/AgentWorkspace.tsx:532:                isSidebarCollapsed && "overflow-hidden border-l-0"
+src/components/Agent/SettingsSidebar.tsx:3:import { SidebarSection, SidebarItem } from '../ui';
+src/components/Agent/SettingsSidebar.tsx:5:interface SettingsSidebarProps {
+src/components/Agent/SettingsSidebar.tsx:10:export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeTab, onTabChange }) => {
+src/components/Agent/SettingsSidebar.tsx:28:        <SidebarSection title="Configuration">
+src/components/Agent/SettingsSidebar.tsx:30:            <SidebarItem
+src/components/Agent/SettingsSidebar.tsx:38:        </SidebarSection>
+src/components/Agent/AgentExplorer.tsx:206:      {/* Sidebar Header */}
+src/components/Agent/UsageSidebar.tsx:3:export const UsageSidebar: React.FC = () => {
+src/components/Agent/SkillsView.tsx:11:  const { listSkills, deleteSkill, isExplorerCollapsed, agents, createAgent, selectAgent, setSidebarCollapsed } = useAgents();
+src/components/Agent/SkillsView.tsx:62:        setSidebarCollapsed(true);

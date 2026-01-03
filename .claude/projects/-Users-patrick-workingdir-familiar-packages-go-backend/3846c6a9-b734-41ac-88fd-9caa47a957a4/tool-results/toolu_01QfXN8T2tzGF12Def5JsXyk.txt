@@ -1,0 +1,1455 @@
+     1→import React, { useState, useEffect, useRef, useCallback } from 'react';
+     2→import { useQuery, useQueryClient } from '@tanstack/react-query';
+     3→import { api } from '../../lib/api';
+     4→import { clsx } from 'clsx';
+     5→import { ask } from '@tauri-apps/plugin-dialog';
+     6→import { useSystem } from '../../context/SystemContext';
+     7→import { useAgents } from '../../context/AgentContext';
+     8→
+     9→export const SettingsView: React.FC = () => {
+    10→  const queryClient = useQueryClient();
+    11→  const { setExplorerCollapsed } = useAgents();
+    12→  const { data: config, refetch: refetchConfig } = useQuery({
+    13→    queryKey: ['config'],
+    14→    queryFn: () => api.getConfig(),
+    15→  });
+    16→
+    17→  const { data: apiKeys } = useQuery({
+    18→    queryKey: ['apiKeys'],
+    19→    queryFn: () => api.getApiKeys(),
+    20→  });
+    21→
+    22→  const { data: vaultSecrets, refetch: refetchVault } = useQuery({
+    23→    queryKey: ['vaultSecrets'],
+    24→    queryFn: () => api.listVaultSecrets(),
+    25→  });
+    26→
+    27→  const { data: status } = useQuery({
+    28→    queryKey: ['status'],
+    29→    queryFn: () => api.getStatus(),
+    30→    refetchInterval: 5000,
+    31→  });
+    32→
+    33→  const handleToggleAlwaysAllowAll = async () => {
+    34→    const current = !!config?.security?.always_allow_all;
+    35→    if (!current) {
+    36→      const confirmed = await ask("WARNING: This will automatically approve ALL tool calls (including shell and browser) from ALL agents and sub-agents. This grants autonomous agents full control over your local system and web presence. Are you sure you want to disable all security oversight?", {
+    37→        title: "Danger: Disable All Approvals",
+    38→        kind: "error",
+    39→      });
+    40→      if (!confirmed) return;
+    41→    }
+    42→
+    43→    try {
+    44→      await api.updateConfig({ security: { always_allow_all: !current } });
+    45→      await refetchConfig();
+    46→      triggerSuccess();
+    47→    } catch (err) {
+    48→      console.error('Failed to toggle always allow all:', err);
+    49→    }
+    50→  };
+    51→
+    52→  const handleUpdateShellPermissionMode = async (mode: string) => {
+    53→    try {
+    54→      await api.updateConfig({ security: { shell_permission_mode: mode } });
+    55→      await refetchConfig();
+    56→      triggerSuccess();
+    57→    } catch (err) {
+    58→      console.error('Failed to update shell permission mode:', err);
+    59→    }
+    60→  };
+    61→
+    62→  const handleToggleSubAgentsGlobal = async () => {
+    63→    try {
+    64→      const current = !!config?.sub_agent?.enabled;
+    65→      await api.updateConfig({ sub_agent: { enabled: !current } });
+    66→      await refetchConfig();
+    67→      triggerSuccess();
+    68→    } catch (err) {
+    69→      console.error('Failed to toggle sub-agents globally:', err);
+    70→    }
+    71→  };
+    72→
+    73→  const [isSaving, setIsSaving] = useState(false);
+    74→  const [_showSuccess, setShowSuccess] = useState(false);
+    75→  const [newKey, setNewKey] = useState<{ provider: string; key: string }>({ provider: '', key: '' });
+    76→  const [newVaultSecret, setNewVaultSecret] = useState<{ name: string; value: string }>({ name: '', value: '' });
+    77→  const [customBaseUrl, setCustomBaseUrl] = useState('');
+    78→  const [isAddingCustomProvider, setIsAddingCustomProvider] = useState(false);
+    79→  const [newCustomProviderName, setNewCustomProviderName] = useState('');
+    80→
+    81→  const [editingProvider, setEditingProvider] = useState<string | null>(null);
+    82→  const [editingCapability, setEditingCapability] = useState<string>('chat');
+    83→  const [newModelName, setNewModelName] = useState('');
+    84→  const [isFetchingModels, setIsFetchingModels] = useState(false);
+    85→  const { activeSettingsTab: activeTab } = useSystem();
+    86→
+    87→  const [recordingHotkey, setRecordingHotkey] = useState<string | null>(null);
+    88→  const autoFetchedProviders = useRef<Set<string>>(new Set());
+    89→
+    90→  // Reasoning levels
+    91→  type ReasoningLevel = '' | 'low' | 'medium' | 'high';
+    92→  const reasoningLevels: { value: ReasoningLevel; label: string }[] = [
+    93→    { value: '', label: 'None' },
+    94→    { value: 'low', label: 'Low' },
+    95→    { value: 'medium', label: 'Medium' },
+    96→    { value: 'high', label: 'High' },
+    97→  ];
+    98→
+    99→  // Helper to parse model string for reasoning level
+   100→  // e.g., "claude-haiku-4.5:thinking-high" -> { baseModel: "claude-haiku-4.5", level: "high" }
+   101→  const parseModelLevel = (model: string): { baseModel: string; level: ReasoningLevel } => {
+   102→    for (const l of ['low', 'medium', 'high'] as ReasoningLevel[]) {
+   103→      const suffix = `:thinking-${l}`;
+   104→      if (model.endsWith(suffix)) {
+   105→        return { baseModel: model.replace(suffix, ''), level: l };
+   106→      }
+   107→    }
+   108→    // Legacy: :thinking without level = high
+   109→    if (model.endsWith(':thinking')) {
+   110→      return { baseModel: model.replace(':thinking', ''), level: 'high' };
+   111→    }
+   112→    return { baseModel: model, level: '' };
+   113→  };
+   114→
+   115→  // Helper to build model string from base and level
+   116→  const buildModelString = (baseModel: string, level: ReasoningLevel): string => {
+   117→    if (level) {
+   118→      return `${baseModel}:thinking-${level}`;
+   119→    }
+   120→    return baseModel;
+   121→  };
+   122→
+   123→  // Providers that support thinking/reasoning
+   124→  const thinkingProviders = ['openrouter', 'anthropic', 'openai', 'gemini'];
+   125→
+   126→  // Update a model's reasoning level
+   127→  const handleUpdateModelLevel = async (oldModel: string, newLevel: ReasoningLevel) => {
+   128→    if (!editingProvider || !editingCapability) return;
+   129→
+   130→    const { baseModel } = parseModelLevel(oldModel);
+   131→    const newModel = buildModelString(baseModel, newLevel);
+   132→
+   133→    if (newModel === oldModel) return; // No change
+   134→
+   135→    const models = availableModels[editingProvider]?.[editingCapability] || [];
+   136→    const updatedModels = models.map(m => m === oldModel ? newModel : m);
+   137→
+   138→    const updatedAvailableModels = {
+   139→      ...availableModels,
+   140→      [editingProvider]: {
+   141→        ...(availableModels[editingProvider] || {}),
+   142→        [editingCapability]: updatedModels
+   143→      }
+   144→    };
+   145→
+   146→    setIsSaving(true);
+   147→    try {
+   148→      await api.updateConfig({ available_models: updatedAvailableModels });
+   149→      await refetchConfig();
+   150→      triggerSuccess();
+   151→    } catch (err) {
+   152→      console.error('Failed to update model reasoning level:', err);
+   153→    } finally {
+   154→      setIsSaving(false);
+   155→    }
+   156→  };
+   157→
+   158→  useEffect(() => {
+   159→    setExplorerCollapsed(false);
+   160→  }, []);
+   161→
+   162→  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   163→  const triggerSuccess = useCallback(() => {
+   164→    setShowSuccess(true);
+   165→    if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+   166→    successTimeoutRef.current = setTimeout(() => setShowSuccess(false), 3000);
+   167→  }, []);
+   168→
+   169→  useEffect(() => {
+   170→    if (recordingHotkey) {
+   171→      const handleGlobalKeyDown = (e: KeyboardEvent) => {
+   172→        // Don't intercept if it's just a modifier key
+   173→        if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+   174→
+   175→        e.preventDefault();
+   176→        e.stopPropagation();
+   177→
+   178→        if (e.key === 'Escape') {
+   179→          setRecordingHotkey(null);
+   180→          return;
+   181→        }
+   182→
+   183→        const modifiers = [];
+   184→        if (e.metaKey) modifiers.push('Cmd');
+   185→        else if (e.ctrlKey) modifiers.push('Ctrl');
+   186→
+   187→        if (e.shiftKey) modifiers.push('Shift');
+   188→        if (e.altKey) modifiers.push('Alt');
+   189→
+   190→        let key = e.key;
+   191→        if (key === ' ') key = 'Space';
+   192→        if (key.length === 1) key = key.toUpperCase();
+   193→
+   194→        const hotkey = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
+   195→
+   196→        handleUpdateHotkey(recordingHotkey, hotkey);
+   197→        setRecordingHotkey(null);
+   198→      };
+   199→
+   200→      window.addEventListener('keydown', handleGlobalKeyDown, true);
+   201→      return () => window.removeEventListener('keydown', handleGlobalKeyDown, true);
+   202→    }
+   203→  }, [recordingHotkey, config]);
+   204→
+   205→  const handleUpdateHotkey = async (key: string, value: string) => {
+   206→    const updatedHotkeys = { ...((config?.ui as any)?.hotkeys || {}), [key]: value };
+   207→    try {
+   208→      await api.updateConfig({ ui: { hotkeys: updatedHotkeys } });
+   209→      await refetchConfig();
+   210→      triggerSuccess();
+   211→    } catch (err) {
+   212→      console.error('Failed to update hotkey:', err);
+   213→    }
+   214→  };
+   215→
+   216→  const hotkeyDefaults: Record<string, string> = {
+   217→    'global_back': 'Escape',
+   218→    'new_agent': 'Cmd+N',
+   219→    'focus_input': 'Cmd+L',
+   220→    'toggle_sidebar': 'Cmd+B',
+   221→    'toggle_settings': 'Cmd+,',
+   222→    'toggle_pause': 'Cmd+P',
+   223→    'compact': 'Cmd+Shift+C',
+   224→    'toggle_unibar': 'Cmd+K',
+   225→    'delete_agent': 'Cmd+D',
+   226→    'toggle_explorer': 'Cmd+E',
+   227→    'scroll_to_top': 'Cmd+ArrowUp',
+   228→    'scroll_to_bottom': 'Cmd+ArrowDown',
+   229→    'attach_file': 'Cmd+Shift+A',
+   230→  };
+   231→
+   232→  const hotkeyLabels: Record<string, string> = {
+   233→    'global_back': 'Go Back',
+   234→    'new_agent': 'New Agent',
+   235→    'focus_input': 'Focus Chat Input',
+   236→    'toggle_sidebar': 'Toggle Sidebar',
+   237→    'toggle_settings': 'Open Settings',
+   238→    'toggle_pause': 'Pause / Resume Agent',
+   239→    'compact': 'Compact Conversation',
+   240→    'toggle_unibar': 'Command Palette',
+   241→    'delete_agent': 'Delete Selected Agent',
+   242→    'toggle_explorer': 'Toggle File Explorer',
+   243→    'scroll_to_top': 'Scroll to Top',
+   244→    'scroll_to_bottom': 'Scroll to Bottom',
+   245→    'attach_file': 'Attach File',
+   246→  };
+   247→
+   248→  // Pointer-based drag state (bypasses Tauri's drag interception)
+   249→  const [isDragging, setIsDragging] = useState(false);
+   250→  const [dragSourceIndex, setDragSourceIndex] = useState<number | null>(null);
+   251→  const [dragTargetIndex, setDragTargetIndex] = useState<number | null>(null);
+   252→  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+   253→  const containerRef = useRef<HTMLDivElement>(null);
+   254→  const scrollRef = useRef<HTMLDivElement>(null);
+   255→
+   256→  useEffect(() => {
+   257→    const handleKeyDown = (e: KeyboardEvent) => {
+   258→      // Don't scroll if we're recording a hotkey or typing in an input
+   259→      if (recordingHotkey) return;
+   260→
+   261→      const activeElement = document.activeElement;
+   262→      const isInput = activeElement instanceof HTMLInputElement ||
+   263→        activeElement instanceof HTMLTextAreaElement ||
+   264→        (activeElement as HTMLElement)?.isContentEditable;
+   265→
+   266→      if (isInput && !(e.metaKey || e.ctrlKey)) return;
+   267→
+   268→      if (e.key === 'ArrowUp') {
+   269→        if (scrollRef.current) {
+   270→          e.preventDefault();
+   271→          scrollRef.current.scrollBy({ top: -100, behavior: 'smooth' });
+   272→        }
+   273→      }
+   274→      if (e.key === 'ArrowDown') {
+   275→        if (scrollRef.current) {
+   276→          e.preventDefault();
+   277→          scrollRef.current.scrollBy({ top: 100, behavior: 'smooth' });
+   278→        }
+   279→      }
+   280→      if (e.key === ' ' && !isInput) {
+   281→        if (scrollRef.current) {
+   282→          e.preventDefault();
+   283→          const direction = e.shiftKey ? -1 : 1;
+   284→          scrollRef.current.scrollBy({
+   285→            top: direction * scrollRef.current.clientHeight * 0.8,
+   286→            behavior: 'smooth'
+   287→          });
+   288→        }
+   289→      }
+   290→    };
+   291→
+   292→    window.addEventListener('keydown', handleKeyDown);
+   293→    return () => window.removeEventListener('keydown', handleKeyDown);
+   294→  }, [recordingHotkey]);
+   295→
+   296→
+   297→
+   298→  useEffect(() => {
+   299→    if (!editingProvider && config?.available_models && apiKeys) {
+   300→      const availableModels = config.available_models;
+   301→      const providers = Object.keys(availableModels);
+   302→
+   303→      // Preference order for default selection
+   304→      const preference = ['openrouter', 'anthropic', 'openai', 'gemini'];
+   305→      const defaultProvider = preference.find(p => providers.some(ap => ap.toLowerCase() === p));
+   306→
+   307→      if (defaultProvider) {
+   308→        const matching = providers.find(p => p.toLowerCase() === defaultProvider);
+   309→        if (matching) {
+   310→          setEditingProvider(matching);
+   311→          setNewKey(prev => ({ ...prev, provider: matching }));
+   312→        }
+   313→      } else if (providers.length > 0) {
+   314→        setEditingProvider(providers[0]);
+   315→        setNewKey(prev => ({ ...prev, provider: providers[0] }));
+   316→      }
+   317→    }
+   318→  }, [config, editingProvider, apiKeys]);
+   319→
+   320→  useEffect(() => {
+   321→    if (editingProvider && config?.custom_providers?.[editingProvider]) {
+   322→      setCustomBaseUrl(config?.custom_providers[editingProvider].base_url || '');
+   323→    } else {
+   324→      setCustomBaseUrl('');
+   325→    }
+   326→  }, [editingProvider, config?.custom_providers]);
+   327→
+   328→  const availableModels = config?.available_models || {};
+   329→  const localProvidersList = ['ollama', 'lmstudio'];
+   330→  const standardProviders = ['openrouter', 'anthropic', 'openai', 'gemini', 'ollama', 'lmstudio'];
+   331→
+   332→  const handleFetchModels = useCallback(async (provider: string) => {
+   333→    if (isFetchingModels) return;
+   334→    setIsFetchingModels(true);
+   335→    try {
+   336→      const response = await api.fetchModels(provider);
+   337→      if (response && response.models) {
+   338→        const updatedAvailableModels = {
+   339→          ...availableModels,
+   340→          [provider]: {
+   341→            ...(availableModels[provider] || {}),
+   342→            chat: response.models
+   343→          }
+   344→        };
+   345→
+   346→        // If this is the active provider and has no model set, pick the first one
+   347→        const updates: any = { available_models: updatedAvailableModels };
+   348→        if (provider === config?.inference?.chat?.provider && (!config?.inference?.chat?.model || (availableModels[provider]?.chat?.length || 0) === 0)) {
+   349→          if (response.models.length > 0) {
+   350→            updates.inference = {
+   351→              ...config.inference,
+   352→              chat: {
+   353→                ...config.inference.chat,
+   354→                model: response.models[0]
+   355→              }
+   356→            };
+   357→          }
+   358→        }
+   359→
+   360→        await api.updateConfig(updates);
+   361→        await refetchConfig();
+   362→        triggerSuccess();
+   363→      }
+   364→    } catch (err) {
+   365→      console.error('Failed to fetch models:', err);
+   366→    } finally {
+   367→      setIsFetchingModels(false);
+   368→    }
+   369→  }, [availableModels, config, isFetchingModels, refetchConfig, triggerSuccess]);
+   370→
+   371→  useEffect(() => {
+   372→    if (editingProvider && localProvidersList.includes(editingProvider.toLowerCase())) {
+   373→      const currentChatModels = availableModels[editingProvider]?.chat || [];
+   374→      if (currentChatModels.length === 0 && !isFetchingModels && !autoFetchedProviders.current.has(editingProvider.toLowerCase())) {
+   375→        autoFetchedProviders.current.add(editingProvider.toLowerCase());
+   376→        handleFetchModels(editingProvider);
+   377→      }
+   378→    }
+   379→  }, [editingProvider, availableModels, isFetchingModels, handleFetchModels]);
+   380→
+   381→  const allProviders = Object.keys(availableModels);
+   382→  const cloudProviders = allProviders.filter(p => standardProviders.includes(p.toLowerCase()) && !localProvidersList.includes(p.toLowerCase()));
+   383→  const localProviders = allProviders.filter(p => standardProviders.includes(p.toLowerCase()) && localProvidersList.includes(p.toLowerCase()));
+   384→  const userCustomProvidersList = allProviders.filter(p => !standardProviders.includes(p.toLowerCase()));
+   385→
+   386→  const currentModels = (editingProvider && editingCapability) ? (availableModels[editingProvider]?.[editingCapability] || []) : [];
+   387→
+   388→  const handleAddCustomProvider = async () => {
+   389→    if (!newCustomProviderName.trim()) return;
+   390→    const name = newCustomProviderName.trim().toLowerCase();
+   391→    if (standardProviders.includes(name) || userCustomProvidersList.includes(name)) {
+   392→      alert('Provider name already exists or is reserved.');
+   393→      return;
+   394→    }
+   395→
+   396→    setIsSaving(true);
+   397→    try {
+   398→      const updatedCustomProviders = {
+   399→        ...(config?.custom_providers || {}),
+   400→        [name]: { base_url: '' }
+   401→      };
+   402→      await api.updateConfig({ custom_providers: updatedCustomProviders });
+   403→      await refetchConfig();
+   404→      setEditingProvider(name);
+   405→      setIsAddingCustomProvider(false);
+   406→      setNewCustomProviderName('');
+   407→      triggerSuccess();
+   408→    } catch (err) {
+   409→      console.error('Failed to add custom provider:', err);
+   410→    } finally {
+   411→      setIsSaving(false);
+   412→    }
+   413→  };
+   414→
+   415→  const handleRemoveCustomProvider = async (name: string) => {
+   416→    const confirmed = await ask(`Are you sure you want to delete the custom provider "${name}"?`, {
+   417→      title: 'Delete Provider',
+   418→      kind: 'warning',
+   419→    });
+   420→
+   421→    if (!confirmed) return;
+   422→
+   423→    setIsSaving(true);
+   424→    try {
+   425→      // Wipe API key from keychain first
+   426→      try {
+   427→        await api.removeApiKey(name);
+   428→      } catch (keyErr) {
+   429→        console.warn(`Failed to remove API key for ${name}:`, keyErr);
+   430→      }
+   431→
+   432→      const updatedCustomProviders = { ...(config?.custom_providers || {}) };
+   433→      delete updatedCustomProviders[name];
+   434→
+   435→      const updatedAvailableModels = { ...(config?.available_models || {}) };
+   436→      delete updatedAvailableModels[name];
+   437→
+   438→      await api.updateConfig({
+   439→        custom_providers: updatedCustomProviders,
+   440→        available_models: updatedAvailableModels
+   441→      });
+   442→      await queryClient.invalidateQueries({ queryKey: ['config'] });
+   443→      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+   444→      if (editingProvider === name) {
+   445→        setEditingProvider(cloudProviders[0] || 'openai');
+   446→      }
+   447→      triggerSuccess();
+   448→    } catch (err) {
+   449→      console.error('Failed to remove custom provider:', err);
+   450→    } finally {
+   451→      setIsSaving(false);
+   452→    }
+   453→  };
+   454→
+   455→  const handleAddModel = async () => {
+   456→    if (!editingProvider || !editingCapability || !newModelName.trim()) return;
+   457→
+   458→    const modelToAdd = newModelName.trim();
+   459→    if (currentModels.includes(modelToAdd)) return;
+   460→
+   461→    const updatedModels = [...currentModels, modelToAdd];
+   462→    const updatedAvailableModels = {
+   463→      ...availableModels,
+   464→      [editingProvider]: {
+   465→        ...(availableModels[editingProvider] || {}),
+   466→        [editingCapability]: updatedModels
+   467→      }
+   468→    };
+   469→
+   470→    const updates: any = { available_models: updatedAvailableModels };
+   471→
+   472→    // If this is the first model for this provider, and it's the default provider, set it as default model
+   473→    if (editingProvider === config?.inference?.chat?.provider && editingCapability === 'chat' && currentModels.length === 0) {
+   474→      updates.inference = {
+   475→        ...config.inference,
+   476→        chat: {
+   477→          ...config.inference.chat,
+   478→          model: modelToAdd
+   479→        }
+   480→      };
+   481→    }
+   482→
+   483→    setIsSaving(true);
+   484→    try {
+   485→      await api.updateConfig(updates);
+   486→      setNewModelName('');
+   487→      await refetchConfig();
+   488→      triggerSuccess();
+   489→    } catch (err) {
+   490→      console.error('Failed to add model:', err);
+   491→    } finally {
+   492→      setIsSaving(false);
+   493→    }
+   494→  };
+   495→
+   496→  const handleRemoveModel = async (modelName: string) => {
+   497→    if (!editingProvider || !editingCapability) return;
+   498→    const updatedModels = currentModels.filter(m => m !== modelName);
+   499→    const updatedAvailableModels = {
+   500→      ...availableModels,
+   501→      [editingProvider]: {
+   502→        ...(availableModels[editingProvider] || {}),
+   503→        [editingCapability]: updatedModels
+   504→      }
+   505→    };
+   506→
+   507→    const updates: any = { available_models: updatedAvailableModels };
+   508→
+   509→    // If we removed the top model, or changed the list, and this is the default provider, update the default model
+   510→    if (editingProvider === config?.inference?.chat?.provider && editingCapability === 'chat' && updatedModels.length > 0) {
+   511→      if (updatedModels[0] !== currentModels[0]) {
+   512→        updates.inference = {
+   513→          ...config.inference,
+   514→          chat: {
+   515→            ...config.inference.chat,
+   516→            model: updatedModels[0]
+   517→          }
+   518→        };
+   519→      }
+   520→    }
+   521→
+   522→    setIsSaving(true);
+   523→    try {
+   524→      await api.updateConfig(updates);
+   525→      await refetchConfig();
+   526→      triggerSuccess();
+   527→    } catch (err) {
+   528→      console.error('Failed to remove model:', err);
+   529→    } finally {
+   530→      setIsSaving(false);
+   531→    }
+   532→  };
+   533→
+   534→  const saveModelOrder = async (newModels: string[]) => {
+   535→    if (!editingProvider || !editingCapability) return;
+   536→
+   537→    const updatedAvailableModels = {
+   538→      ...availableModels,
+   539→      [editingProvider]: {
+   540→        ...(availableModels[editingProvider] || {}),
+   541→        [editingCapability]: newModels
+   542→      }
+   543→    };
+   544→
+   545→    const updates: any = { available_models: updatedAvailableModels };
+   546→
+   547→    // If we moved something to the top, and this is the default provider, update the default model
+   548→    if (editingProvider === config?.inference?.chat?.provider && editingCapability === 'chat') {
+   549→      updates.inference = {
+   550→        ...config.inference,
+   551→        chat: {
+   552→          ...config.inference.chat,
+   553→          model: newModels[0]
+   554→        }
+   555→      };
+   556→    }
+   557→
+   558→    setIsSaving(true);
+   559→    try {
+   560→      await api.updateConfig(updates);
+   561→      await refetchConfig();
+   562→      triggerSuccess();
+   563→    } catch (err) {
+   564→      console.error('Failed to update model order:', err);
+   565→    } finally {
+   566→      setIsSaving(false);
+   567→    }
+   568→  };
+   569→
+   570→  // Pointer-based drag handlers (works in Tauri)
+   571→  const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
+   572→    e.preventDefault();
+   573→    setIsDragging(true);
+   574→    setDragSourceIndex(index);
+   575→    setDragTargetIndex(index);
+   576→    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+   577→  }, []);
+   578→
+   579→  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+   580→    if (!isDragging || dragSourceIndex === null || !containerRef.current) return;
+   581→
+   582→    const containerRect = containerRef.current.getBoundingClientRect();
+   583→    const y = e.clientY - containerRect.top;
+   584→
+   585→    // Find which item we're over
+   586→    let newTargetIndex = dragSourceIndex;
+   587→    for (let i = 0; i < itemRefs.current.length; i++) {
+   588→      const item = itemRefs.current[i];
+   589→      if (!item) continue;
+   590→      const rect = item.getBoundingClientRect();
+   591→      const itemY = rect.top - containerRect.top + rect.height / 2;
+   592→      if (y < itemY) {
+   593→        newTargetIndex = i;
+   594→        break;
+   595→      }
+   596→      newTargetIndex = i + 1;
+   597→    }
+   598→    newTargetIndex = Math.max(0, Math.min(newTargetIndex, currentModels.length - 1));
+   599→
+   600→    if (newTargetIndex !== dragTargetIndex) {
+   601→      setDragTargetIndex(newTargetIndex);
+   602→    }
+   603→  }, [isDragging, dragSourceIndex, dragTargetIndex, currentModels.length]);
+   604→
+   605→  const handlePointerUp = useCallback(async (e: React.PointerEvent) => {
+   606→    if (!isDragging) return;
+   607→    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+   608→
+   609→    const sourceIndex = dragSourceIndex;
+   610→    const targetIndex = dragTargetIndex;
+   611→
+   612→    setIsDragging(false);
+   613→    setDragSourceIndex(null);
+   614→    setDragTargetIndex(null);
+   615→
+   616→    if (sourceIndex === null || targetIndex === null || sourceIndex === targetIndex) return;
+   617→
+   618→    const newModels = [...currentModels];
+   619→    const [removed] = newModels.splice(sourceIndex, 1);
+   620→    newModels.splice(targetIndex, 0, removed);
+   621→
+   622→    await saveModelOrder(newModels);
+   623→  }, [isDragging, dragSourceIndex, dragTargetIndex, currentModels, saveModelOrder]);
+   624→
+   625→
+   626→  const handleToggleAutoCompaction = async () => {
+   627→    try {
+   628→      const current = config?.agent?.auto_compaction_enabled !== false; // Default to true if undefined
+   629→      await api.updateConfig({ agent: { auto_compaction_enabled: !current } });
+   630→      await refetchConfig();
+   631→      triggerSuccess();
+   632→    } catch (err) {
+   633→      console.error('Failed to toggle auto-compaction:', err);
+   634→    }
+   635→  };
+   636→
+   637→  const handleSetApiKey = async () => {
+   638→    if (!newKey.provider || !newKey.key) return;
+   639→    setIsSaving(true);
+   640→    try {
+   641→      await api.setApiKey(newKey.provider, newKey.key);
+   642→      setNewKey({ provider: '', key: '' });
+   643→      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+   644→      triggerSuccess();
+   645→    } catch (err) {
+   646→      console.error('Failed to set API key:', err);
+   647→    } finally {
+   648→      setIsSaving(false);
+   649→    }
+   650→  };
+   651→
+   652→  const handleSaveCustomBaseUrl = async () => {
+   653→    if (!customBaseUrl.trim() || !editingProvider) return;
+   654→    setIsSaving(true);
+   655→    try {
+   656→      const updatedCustomProviders = {
+   657→        ...(config?.custom_providers || {}),
+   658→        [editingProvider]: { base_url: customBaseUrl.trim() }
+   659→      };
+   660→      await api.updateConfig({ custom_providers: updatedCustomProviders });
+   661→      await queryClient.invalidateQueries({ queryKey: ['config'] });
+   662→      triggerSuccess();
+   663→    } catch (err) {
+   664→      console.error('Failed to update custom provider base URL:', err);
+   665→    } finally {
+   666→      setIsSaving(false);
+   667→    }
+   668→  };
+   669→
+   670→  const handleRemoveApiKey = async (provider: string) => {
+   671→    const confirmed = await ask(`Are you sure you want to wipe the API key for ${provider.toUpperCase()}? This will prevent agents from using this provider until a new key is registered.`, {
+   672→      title: 'Wipe API Key',
+   673→      kind: 'warning',
+   674→    });
+   675→
+   676→    if (!confirmed) return;
+   677→
+   678→    try {
+   679→      await api.removeApiKey(provider);
+   680→      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+   681→    } catch (err) {
+   682→      console.error('Failed to remove API key:', err);
+   683→    }
+   684→  };
+   685→
+   686→  const handleToggleProvider = async (provider: string, currentEnabled: boolean) => {
+   687→    setIsSaving(true);
+   688→    try {
+   689→      const updatedProviders = {
+   690→        ...(config?.providers || {}),
+   691→        [provider]: { enabled: !currentEnabled }
+   692→      };
+   693→      await api.updateConfig({ providers: updatedProviders });
+   694→      await queryClient.invalidateQueries({ queryKey: ['config'] });
+   695→      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+   696→      triggerSuccess();
+   697→    } catch (err) {
+   698→      console.error('Failed to toggle provider:', err);
+   699→    } finally {
+   700→      setIsSaving(false);
+   701→    }
+   702→  };
+   703→
+   704→  const handleSetVaultSecret = async () => {
+   705→    if (!newVaultSecret.name || !newVaultSecret.value) return;
+   706→    setIsSaving(true);
+   707→    try {
+   708→      await api.setVaultSecret(newVaultSecret.name, newVaultSecret.value);
+   709→      setNewVaultSecret({ name: '', value: '' });
+   710→      await refetchVault();
+   711→      triggerSuccess();
+   712→    } catch (err) {
+   713→      console.error('Failed to set vault secret:', err);
+   714→    } finally {
+   715→      setIsSaving(false);
+   716→    }
+   717→  };
+   718→
+   719→  const handleRemoveVaultSecret = async (name: string) => {
+   720→    const confirmed = await ask(`Are you sure you want to delete the secret "${name}"? This cannot be undone.`, {
+   721→      title: 'Delete Secret',
+   722→      kind: 'warning',
+   723→    });
+   724→
+   725→    if (!confirmed) return;
+   726→
+   727→    try {
+   728→      await api.removeVaultSecret(name);
+   729→      refetchVault();
+   730→    } catch (err) {
+   731→      console.error('Failed to remove vault secret:', err);
+   732→    }
+   733→  };
+   734→
+   735→  return (
+   736→    <div className="flex h-full bg-background font-mono text-[13px] overflow-hidden">
+   737→      {/* Main Content Area */}
+   738→      <div className="flex-1 flex flex-col min-w-0 bg-background relative">
+   739→        <div className="flex-1 overflow-auto p-8 custom-scrollbar relative" ref={scrollRef}>
+   740→          <div className="max-w-4xl mx-auto pb-20">
+   741→            {activeTab === 'models' && (
+   742→              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+   743→                {/* Model Registry Section */}
+   744→                <section className="space-y-3">
+   745→                  <div className="flex flex-col gap-0.5">
+   746→                    <div className="flex items-center gap-2 text-accent/80">
+   747→                      <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">Provider Configuration</h2>
+   748→                    </div>
+   749→                    <p className="text-[10px] text-text-tertiary/60 italic leading-normal font-black tracking-tight">
+   750→                      LLM providers and endpoints. Credentials stored in system keychain.
+   751→                    </p>
+   752→                  </div>
+   753→
+   754→                  <div className="flex flex-col md:flex-row bg-surface/5 border border-border/10 overflow-hidden min-h-[450px]">
+   755→                    {/* Left Sidebar: Providers */}
+   756→                    <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-border/10 bg-background/20 flex flex-col font-mono">
+   757→                      <div className="p-3 border-b border-border/10 bg-background/10 flex items-center justify-between">
+   758→                        <span className="text-[10px] font-black text-accent/60 uppercase tracking-[0.2em]">Providers</span>
+   759→                        <button
+   760→                          onClick={() => setIsAddingCustomProvider(true)}
+   761→                          className="text-accent/60 hover:text-accent transition-colors text-[10px]"
+   762→                          title="Add custom provider"
+   763→                        >
+   764→                          [+]
+   765→                        </button>
+   766→                      </div>
+   767→                      <div className="flex-1 overflow-auto p-1.5 space-y-0.5 custom-scrollbar">
+   768→                        {isAddingCustomProvider && (
+   769→                          <div className="px-1.5 py-2 space-y-1.5 border-b border-border/10 mb-2">
+   770→                            <input
+   771→                              autoFocus
+   772→                              type="text"
+   773→                              placeholder="Custom provider name..."
+   774→                              value={newCustomProviderName}
+   775→                              onChange={(e) => setNewCustomProviderName(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+   776→                              onKeyDown={(e) => {
+   777→                                if (e.key === 'Enter') handleAddCustomProvider();
+   778→                                if (e.key === 'Escape') setIsAddingCustomProvider(false);
+   779→                              }}
+   780→                              className="w-full bg-transparent border-b border-accent/20 px-1 py-0.5 text-[10px] text-text-primary focus:outline-none font-mono uppercase"
+   781→                            />
+   782→                            <div className="flex gap-1">
+   783→                              <button
+   784→                                onClick={handleAddCustomProvider}
+   785→                                className="flex-1 py-0.5 text-accent text-[9px] font-black border border-accent/20 hover:bg-accent/5"
+   786→                              >
+   787→                                Add
+   788→                              </button>
+   789→                              <button
+   790→                                onClick={() => setIsAddingCustomProvider(false)}
+   791→                                className="flex-1 py-0.5 text-text-tertiary/60 text-[9px] font-black border border-border/10 hover:bg-surface/10"
+   792→                              >
+   793→                                Cancel
+   794→                              </button>
+   795→                            </div>
+   796→                          </div>
+   797→                        )}
+   798→
+   799→                        {/* All providers in a flat list */}
+   800→                        {[...cloudProviders, ...userCustomProvidersList, ...localProviders].map(p => {
+   801→                          const providerData = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+   802→                          const isConfigured = providerData?.configured;
+   803→                          const isEnabled = providerData?.enabled === true;
+   804→                          const isLocal = localProvidersList.includes(p.toLowerCase());
+   805→                          const isCustom = userCustomProvidersList.includes(p);
+   806→
+   807→                          return (
+   808→                            <button
+   809→                              key={p}
+   810→                              onClick={() => {
+   811→                                setEditingProvider(p);
+   812→                                setNewKey(prev => ({ ...prev, provider: p }));
+   813→                              }}
+   814→                              className={clsx(
+   815→                                "w-full px-2 py-1.5 text-left text-[11px] font-black uppercase transition-all flex items-center justify-between",
+   816→                                editingProvider === p
+   817→                                  ? "text-accent bg-accent/5"
+   818→                                  : "text-text-tertiary/60 hover:text-text-secondary hover:bg-surface/5",
+   819→                                !isEnabled && "opacity-40"
+   820→                              )}
+   821→                            >
+   822→                              <div className="flex items-center gap-2">
+   823→                                <span className="w-2 text-[10px]">{editingProvider === p ? '>' : ' '}</span>
+   824→                                <span className="truncate">{p}</span>
+   825→                                {isLocal && <span className="text-[7px] text-text-tertiary/30">LOCAL</span>}
+   826→                                {isCustom && <span className="text-[7px] text-text-tertiary/30">CUSTOM</span>}
+   827→                              </div>
+   828→                              {!isLocal && (
+   829→                                <div className={clsx(
+   830→                                  "w-1.5 h-1.5 rounded-full shrink-0",
+   831→                                  isConfigured ? "bg-status-success" : "bg-status-error/40"
+   832→                                )} />
+   833→                              )}
+   834→                            </button>
+   835→                          );
+   836→                        })}
+   837→                      </div>
+   838→                    </div>
+   839→
+   840→                    {/* Right Panel: Skills and Models */}
+   841→                    <div className="flex-1 flex flex-col bg-background/5 font-mono">
+   842→                      {!editingProvider ? (
+   843→                        <div className="flex-1 flex flex-col items-center justify-center text-text-tertiary/20 space-y-2">
+   844→                          <span className="text-[10px] uppercase font-black tracking-[0.2em]">Select a provider</span>
+   845→                          <div className="animate-pulse">_</div>
+   846→                        </div>
+   847→                      ) : (
+   848→                        <div className="flex-1 overflow-auto p-5 space-y-6 custom-scrollbar">
+   849→                          {/* Provider Header */}
+   850→                          {(() => {
+   851→                            const providerData = apiKeys?.find(k => k.provider.toLowerCase() === editingProvider.toLowerCase());
+   852→                            const isConfigured = providerData?.configured;
+   853→                            const isEnabled = providerData?.enabled === true;
+   854→                            const isLocal = localProvidersList.includes(editingProvider.toLowerCase());
+   855→                            const isCustom = userCustomProvidersList.includes(editingProvider);
+   856→
+   857→                            return (
+   858→                              <div className="space-y-4">
+   859→                                {/* Provider name and enable toggle */}
+   860→                                <div className="flex items-center justify-between">
+   861→                                  <div className="flex items-center gap-3">
+   862→                                    <span className="text-[14px] font-black text-text-primary uppercase tracking-[0.1em]">
+   863→                                      {editingProvider}
+   864→                                    </span>
+   865→                                    {isLocal && (
+   866→                                      <span className="text-[8px] font-black text-accent/50 uppercase tracking-widest px-1.5 py-0.5 border border-accent/20">Local</span>
+   867→                                    )}
+   868→                                    {isCustom && (
+   869→                                      <span className="text-[8px] font-black text-text-tertiary/50 uppercase tracking-widest px-1.5 py-0.5 border border-border/20">Custom</span>
+   870→                                    )}
+   871→                                  </div>
+   872→
+   873→                                  <div className="flex items-center gap-3">
+   874→                                    {/* Enable/Disable toggle */}
+   875→                                    <button
+   876→                                      onClick={() => handleToggleProvider(editingProvider, isEnabled)}
+   877→                                      className={clsx(
+   878→                                        "text-[9px] font-black px-3 py-1 transition-all tracking-widest uppercase active:scale-95",
+   879→                                        isEnabled
+   880→                                          ? "text-status-success bg-status-success/10 hover:bg-status-success/15"
+   881→                                          : "text-text-tertiary/40 bg-surface/10 hover:bg-surface/20"
+   882→                                      )}
+   883→                                    >
+   884→                                      {isEnabled ? 'Enabled' : 'Disabled'}
+   885→                                    </button>
+   886→
+   887→                                    {/* Delete custom provider */}
+   888→                                    {isCustom && (
+   889→                                      <button
+   890→                                        onClick={() => handleRemoveCustomProvider(editingProvider)}
+   891→                                        className="text-[9px] text-text-tertiary/30 hover:text-status-error transition-all uppercase font-black"
+   892→                                        title="Delete provider"
+   893→                                      >
+   894→                                        [Delete]
+   895→                                      </button>
+   896→                                    )}
+   897→                                  </div>
+   898→                                </div>
+   899→
+   900→                                {/* API Key Status - clear visual indicator */}
+   901→                                {!isLocal && (
+   902→                                  <div className={clsx(
+   903→                                    "p-3 border transition-all",
+   904→                                    isConfigured
+   905→                                      ? "border-status-success/20 bg-status-success/5"
+   906→                                      : "border-status-error/20 bg-status-error/5"
+   907→                                  )}>
+   908→                                    {isConfigured ? (
+   909→                                      <div className="flex items-center justify-between">
+   910→                                        <div className="flex items-center gap-2">
+   911→                                          <div className="w-2 h-2 rounded-full bg-status-success" />
+   912→                                          <span className="text-[10px] font-black text-status-success uppercase tracking-widest">API Key Configured</span>
+   913→                                        </div>
+   914→                                        <button
+   915→                                          onClick={() => handleRemoveApiKey(editingProvider)}
+   916→                                          className="text-[9px] text-text-tertiary/40 hover:text-status-error transition-all uppercase font-black"
+   917→                                        >
+   918→                                          [Remove Key]
+   919→                                        </button>
+   920→                                      </div>
+   921→                                    ) : (
+   922→                                      <div className="space-y-3">
+   923→                                        <div className="flex items-center gap-2">
+   924→                                          <div className="w-2 h-2 rounded-full bg-status-error/50" />
+   925→                                          <span className="text-[10px] font-black text-status-error/70 uppercase tracking-widest">API Key Required</span>
+   926→                                        </div>
+   927→                                        <div className="flex gap-2">
+   928→                                          <input
+   929→                                            type="password"
+   930→                                            placeholder="Paste your API key..."
+   931→                                            value={newKey.key}
+   932→                                            onChange={(e) => setNewKey(prev => ({ ...prev, key: e.target.value }))}
+   933→                                            onKeyDown={(e) => e.key === 'Enter' && handleSetApiKey()}
+   934→                                            className="flex-1 bg-transparent border-b border-border/20 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all"
+   935→                                          />
+   936→                                          <button
+   937→                                            onClick={handleSetApiKey}
+   938→                                            disabled={isSaving || !newKey.key}
+   939→                                            className="px-3 py-1 text-accent hover:text-accent-hover font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-20"
+   940→                                          >
+   941→                                            Save
+   942→                                          </button>
+   943→                                        </div>
+   944→                                      </div>
+   945→                                    )}
+   946→                                  </div>
+   947→                                )}
+   948→
+   949→                                {/* Local provider notice */}
+   950→                                {isLocal && (
+   951→                                  <div className="p-3 border border-accent/20 bg-accent/5">
+   952→                                    <div className="flex items-center gap-2">
+   953→                                      <div className="w-2 h-2 rounded-full bg-accent" />
+   954→                                      <span className="text-[10px] font-black text-accent/70 uppercase tracking-widest">No Authentication Required</span>
+   955→                                    </div>
+   956→                                  </div>
+   957→                                )}
+   958→
+   959→                                {/* Custom provider endpoint URL */}
+   960→                                {isCustom && (
+   961→                                  <div className="space-y-2">
+   962→                                    <span className="text-[9px] font-black text-text-tertiary/60 uppercase tracking-widest">Endpoint URL</span>
+   963→                                    <div className="flex gap-2">
+   964→                                      <input
+   965→                                        type="text"
+   966→                                        placeholder="https://api.provider.com/v1"
+   967→                                        value={customBaseUrl}
+   968→                                        onChange={(e) => setCustomBaseUrl(e.target.value)}
+   969→                                        onKeyDown={(e) => e.key === 'Enter' && handleSaveCustomBaseUrl()}
+   970→                                        className="flex-1 bg-transparent border-b border-border/20 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all"
+   971→                                      />
+   972→                                      <button
+   973→                                        onClick={handleSaveCustomBaseUrl}
+   974→                                        disabled={isSaving || !customBaseUrl.trim()}
+   975→                                        className="px-3 py-1 text-accent hover:text-accent-hover font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-20"
+   976→                                      >
+   977→                                        Save
+   978→                                      </button>
+   979→                                    </div>
+   980→                                  </div>
+   981→                                )}
+   982→                              </div>
+   983→                            );
+   984→                          })()}
+   985→
+   986→                          {/* Model Registry Content */}
+   987→                          <div className="space-y-6">
+   988→                            <div className="flex items-center justify-between">
+   989→                              <span className="text-[9px] font-black text-text-tertiary/60 uppercase tracking-widest">Models</span>
+   990→                              {localProvidersList.includes(editingProvider?.toLowerCase() || '') && (
+   991→                                <button
+   992→                                  onClick={() => editingProvider && handleFetchModels(editingProvider)}
+   993→                                  disabled={isFetchingModels}
+   994→                                  className={clsx(
+   995→                                    "text-[9px] font-black uppercase tracking-widest transition-all",
+   996→                                    isFetchingModels ? "text-text-tertiary/20 animate-pulse" : "text-accent hover:text-accent-hover"
+   997→                                  )}
+   998→                                >
+   999→                                  {isFetchingModels ? 'Discovering...' : 'Discover local models'}
+  1000→                                </button>
+  1001→                              )}
+  1002→                            </div>
+  1003→
+  1004→                            {['chat'].map(cap => {
+  1005→                              const models = availableModels[editingProvider]?.[cap] || [];
+  1006→                              const isEditing = editingCapability === cap;
+  1007→
+  1008→                              const isOpenRouter = editingProvider?.toLowerCase() === 'openrouter';
+  1009→                              const supportsThinking = thinkingProviders.includes(editingProvider?.toLowerCase() || '');
+  1010→
+  1011→                              return (
+  1012→                                <div key={cap} className="space-y-1">
+  1013→                                  {/* Column headers */}
+  1014→                                  {(supportsThinking || isOpenRouter) && models.length > 0 && (
+  1015→                                    <div className="flex items-center gap-2 px-2 py-1 border-b border-border/10">
+  1016→                                      <div className="w-6" /> {/* Spacer for drag handle */}
+  1017→                                      <span className="flex-1 text-[8px] font-black text-text-tertiary/40 uppercase tracking-widest">MODEL NAME</span>
+  1018→                                      {isOpenRouter && (
+  1019→                                        <span className="text-[8px] font-black text-text-tertiary/40 uppercase tracking-widest w-24 text-right">PRICING (INPUT/OUTPUT per 1M TOK)</span>
+  1020→                                      )}
+  1021→                                      {supportsThinking && (
+  1022→                                        <span className="text-[8px] font-black text-text-tertiary/40 uppercase tracking-widest w-20 text-right">REASONING</span>
+  1023→                                      )}
+  1024→                                      <div className="w-6" /> {/* Spacer for delete button */}
+  1025→                                    </div>
+  1026→                                  )}
+  1027→                                  <div
+  1028→                                    ref={containerRef}
+  1029→                                    className="flex flex-col gap-0.5 min-h-[50px]"
+  1030→                                  >
+  1031→                                    {models.map((model, index) => {
+  1032→                                      const { baseModel, level } = parseModelLevel(model);
+  1033→                                      // Use baseModel for pricing lookup since pricing is stored by base model name
+  1034→                                      const pricing = isOpenRouter && config?.model_pricing?.['openrouter']?.[cap]?.[baseModel];
+  1035→
+  1036→                                      return (
+  1037→                                        <div
+  1038→                                          key={model}
+  1039→                                          ref={el => { itemRefs.current[index] = el; }}
+  1040→                                          className={clsx(
+  1041→                                            "flex items-center justify-between px-2 py-1 border-b border-border/5 group transition-all relative select-none gap-2",
+  1042→                                            isDragging && dragSourceIndex === index && "opacity-50",
+  1043→                                            isDragging && dragTargetIndex === index && dragSourceIndex !== index && "border-t border-accent"
+  1044→                                          )}
+  1045→                                        >
+  1046→                                          {/* Drag handle */}
+  1047→                                          <div
+  1048→                                            className="text-text-tertiary/20 hover:text-accent transition-all cursor-grab active:cursor-grabbing p-1 -m-1 touch-none shrink-0"
+  1049→                                            onPointerDown={(e) => handlePointerDown(e, index)}
+  1050→                                            onPointerMove={handlePointerMove}
+  1051→                                            onPointerUp={handlePointerUp}
+  1052→                                            onPointerCancel={handlePointerUp}
+  1053→                                          >
+  1054→                                            <span className="text-[8px] font-black">{index === 0 ? '@' : '#'}</span>
+  1055→                                          </div>
+  1056→
+  1057→                                          {/* Model name */}
+  1058→                                          <div className="flex-1 min-w-0">
+  1059→                                            <span className={clsx(
+  1060→                                              "text-[10px] transition-colors truncate font-mono uppercase block",
+  1061→                                              index === 0 ? "text-accent font-black" : "text-text-primary/60 group-hover:text-text-primary"
+  1062→                                            )}>{baseModel}</span>
+  1063→                                          </div>
+  1064→
+  1065→                                          {/* Pricing column for OpenRouter */}
+  1066→                                          {isOpenRouter && (
+  1067→                                            <div className="text-[9px] text-text-tertiary/60 font-mono text-right shrink-0 w-24">
+  1068→                                              {pricing ? (
+  1069→                                                <span>${pricing.prompt.toFixed(2)}/${pricing.completion.toFixed(2)}</span>
+  1070→                                              ) : (
+  1071→                                                <span className="text-text-tertiary/20">—</span>
+  1072→                                              )}
+  1073→                                            </div>
+  1074→                                          )}
+  1075→
+  1076→                                          {/* Reasoning level dropdown */}
+  1077→                                          {supportsThinking && (
+  1078→                                            <select
+  1079→                                              value={level}
+  1080→                                              onChange={(e) => handleUpdateModelLevel(model, e.target.value as typeof level)}
+  1081→                                              className={clsx(
+  1082→                                                "bg-transparent border px-1.5 py-0.5 text-[9px] font-black uppercase cursor-pointer transition-all shrink-0 w-20",
+  1083→                                                level
+  1084→                                                  ? "text-status-success border-status-success/30 bg-status-success/5"
+  1085→                                                  : "text-text-tertiary/50 border-border/20 hover:border-border/40"
+  1086→                                              )}
+  1087→                                              style={{ WebkitAppearance: 'none', appearance: 'none', paddingRight: '16px', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%23666%27%3e%3cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 2px center', backgroundSize: '10px' }}
+  1088→                                            >
+  1089→                                              {reasoningLevels.map(l => (
+  1090→                                                <option key={l.value} value={l.value}>{l.label}</option>
+  1091→                                              ))}
+  1092→                                            </select>
+  1093→                                          )}
+  1094→
+  1095→                                          {/* Remove button */}
+  1096→                                          <button
+  1097→                                            onClick={(e) => {
+  1098→                                              e.stopPropagation();
+  1099→                                              setEditingCapability(cap);
+  1100→                                              handleRemoveModel(model);
+  1101→                                            }}
+  1102→                                            className="text-text-tertiary/20 hover:text-status-error opacity-0 group-hover:opacity-100 transition-all text-[10px] font-black shrink-0"
+  1103→                                          >
+  1104→                                            [X]
+  1105→                                          </button>
+  1106→                                        </div>
+  1107→                                      );
+  1108→                                    })}
+  1109→
+  1110→                                    {/* Inline Add Model Input */}
+  1111→                                    <div className="flex gap-2 group/input mt-1">
+  1112→                                      <div className="flex-1 relative">
+  1113→                                        <input
+  1114→                                          type="text"
+  1115→                                          placeholder="Add model..."
+  1116→                                          value={isEditing ? newModelName : ''}
+  1117→                                          onFocus={() => setEditingCapability(cap)}
+  1118→                                          onChange={(e) => {
+  1119→                                            setEditingCapability(cap);
+  1120→                                            setNewModelName(e.target.value);
+  1121→                                          }}
+  1122→                                          onKeyDown={(e) => e.key === 'Enter' && handleAddModel()}
+  1123→                                          className="w-full bg-transparent border-b border-dashed border-border/20 px-0 py-0.5 text-[10px] text-text-primary placeholder:text-text-tertiary/20 focus:outline-none focus:border-accent/40 focus:border-solid font-mono transition-all uppercase"
+  1124→                                        />
+  1125→                                      </div>
+  1126→                                      {isEditing && newModelName.trim() && (
+  1127→                                        <button
+  1128→                                          onClick={handleAddModel}
+  1129→                                          className="text-accent text-[10px] font-black"
+  1130→                                        >
+  1131→                                          [+]
+  1132→                                        </button>
+  1133→                                      )}
+  1134→                                    </div>
+  1135→                                  </div>
+  1136→                                </div>
+  1137→                              );
+  1138→                            })}
+  1139→                          </div>
+  1140→                        </div>
+  1141→                      )}
+  1142→                    </div>
+  1143→                  </div>
+  1144→                </section>
+  1145→              </div>
+  1146→            )}
+  1147→
+  1148→            {activeTab === 'general' && (
+  1149→              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+  1150→                <div className="grid grid-cols-1 gap-12">
+  1151→                  {/* Agent Behavior Section */}
+  1152→                  <section className="space-y-3">
+  1153→                    <div className="flex flex-col gap-0.5">
+  1154→                      <div className="flex items-center gap-2 text-accent/80">
+  1155→                        <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">Behavior</h2>
+  1156→                      </div>
+  1157→                      <p className="text-[10px] text-text-tertiary/60 italic leading-normal font-black tracking-tight">
+  1158→                        Global execution and memory policies.
+  1159→                      </p>
+  1160→                    </div>
+  1161→
+  1162→                    <div className="bg-surface/5 border border-border/10 p-4 space-y-3 font-mono">
+  1163→                      <div className="flex items-center justify-between border-b border-border/5 pb-3">
+  1164→                        <div className="flex flex-col gap-0.5">
+  1165→                          <div className="flex items-center gap-2">
+  1166→                            <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em]">Auto-compaction</span>
+  1167→                          </div>
+  1168→                          <p className="text-[10px] text-text-tertiary/60 italic px-3 leading-normal font-black tracking-tight">
+  1169→                            Reduce token overhead automatically at threshold.
+  1170→                          </p>
+  1171→                        </div>
+  1172→                        <button
+  1173→                          onClick={handleToggleAutoCompaction}
+  1174→                          className={clsx(
+  1175→                            "text-[10px] font-black px-2 py-1 transition-all tracking-widest uppercase active:scale-95",
+  1176→                            config?.agent?.auto_compaction_enabled !== false
+  1177→                              ? "text-status-success hover:bg-status-success/5"
+  1178→                              : "text-status-error hover:bg-status-error/5"
+  1179→                          )}
+  1180→                        >
+  1181→                          {config?.agent?.auto_compaction_enabled !== false ? 'Active' : 'Inactive'}
+  1182→                        </button>
+  1183→                      </div>
+  1184→                    </div>
+  1185→                  </section>
+  1186→
+  1187→                  {/* Sub-Agent Ecosystem */}
+  1188→                  <section className="space-y-4">
+  1189→                    <div className="flex flex-col gap-0.5">
+  1190→                      <div className="flex items-center justify-between">
+  1191→                        <div className="flex items-center gap-2 text-accent/80">
+  1192→                          <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">Sub-agents</h2>
+  1193→                        </div>
+  1194→                        <button
+  1195→                          onClick={handleToggleSubAgentsGlobal}
+  1196→                          className={clsx(
+  1197→                            "text-[10px] font-black px-2 py-0.5 transition-all tracking-widest uppercase border active:scale-95 font-mono",
+  1198→                            config?.sub_agent?.enabled
+  1199→                              ? "text-status-success border-status-success/20 hover:bg-status-success/5"
+  1200→                              : "text-status-error border-status-error/20 hover:bg-status-error/5"
+  1201→                          )}
+  1202→                        >
+  1203→                          {config?.sub_agent?.enabled ? 'Enabled' : 'Disabled'}
+  1204→                        </button>
+  1205→                      </div>
+  1206→                      <p className="text-[10px] text-text-tertiary/60 italic leading-normal font-black tracking-tight">
+  1207→                        Autonomous child-agents for specialized task processing.
+  1208→                      </p>
+  1209→                    </div>
+  1210→
+  1211→                  </section>
+  1212→                </div>
+  1213→              </div>
+  1214→            )
+  1215→            }
+  1216→
+  1217→            {activeTab === 'security' && (
+  1218→              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+  1219→                {/* Unrestricted Execution Mode Toggle */}
+  1220→                <div className={clsx(
+  1221→                  "p-4 border transition-all duration-500",
+  1222→                  config?.security?.always_allow_all
+  1223→                    ? "bg-status-error text-background border-status-error shadow-[0_0_25px_rgba(var(--status-error),0.2)]"
+  1224→                    : "bg-status-error/5 border-status-error/10"
+  1225→                )}>
+  1226→                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+  1227→                    <div className="flex flex-col gap-1 pr-4">
+  1228→                      <div className="flex items-center gap-2">
+  1229→                        <span className={clsx(
+  1230→                          "text-[11px] font-black uppercase tracking-[0.2em]",
+  1231→                          config?.security?.always_allow_all ? "text-background" : "text-status-error"
+  1232→                        )}>Unrestricted Execution</span>
+  1233→                        {config?.security?.always_allow_all && (
+  1234→                          <span className="text-[8px] font-black bg-background text-status-error px-1 py-0.5 animate-pulse tracking-widest">System unlocked</span>
+  1235→                        )}
+  1236→                      </div>
+  1237→                      <p className={clsx(
+  1238→                        "text-[9px] italic leading-relaxed max-w-2xl font-black uppercase tracking-tight",
+  1239→                        config?.security?.always_allow_all ? "text-background/90" : "text-text-tertiary/60"
+  1240→                      )}>
+  1241→                        Bypass all security checks. Agents gain full unmonitored system access. Use only in trusted environments.
+  1242→                      </p>
+  1243→                    </div>
+  1244→                    <button
+  1245→                      onClick={handleToggleAlwaysAllowAll}
+  1246→                      className={clsx(
+  1247→                        "text-[9px] font-black px-3 py-1.5 transition-all tracking-[0.1em] uppercase border whitespace-nowrap active:scale-95",
+  1248→                        config?.security?.always_allow_all
+  1249→                          ? "bg-background text-status-error border-background"
+  1250→                          : "bg-status-error text-background border-status-error"
+  1251→                      )}
+  1252→                    >
+  1253→                      {config?.security?.always_allow_all ? 'Restore Security' : 'Disable Security'}
+  1254→                    </button>
+  1255→                  </div>
+  1256→                </div>
+  1257→
+  1258→                {/* Shell Execution Policy */}
+  1259→                <section className={clsx(
+  1260→                  "space-y-3 transition-all duration-300",
+  1261→                  config?.security?.always_allow_all && "opacity-40 grayscale"
+  1262→                )}>
+  1263→                  <div className="flex flex-col gap-0.5">
+  1264→                    <div className="flex items-center justify-between">
+  1265→                      <div className="flex items-center gap-2 text-accent/80">
+  1266→                        <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">Shell Policy</h2>
+  1267→                      </div>
+  1268→                      {config?.security?.always_allow_all && (
+  1269→                        <span className="text-[8px] font-black text-status-error uppercase tracking-widest bg-status-error/10 px-1.5 py-0.5">
+  1270→                          Overridden by unrestricted mode
+  1271→                        </span>
+  1272→                      )}
+  1273→                    </div>
+  1274→                    <p className="text-[10px] text-text-tertiary/60 italic leading-normal font-black tracking-tight">
+  1275→                      Control auto-approval levels for terminal commands.
+  1276→                    </p>
+  1277→                  </div>
+  1278→
+  1279→                  <div className={clsx(
+  1280→                    "bg-surface/5 border border-border/10 p-5 space-y-4",
+  1281→                    config?.security?.always_allow_all && "pointer-events-none"
+  1282→                  )}>
+  1283→                    <div className="flex flex-col gap-0.5">
+  1284→                      <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em]">Execution Mode</span>
+  1285→                    </div>
+  1286→
+  1287→                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+  1288→                      {[
+  1289→                        { id: 'restricted', label: 'RESTRICTED', desc: 'Minimal safe set' },
+  1290→                        { id: 'read-only', label: 'READ_ONLY', desc: 'All inspections' },
+  1291→                        { id: 'non-destructive', label: 'MUTABLE', desc: 'No deletions' },
+  1292→                        { id: 'unrestricted', label: 'OPEN', desc: 'No approvals' },
+  1293→                      ].map((mode) => (
+  1294→                        <button
+  1295→                          key={mode.id}
+  1296→                          onClick={() => handleUpdateShellPermissionMode(mode.id)}
+  1297→                          className={clsx(
+  1298→                            "flex flex-col items-start p-3 border transition-all text-left group active:scale-[0.98]",
+  1299→                            config?.security?.shell_permission_mode === mode.id
+  1300→                              ? "border-accent bg-accent/5 shadow-[0_0_15px_rgba(var(--accent),0.05)]"
+  1301→                              : "border-border/10 hover:border-accent/40 bg-surface/5"
+  1302→                          )}
+  1303→                        >
+  1304→                          <span className={clsx(
+  1305→                            "text-[10px] font-black uppercase tracking-widest mb-1",
+  1306→                            config?.security?.shell_permission_mode === mode.id ? "text-accent" : "text-text-tertiary/60 group-hover:text-text-secondary"
+  1307→                          )}>
+  1308→                            {config?.security?.shell_permission_mode === mode.id ? `[${mode.label}]` : `  ${mode.label}`}
+  1309→                          </span>
+  1310→                          <span className="text-[8px] text-text-tertiary/40 font-black uppercase leading-tight">
+  1311→                            {mode.desc}
+  1312→                          </span>
+  1313→                        </button>
+  1314→                      ))}
+  1315→                    </div>
+  1316→                  </div>
+  1317→                </section>
+  1318→
+  1319→                {/* Vault Section */}
+  1320→                <section className="space-y-3">
+  1321→                  <div className="flex flex-col gap-0.5">
+  1322→                    <div className="flex items-center gap-2 text-accent/80">
+  1323→                      <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">Secure Vault</h2>
+  1324→                    </div>
+  1325→                    <p className="text-[10px] text-text-tertiary/60 italic leading-normal font-black tracking-tight">
+  1326→                      Protected tokens and environment variables.
+  1327→                    </p>
+  1328→                  </div>
+  1329→
+  1330→                  <div className="bg-surface/5 border border-border/10 p-5 space-y-6">
+  1331→                    <div className="space-y-4">
+  1332→                      <div className="flex flex-col gap-0.5">
+  1333→                        <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em]">Vault Index</span>
+  1334→                        <p className="text-[10px] text-text-tertiary/60 italic px-3 font-black tracking-tight">
+  1335→                          Access in tools via <code className="text-accent underline">{"{{vault:KEY}}"}</code>.
+  1336→                        </p>
+  1337→                      </div>
+  1338→
+  1339→                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+  1340→                        {vaultSecrets && vaultSecrets.length > 0 ? (
+  1341→                          vaultSecrets.map((secret: any) => (
+  1342→                            <div
+  1343→                              key={secret.name}
+  1344→                              className="flex items-center justify-between px-3 py-1.5 bg-background/20 border border-border/5 group hover:border-accent/20 transition-all"
+  1345→                            >
+  1346→                              <div className="flex items-center gap-2">
+  1347→                                <span className="text-[8px] font-black text-accent/40 uppercase">[KEY]</span>
+  1348→                                <span className="text-[11px] font-black text-text-primary/70 font-mono truncate max-w-[120px]">
+  1349→                                  {secret.name}
+  1350→                                </span>
+  1351→                              </div>
+  1352→                              <button
+  1353→                                onClick={() => handleRemoveVaultSecret(secret.name)}
+  1354→                                className="text-text-tertiary/20 hover:text-status-error opacity-0 group-hover:opacity-100 transition-all text-[10px] font-black"
+  1355→                              >
+  1356→                                [X]
+  1357→                              </button>
+  1358→                            </div>
+  1359→                          ))
+  1360→                        ) : (
+  1361→                          <div className="col-span-full py-6 border border-dashed border-border/10 flex flex-col items-center justify-center text-text-tertiary/20">
+  1362→                            <span className="text-[9px] uppercase font-black tracking-[0.2em]">No secrets stored</span>
+  1363→                          </div>
+  1364→                        )}
+  1365→                      </div>
+  1366→
+  1367→                      {/* Add Secret Form */}
+  1368→                      <div className="mt-4 p-4 border-t border-border/5 space-y-3">
+  1369→                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  1370→                          <div className="space-y-1">
+  1371→                            <label className="text-[9px] font-black text-text-tertiary/40 uppercase tracking-widest ml-1">Key</label>
+  1372→                            <input
+  1373→                              type="text"
+  1374→                              placeholder="GITHUB_TOKEN"
+  1375→                              value={newVaultSecret.name}
+  1376→                              onChange={(e) => setNewVaultSecret(prev => ({ ...prev, name: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') }))}
+  1377→                              className="w-full bg-transparent border-b border-border/10 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all uppercase"
+  1378→                            />
+  1379→                          </div>
+  1380→                          <div className="space-y-1">
+  1381→                            <label className="text-[9px] font-black text-text-tertiary/40 uppercase tracking-widest ml-1">Value</label>
+  1382→                            <input
+  1383→                              type="password"
+  1384→                              placeholder="Secret value"
+  1385→                              value={newVaultSecret.value}
+  1386→                              onChange={(e) => setNewVaultSecret(prev => ({ ...prev, value: e.target.value }))}
+  1387→                              className="w-full bg-transparent border-b border-border/10 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all"
+  1388→                            />
+  1389→                          </div>
+  1390→                        </div>
+  1391→                        <button
+  1392→                          onClick={handleSetVaultSecret}
+  1393→                          disabled={isSaving || !newVaultSecret.name || !newVaultSecret.value}
+  1394→                          className="w-full py-1 text-accent hover:text-accent-hover font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-20 active:scale-[0.98]"
+  1395→                        >
+  1396→                          Store in Vault
+  1397→                        </button>
+  1398→                      </div>
+  1399→                    </div>
+  1400→                  </div>
+  1401→                </section>
+  1402→              </div>
+  1403→            )
+  1404→            }
+  1405→
+  1406→            {activeTab === 'shortcuts' && (
+  1407→              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+  1408→                {/* All Hotkeys Section */}
+  1409→                <section className="space-y-3">
+  1410→                  <div className="flex flex-col gap-0.5">
+  1411→                    <div className="flex items-center gap-2 text-accent/80">
+  1412→                      <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">Shortcuts</h2>
+  1413→                    </div>
+  1414→                  </div>
+  1415→
+  1416→                  <div className="bg-surface/5 border border-border/10 p-5">
+  1417→                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
+  1418→                      {Object.entries(hotkeyLabels).map(([key, label]) => (
+  1419→                        <div key={key} className="flex items-center justify-between py-1.5 border-b border-border/5 last:border-0 md:[&:nth-last-child(-n+2)]:border-0">
+  1420→                          <span className="text-[10px] font-black text-text-tertiary/60 uppercase tracking-widest">{label}</span>
+  1421→                          <button
+  1422→                            onClick={() => setRecordingHotkey(key)}
+  1423→                            className={clsx(
+  1424→                              "font-mono text-[10px] font-black transition-all min-w-[90px] text-right",
+  1425→                              recordingHotkey === key
+  1426→                                ? "text-accent animate-pulse"
+  1427→                                : "text-accent/60 hover:text-accent"
+  1428→                            )}
+  1429→                          >
+  1430→                            {recordingHotkey === key ? 'Recording...' : ((config?.ui as any)?.hotkeys?.[key] || hotkeyDefaults[key] || 'N/A')}
+  1431→                          </button>
+  1432→                        </div>
+  1433→                      ))}
+  1434→                    </div>
+  1435→                        <div className="mt-6 pt-3 border-t border-border/5">
+  1436→                      <p className="text-[9px] text-text-tertiary/20 tracking-tighter italic font-black">
+  1437→                        Press Escape to cancel. System reserved keys may override.
+  1438→                      </p>
+  1439→                    </div>
+  1440→                  </div>
+  1441→                </section>
+  1442→              </div>
+  1443→            )
+  1444→            }
+  1445→          </div >
+  1446→        </div >
+  1447→      </div >
+  1448→    </div >
+  1449→  );
+  1450→};
+  1451→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

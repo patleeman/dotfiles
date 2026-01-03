@@ -1,0 +1,68 @@
+import { spawn, ChildProcess } from 'child_process';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+let serverProcess: ChildProcess | null = null;
+
+async function waitForServer(url: string, timeout = 30000): Promise<void> {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        return;
+      }
+    } catch {
+      // Server not ready yet
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  throw new Error(`Server at ${url} did not start within ${timeout}ms`);
+}
+
+export default async function globalSetup() {
+  const backendPath = resolve(__dirname, '../../../../bin/familiar-go');
+  const backendUrl = 'http://localhost:18080/api/health';
+
+  // Check if server is already running
+  try {
+    const response = await fetch(backendUrl);
+    if (response.ok) {
+      console.log('Backend server already running');
+      return;
+    }
+  } catch {
+    // Server not running, we'll start it
+  }
+
+  console.log('Starting backend server...');
+
+  serverProcess = spawn(backendPath, [], {
+    stdio: 'pipe',
+    env: {
+      ...process.env,
+      FAMILIAR_TEST_MODE: 'true',
+    },
+    detached: true,
+  });
+
+  serverProcess.stdout?.on('data', (data) => {
+    console.log(`[backend] ${data}`);
+  });
+
+  serverProcess.stderr?.on('data', (data) => {
+    console.error(`[backend] ${data}`);
+  });
+
+  // Store the PID for teardown
+  if (serverProcess.pid) {
+    process.env.BACKEND_PID = String(serverProcess.pid);
+  }
+
+  // Wait for server to be ready
+  await waitForServer(backendUrl);
+  console.log('Backend server ready');
+}

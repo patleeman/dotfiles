@@ -1,0 +1,688 @@
+import { createContext, useContext, useRef, useCallback, useSyncExternalStore, useEffect } from 'react';
+import { api, type ProcessedMessage } from '../lib/api';
+import { globalWS } from '../lib/websocket';
+
+export interface Attachment {
+  id: string;
+  type: 'image' | 'file';
+  name: string;
+  mimeType: string;
+  data: string;
+  size: number;
+  previewUrl?: string;
+  path?: string;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export interface ToolCall {
+  id: string;
+  type: string;
+  function: {
+    name: string;
+    arguments: string;
+  };
+  _result?: string;
+}
+
+export interface MessageSegment {
+  content?: string;
+  tool_calls?: ToolCall[];
+}
+
+export interface Message {
+  id?: string;
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: string;
+  tool_calls?: ToolCall[];
+  segments?: MessageSegment[];
+  tool_call_id?: string;
+  name?: string;
+  timestamp?: number;
+  attachments?: Attachment[];
+  meta?: {
+    tok_per_s?: number;
+    total_tokens?: number;
+    completion_tokens?: number;
+    elapsed?: number;
+    is_local?: boolean;
+    provider_name?: string;
+  };
+}
+
+interface ChatStateSnapshot {
+  messages: Message[];
+  isStreaming: boolean;
+  agentStatus?: 'thinking' | 'executing_tools';
+}
+
+const EMPTY_STATE: ChatStateSnapshot = {
+  messages: [],
+  isStreaming: false,
+};
+
+interface SessionState {
+  messages: Message[];
+  isStreaming: boolean;
+  agentStatus?: 'thinking' | 'executing_tools';
+  historyLoaded: boolean;
+  snapshot: ChatStateSnapshot;
+}
+
+interface ChatStore {
+  sessions: Map<string, SessionState>;
+  listeners: Set<() => void>;
+  onTitleUpdated?: () => void;
+  onStreamComplete?: (sessionId: string) => void;
+  activeSessionsSnapshot: { sessionId: string; isStreaming: boolean; agentStatus?: string }[];
+}
+
+function convertProcessedMessage(pm: ProcessedMessage): Message {
+  return {
+    id: pm.id,
+    role: pm.role,
+    content: pm.content,
+    segments: pm.segments,
+    tool_calls: pm.tool_calls,
+    timestamp: pm.timestamp,
+    attachments: pm.attachments,
+  };
+}
+
+function createSessionState(): SessionState {
+  const messages: Message[] = [];
+  const isStreaming = false;
+  return {
+    messages,
+    isStreaming,
+    historyLoaded: false,
+    snapshot: { messages, isStreaming },
+  };
+}
+
+function createChatStore(): ChatStore {
+  return {
+    sessions: new Map(),
+    listeners: new Set(),
+    activeSessionsSnapshot: [],
+  };
+}
+
+const ChatStoreContext = createContext<ChatStore | null>(null);
+
+interface ChatProviderProps {
+  children: React.ReactNode;
+  onTitleUpdated?: () => void;
+  onStreamComplete?: (sessionId: string) => void;
+}
+
+export function ChatProvider({ children, onTitleUpdated, onStreamComplete }: ChatProviderProps) {
+  const storeRef = useRef<ChatStore | null>(null);
+  if (!storeRef.current) {
+    storeRef.current = createChatStore();
+  }
+  const store = storeRef.current;
+  store.onTitleUpdated = onTitleUpdated;
+  store.onStreamComplete = onStreamComplete;
+
+  useEffect(() => {
+    const unsubscribe = globalWS.addMessageListener((data) => {
+      // Find session ID from the message (most stream messages include it)
+      const sessionId = data.session_id;
+      if (!sessionId) return;
+
+      if (data.type === 'chunk') {
+        const timestamp = Date.now();
+        // Clear status when we get a chunk
+        setSessionAgentStatus(store, sessionId, undefined);
+        updateSessionMessages(store, sessionId, prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            if (last.segments && last.segments.length > 0) {
+              const segments = [...last.segments];
+              const lastSeg = segments[segments.length - 1];
+              segments[segments.length - 1] = {
+                ...lastSeg,
+                content: (lastSeg.content || '') + data.text
+              };
+              return [...prev.slice(0, -1), { ...last, segments }];
+            }
+            return [...prev.slice(0, -1), { ...last, content: (last.content || '') + data.text }];
+          }
+          return [...prev, { role: 'assistant', content: data.text, timestamp }];
+        });
+      } else if (data.type === 'user_message') {
+        updateSessionMessages(store, sessionId, prev => {
+          const msg = data.message;
+
+          // Helper to get text from content (handles string or multimodal array)
+          const getText = (c: any): string => {
+            if (!c) return '';
+            if (typeof c === 'string') return c;
+            if (Array.isArray(c)) {
+              return c
+                .filter(p => p.type === 'text')
+                .map(p => p.text || '')
+                .join('\n');
+            }
+            return '';
+          };
+
+          const msgText = getText(msg.content);
+
+          // Check if this message already exists by ID or by content
+          const existingIdx = prev.findIndex(m => {
+            if (m.id && msg.id && m.id === msg.id) return true;
+            if (m.role !== 'user') return false;
+            
+            // Compare text content
+            const mText = getText(m.content);
+            if (mText.trim() !== msgText.trim()) return false;
+
+            // If both have attachments, compare count as a heuristic
+            const mAttCount = m.attachments?.length || 0;
+            const msgAttCount = msg.attachments?.length || 0;
+            if (mAttCount !== msgAttCount) return false;
+
+            return true;
+          });
+
+          if (existingIdx !== -1) {
+            console.debug('[ChatContext] Deduplicated user message:', msg.id);
+            // If it exists but has no ID (local message), update it with the server ID
+            if (!prev[existingIdx].id) {
+              const newMessages = [...prev];
+              newMessages[existingIdx] = {
+                ...newMessages[existingIdx],
+                id: msg.id,
+                timestamp: msg.timestamp || newMessages[existingIdx].timestamp,
+                // Update content to server version (might have multimodal array)
+                content: msg.content,
+                attachments: msg.attachments || newMessages[existingIdx].attachments
+              };
+              return newMessages;
+            }
+            return prev;
+          }
+
+          console.debug('[ChatContext] Appending new user message:', msg.id);
+          return [...prev, {
+            id: msg.id,
+            role: 'user',
+            content: msg.content,
+            timestamp: msg.timestamp || Date.now(),
+            attachments: msg.attachments
+          }];
+        });
+      } else if (data.type === 'assistant_message') {
+        const session = store.sessions.get(sessionId);
+        const isStreaming = session?.isStreaming;
+        const isScheduled = data.is_scheduled;
+
+        updateSessionMessages(store, sessionId, prev => {
+          const msg = data.message;
+          if (prev.some(m => m.id === msg.id)) return prev;
+
+          // Only merge if we are currently streaming a multi-turn response AND it's not a scheduled task
+          const last = prev[prev.length - 1];
+          if (!isScheduled && isStreaming && last && last.role === 'assistant') {
+            // If it has segments, it's a multi-turn message, merge into last segment
+            if (last.segments && last.segments.length > 0) {
+              const segments = [...last.segments];
+              segments[segments.length - 1] = {
+                ...segments[segments.length - 1],
+                content: msg.content,
+                tool_calls: msg.tool_calls
+              };
+              return [...prev.slice(0, -1), {
+                ...last,
+                id: msg.id, // Update to latest ID
+                segments,
+                meta: msg.meta || last.meta,
+                attachments: [...(last.attachments || []), ...(msg.attachments || [])]
+              }];
+            }
+
+            // If it doesn't have an ID, it's a "live" message from chunks, replace it
+            if (!last.id) {
+              return [...prev.slice(0, -1), {
+                id: msg.id,
+                role: 'assistant',
+                content: msg.content,
+                timestamp: msg.timestamp || last.timestamp || Date.now(),
+                tool_calls: msg.tool_calls,
+                attachments: msg.attachments,
+                meta: msg.meta
+              }];
+            }
+          }
+
+          // If it's a scheduled task or we're not streaming, always append as a new message
+          return [...prev, {
+            id: msg.id,
+            role: 'assistant',
+            content: msg.content,
+            timestamp: msg.timestamp || Date.now(),
+            tool_calls: msg.tool_calls,
+            attachments: msg.attachments,
+            meta: msg.meta
+          }];
+        });
+      } else if (data.type === 'tool_message') {
+        updateSessionMessages(store, sessionId, prev => {
+          const msg = data.message;
+          const last = prev[prev.length - 1];
+
+          if (last?.role === 'assistant') {
+            const toolCallId = msg.tool_call_id;
+
+            // Update assistant's attachments if tool message has them
+            if (msg.attachments && msg.attachments.length > 0) {
+              last.attachments = [...(last.attachments || []), ...msg.attachments];
+            }
+
+            // Try updating segments first
+            if (last.segments && last.segments.length > 0) {
+              const segments = last.segments.map(seg => {
+                if (!seg.tool_calls) return seg;
+                const tool_calls = seg.tool_calls.map(tc =>
+                  tc.id === toolCallId ? { ...tc, _result: msg.content } : tc
+                );
+                return { ...seg, tool_calls };
+              });
+              return [...prev.slice(0, -1), { ...last, segments }];
+            }
+
+            // Try updating top-level tool_calls
+            if (last.tool_calls && last.tool_calls.length > 0) {
+              const tool_calls = last.tool_calls.map(tc =>
+                tc.id === toolCallId ? { ...tc, _result: msg.content } : tc
+              );
+              return [...prev.slice(0, -1), { ...last, tool_calls }];
+            }
+          }
+
+          // If we couldn't find a matching assistant message to update, 
+          // we still don't want to append it as a "USER" message.
+          // We'll append it with role 'tool' which Message.tsx should ignore or handle.
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [...prev, {
+            id: msg.id,
+            role: 'tool',
+            content: msg.content,
+            timestamp: msg.timestamp || Date.now(),
+            tool_call_id: msg.tool_call_id,
+            name: msg.name
+          }];
+        });
+      } else if (data.type === 'tool_start') {
+        updateSessionMessages(store, sessionId, prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            const toolCalls = data.tool_calls || [];
+            if (last.segments && last.segments.length > 0) {
+              const segments = [...last.segments];
+              const lastSeg = segments[segments.length - 1];
+              segments[segments.length - 1] = {
+                ...lastSeg,
+                tool_calls: toolCalls.map((tc: ToolCall) => ({ ...tc, _result: undefined }))
+              };
+              return [...prev.slice(0, -1), { ...last, segments }];
+            }
+            return [...prev.slice(0, -1), {
+              ...last,
+              content: '',
+              segments: [{
+                content: last.content || undefined,
+                tool_calls: toolCalls.map((tc: ToolCall) => ({ ...tc, _result: undefined }))
+              }]
+            }];
+          }
+          return prev;
+        });
+      } else if (data.type === 'turn_start') {
+        updateSessionMessages(store, sessionId, prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            const existingSegments: MessageSegment[] = last.segments || [{ content: last.content || '' }];
+            return [...prev.slice(0, -1), {
+              ...last,
+              content: '',
+              segments: [...existingSegments, { content: '' }]
+            }];
+          }
+          return prev;
+        });
+      } else if (data.type === 'done') {
+        setSessionStreaming(store, sessionId, false);
+        setSessionAgentStatus(store, sessionId, undefined);
+        updateSessionMessages(store, sessionId, prev => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === 'assistant') {
+            const finalMsg = data.new_messages?.[0];
+            if (finalMsg) {
+              if (last.segments && last.segments.length > 0) {
+                const segments = [...last.segments];
+                segments[segments.length - 1] = {
+                  ...segments[segments.length - 1],
+                  content: data.text || segments[segments.length - 1].content
+                };
+                return [...prev.slice(0, -1), {
+                  ...last,
+                  id: finalMsg.id,
+                  segments,
+                  meta: data.meta || last.meta
+                }];
+              }
+              return [...prev.slice(0, -1), {
+                ...last,
+                id: finalMsg.id,
+                content: data.text || last.content,
+                meta: data.meta || last.meta
+              }];
+            }
+          }
+          return prev;
+        });
+        store.onStreamComplete?.(sessionId);
+      } else if (data.type === 'error') {
+        setSessionStreaming(store, sessionId, false);
+        setSessionAgentStatus(store, sessionId, undefined);
+
+        const isCancellation = data.error?.toLowerCase().includes('cancel');
+        if (isCancellation) {
+          console.debug('[ChatContext] Rollback messages after cancellation');
+          updateSessionMessages(store, sessionId, prev => {
+            // Find the last user message and remove everything from there onwards
+            const lastUserIdx = [...prev].reverse().findIndex(m => m.role === 'user');
+            if (lastUserIdx !== -1) {
+              const actualIdx = prev.length - 1 - lastUserIdx;
+              return prev.slice(0, actualIdx);
+            }
+            return prev;
+          });
+        } else {
+          updateSessionMessages(store, sessionId, prev => [
+            ...prev,
+            { role: 'assistant', content: `Error: ${data.error || 'Unknown error'}`, timestamp: Date.now() }
+          ]);
+        }
+      } else if (data.type === 'agent_status') {
+        setSessionAgentStatus(store, sessionId, data.status);
+      } else if (data.type === 'title_updated') {
+        store.onTitleUpdated?.();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [store]);
+
+  return (
+    <ChatStoreContext.Provider value={store}>
+      {children}
+    </ChatStoreContext.Provider>
+  );
+}
+
+function useChatStore(): ChatStore {
+  const store = useContext(ChatStoreContext);
+  if (!store) {
+    throw new Error('useChatStore must be used within a ChatProvider');
+  }
+  return store;
+}
+
+function getOrCreateSession(store: ChatStore, sessionId: string): SessionState {
+  let session = store.sessions.get(sessionId);
+  if (!session) {
+    session = createSessionState();
+    store.sessions.set(sessionId, session);
+  }
+  return session;
+}
+
+function updateActiveSessionsSnapshot(store: ChatStore) {
+  const activeSessions: { sessionId: string; isStreaming: boolean; agentStatus?: string }[] = [];
+  store.sessions.forEach((session, sessionId) => {
+    if (session.isStreaming) {
+      activeSessions.push({ sessionId, isStreaming: true, agentStatus: session.agentStatus });
+    }
+  });
+
+  const changed = activeSessions.length !== store.activeSessionsSnapshot.length ||
+    activeSessions.some((s, i) =>
+      s.sessionId !== store.activeSessionsSnapshot[i].sessionId ||
+      s.agentStatus !== store.activeSessionsSnapshot[i].agentStatus
+    );
+
+  if (changed) {
+    store.activeSessionsSnapshot = activeSessions;
+  }
+}
+
+function notifyListeners(store: ChatStore) {
+  updateActiveSessionsSnapshot(store);
+  store.listeners.forEach(listener => listener());
+}
+
+function updateSessionMessages(
+  store: ChatStore,
+  sessionId: string,
+  updater: (prev: Message[]) => Message[]
+) {
+  const session = getOrCreateSession(store, sessionId);
+  session.messages = updater(session.messages);
+  session.snapshot = { ...session.snapshot, messages: session.messages };
+  notifyListeners(store);
+}
+
+function setSessionStreaming(store: ChatStore, sessionId: string, isStreaming: boolean) {
+  const session = getOrCreateSession(store, sessionId);
+  session.isStreaming = isStreaming;
+  session.snapshot = { ...session.snapshot, isStreaming };
+  notifyListeners(store);
+}
+
+function setSessionAgentStatus(store: ChatStore, sessionId: string, agentStatus?: 'thinking' | 'executing_tools') {
+  const session = getOrCreateSession(store, sessionId);
+  session.agentStatus = agentStatus;
+  session.snapshot = { ...session.snapshot, agentStatus };
+  notifyListeners(store);
+}
+
+export function useSessionChat(sessionId: string | null) {
+  const store = useChatStore();
+
+  const subscribe = useCallback((callback: () => void) => {
+    store.listeners.add(callback);
+    return () => store.listeners.delete(callback);
+  }, [store]);
+
+  const state = useSyncExternalStore(
+    subscribe,
+    () => {
+      if (!sessionId) return EMPTY_STATE;
+      const session = store.sessions.get(sessionId);
+      return session?.snapshot ?? EMPTY_STATE;
+    },
+    () => EMPTY_STATE
+  );
+
+  const loadHistory = useCallback(async (sid: string, force = false) => {
+    const session = getOrCreateSession(store, sid);
+    if (session.historyLoaded && !force) return;
+
+    try {
+      const response = await api.getProcessedHistory(sid);
+      if (response.messages) {
+        const fetchedMessages = response.messages.map(convertProcessedMessage);
+
+        updateSessionMessages(store, sid, prev => {
+          // Merge local and fetched messages
+          const merged = [...fetchedMessages];
+
+          // Keep local messages that are not in fetched messages
+          prev.forEach(localMsg => {
+            const exists = merged.some(m =>
+              m.id === localMsg.id ||
+              (m.role === localMsg.role && m.content === localMsg.content && Math.abs((m.timestamp || 0) - (localMsg.timestamp || 0)) < 5000)
+            );
+            if (!exists) {
+              merged.push(localMsg);
+            }
+          });
+
+          // Sort by timestamp
+          return merged.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        });
+
+        session.historyLoaded = true;
+      }
+    } catch (err) {
+      console.error('Failed to load chat history:', err);
+    }
+  }, [store]);
+
+  const sendMessage = useCallback(async (
+    content: string,
+    targetSessionId: string,
+    attachments?: Attachment[]
+  ) => {
+    const session = getOrCreateSession(store, targetSessionId);
+
+    if (session.isStreaming) {
+      console.warn('[ChatContext] Already streaming, ignoring message');
+      return;
+    }
+
+    const userMessage: Message = { role: 'user', content, timestamp: Date.now(), attachments };
+    session.messages = [...session.messages, userMessage];
+    session.isStreaming = true;
+    session.snapshot = { messages: session.messages, isStreaming: true };
+    notifyListeners(store);
+
+    let user_content: Array<{ type: string; text?: string; image_url?: { url: string } }> | undefined;
+
+    if (attachments?.length) {
+      user_content = [];
+      if (content.trim()) {
+        user_content.push({ type: 'text', text: content });
+      }
+      for (const attachment of attachments) {
+        if (attachment.type === 'image') {
+          user_content.push({
+            type: 'image_url',
+            image_url: { url: `data:${attachment.mimeType};base64,${attachment.data}` }
+          });
+        } else {
+          // For text-based files, include the content
+          const isText = attachment.mimeType.startsWith('text/') ||
+            ['application/json', 'application/javascript', 'application/x-javascript', 'text/javascript', 'text/x-javascript', 'application/xml', 'text/xml'].includes(attachment.mimeType);
+
+          if (isText) {
+            try {
+              // Decode base64 UTF-8 string
+              const binaryString = atob(attachment.data);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              const decoded = new TextDecoder().decode(bytes);
+
+              const pathInfo = attachment.path ? ` (from ${attachment.path})` : '';
+              user_content.push({
+                type: 'text',
+                text: `[File: ${attachment.name}${pathInfo}]\n${decoded}`
+              });
+            } catch (err) {
+              console.error('Failed to decode text file:', err);
+              const pathInfo = attachment.path ? ` at ${attachment.path}` : '';
+              user_content.push({
+                type: 'text',
+                text: `[Attached file: ${attachment.name}${pathInfo} (${attachment.mimeType}, ${formatFileSize(attachment.size)})]`
+              });
+            }
+          } else {
+            const pathInfo = attachment.path ? ` at ${attachment.path}` : '';
+            user_content.push({
+              type: 'text',
+              text: `[Attached file: ${attachment.name}${pathInfo} (${attachment.mimeType}, ${formatFileSize(attachment.size)})]`
+            });
+          }
+        }
+      }
+    }
+
+    try {
+      console.debug('[ChatContext] Sending message:', {
+        hasUserContent: !!user_content,
+        userContentLength: user_content?.length,
+        userContentTypes: user_content?.map(p => p.type),
+        attachmentsCount: attachments?.length,
+        attachmentTypes: attachments?.map(a => ({ type: a.type, mime: a.mimeType, dataLen: a.data?.length }))
+      });
+      await globalWS.send({
+        type: 'chat',
+        session_id: targetSessionId,
+        payload: { message: content, user_content, attachments }
+      });
+    } catch (err) {
+      console.error('Failed to send message via WebSocket:', err);
+      setSessionStreaming(store, targetSessionId, false);
+    }
+  }, [store]);
+
+  const clearSession = useCallback((sid: string) => {
+    const session = store.sessions.get(sid);
+    if (session) {
+      store.sessions.delete(sid);
+      notifyListeners(store);
+    }
+  }, [store]);
+
+  const stopGeneration = useCallback(async (targetSessionId: string) => {
+    // Optimistically stop streaming locally
+    setSessionStreaming(store, targetSessionId, false);
+    setSessionAgentStatus(store, targetSessionId, undefined);
+    
+    try {
+      await globalWS.send({
+        type: 'cancel_chat',
+        session_id: targetSessionId,
+      });
+    } catch (err) {
+      console.error('Failed to send cancel_chat via WebSocket:', err);
+    }
+  }, [store]);
+
+  return {
+    messages: state.messages,
+    isStreaming: state.isStreaming,
+    agentStatus: state.agentStatus,
+    sendMessage,
+    stopGeneration,
+    loadHistory,
+    clearSession,
+  };
+}
+
+export function useActiveSessions() {
+  const store = useChatStore();
+
+  const subscribe = useCallback((callback: () => void) => {
+    store.listeners.add(callback);
+    return () => store.listeners.delete(callback);
+  }, [store]);
+
+  return useSyncExternalStore(
+    subscribe,
+    () => store.activeSessionsSnapshot,
+    () => []
+  );
+}

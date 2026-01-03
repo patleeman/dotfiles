@@ -1,0 +1,31 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/index.css has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   103→  .power-surface {
+   104→    background-color: rgb(var(--surface));
+   105→  }
+   106→
+   107→  .scrollbar-thin {
+   108→    scrollbar-width: thin;
+   109→    scrollbar-color: #334155 transparent;
+   110→  }
+   111→
+   112→  .scrollbar-thin::-webkit-scrollbar {
+   113→    width: 6px;
+   114→    height: 6px;
+   115→  }
+   116→
+   117→  .scrollbar-thin::-webkit-scrollbar-track {
+   118→    background: transparent;
+   119→  }
+   120→
+   121→  .scrollbar-thin::-webkit-scrollbar-thumb {
+   122→    background-color: #334155;
+   123→    border-radius: 3px;
+   124→  }
+   125→
+   126→  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+   127→    background-color: #475569;
+   128→  }
+   129→
+   130→  .scrollbar-hidden {
+   131→    scrollbar-width: none;
+   132→    -ms-overflow-style: none;

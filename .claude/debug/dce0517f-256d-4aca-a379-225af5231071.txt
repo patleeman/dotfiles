@@ -1,0 +1,96 @@
+2026-01-03T12:18:18.121Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude...
+2026-01-03T12:18:18.151Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (24.6ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T12:18:18.159Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T12:18:18.159Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T12:18:18.159Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T12:18:18.159Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'userSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T12:18:18.160Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T12:18:18.160Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T12:18:18.160Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-03T12:18:18.169Z [DEBUG] Stats cache is up to date
+2026-01-03T12:18:18.171Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T12:18:18.337Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (164.4ms): cursor --version
+2026-01-03T12:18:18.338Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T12:18:18.352Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T12:18:18.352Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T12:18:18.353Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T12:18:18.353Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767442698353-z4x3oi.sh
+2026-01-03T12:18:18.353Z [DEBUG] Shell binary exists: true
+2026-01-03T12:18:18.353Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T12:18:18.354Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/dce0517f-256d-4aca-a379-225af5231071-agent-dce0517f-256d-4aca-a379-225af5231071.json.tmp.88732.1767442698354
+2026-01-03T12:18:18.354Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T12:18:18.354Z [DEBUG] Renaming /Users/patrick/.claude/todos/dce0517f-256d-4aca-a379-225af5231071-agent-dce0517f-256d-4aca-a379-225af5231071.json.tmp.88732.1767442698354 to /Users/patrick/.claude/todos/dce0517f-256d-4aca-a379-225af5231071-agent-dce0517f-256d-4aca-a379-225af5231071.json
+2026-01-03T12:18:18.354Z [DEBUG] File /Users/patrick/.claude/todos/dce0517f-256d-4aca-a379-225af5231071-agent-dce0517f-256d-4aca-a379-225af5231071.json written atomically
+2026-01-03T12:18:18.358Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-01-03T12:18:18.358Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T12:18:18.358Z [DEBUG] Total plugin commands loaded: 0
+2026-01-03T12:18:18.358Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-03T12:18:18.361Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T12:18:18.366Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.88732.1767442698366
+2026-01-03T12:18:18.366Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T12:18:18.366Z [DEBUG] Temp file written successfully, size: 59108 bytes
+2026-01-03T12:18:18.366Z [DEBUG] Applied original permissions to temp file
+2026-01-03T12:18:18.366Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.88732.1767442698366 to /Users/patrick/.claude.json
+2026-01-03T12:18:18.366Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T12:18:18.370Z [DEBUG] Protecting locked version from cleanup: 2.0.67
+2026-01-03T12:18:18.371Z [ERROR] Error: Error: NON-FATAL: Lock acquisition failed for /Users/patrick/.local/share/claude/versions/2.0.76 (expected in multi-process scenarios)
+    at XZR (/$bunfs/root/claude:2430:2165)
+    at fUA (/$bunfs/root/claude:2430:1885)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T12:18:18.371Z [DEBUG] Remote settings: No settings found (404)
+2026-01-03T12:18:18.371Z [DEBUG] Programmatic settings change notification for policySettings
+2026-01-03T12:18:18.371Z [DEBUG] Plugin hooks: reloading due to policySettings change
+2026-01-03T12:18:18.372Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-03T12:18:18.372Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-03T12:18:18.373Z [DEBUG] Loaded 1 unique skills (managed: 0, user: 0, project: 0, legacy commands: 1)
+2026-01-03T12:18:18.373Z [DEBUG] getSkills returning: 1 skill dir commands, 0 plugin skills
+2026-01-03T12:18:18.377Z [DEBUG] Initialized versioned plugins system with 1 plugins
+2026-01-03T12:18:18.380Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-03T12:18:18.380Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:18:18.380Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-03T12:18:18.383Z [DEBUG] Total plugin output styles loaded: 0
+2026-01-03T12:18:18.458Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-03T12:18:18.458Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-03T12:18:18.458Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-03T12:18:18.458Z [DEBUG] Path /Users/patrick/workingdir/familiar/packages/desktop/src-tauri already tracked for repo patleeman/familiar
+2026-01-03T12:18:18.501Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-03T12:18:18.501Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:18:18.501Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-03T12:18:18.501Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-03T12:18:18.501Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:18:18.501Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-03T12:18:18.504Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T12:18:18.504Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T12:18:18.505Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T12:18:18.505Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T12:18:18.506Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T12:18:18.506Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:18:18.506Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T12:18:18.511Z [DEBUG] Skills and commands included in Skill tool: commit-and-push
+2026-01-03T12:18:18.580Z [ERROR] Error streaming, falling back to non-streaming mode: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyR32LRep7KSHDoFBR"}
+2026-01-03T12:18:18.589Z [ERROR] Error streaming, falling back to non-streaming mode: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyR5W5zD3RAF8bAvda"}
+2026-01-03T12:18:18.590Z [ERROR] Error streaming, falling back to non-streaming mode: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyR5FgKoPRPkXMB3iX"}
+2026-01-03T12:18:18.649Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyRFvV8Kvk1FQS5sEz"}
+2026-01-03T12:18:18.649Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyRFvV8Kvk1FQS5sEz"}
+    at generate (/$bunfs/root/claude:454:11098)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T12:18:18.654Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyRMNbL3xktAME7rNC"}
+2026-01-03T12:18:18.654Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyRMNbL3xktAME7rNC"}
+    at generate (/$bunfs/root/claude:454:11098)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T12:18:18.656Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyRLP9vmRbfFxfpWQF"}
+2026-01-03T12:18:18.656Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWkRyRLP9vmRbfFxfpWQF"}
+    at generate (/$bunfs/root/claude:454:11098)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T12:18:18.664Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T12:18:18.664Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:18:18.664Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T12:18:18.666Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T12:18:18.666Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:18:18.666Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T12:18:18.666Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2026-01-03T12:18:18.666Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:18:18.666Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

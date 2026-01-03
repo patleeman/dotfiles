@@ -1,0 +1,60 @@
+# Familiar
+
+A local, high-performance AI agent desktop app built with Tauri, Go backend, and React UI.
+
+## Tech Stack
+
+- **Desktop**: Tauri (Rust) with React 19 + TypeScript frontend
+- **Backend**: Go server (runs as Tauri sidecar)
+- **UI**: Vite, Tailwind CSS, TanStack Query
+- **Testing**: Vitest (unit), Playwright (e2e), Go test
+
+## Essential Commands
+
+All commands run via `make` from the project root:
+
+```bash
+# Setup & Run
+make setup          # Install all dependencies
+make run            # Start dev server (builds sidecar + runs tauri dev)
+make build          # Production build
+
+# Testing
+make test           # Run all tests (backend + UI + e2e)
+make test-backend   # Go tests only
+make test-ui        # Vitest UI tests only
+make test-e2e       # Playwright e2e tests
+
+# Code Quality
+make lint           # Go vet
+make fmt            # Go fmt
+
+# Other
+make clean          # Remove build artifacts
+make website-dev    # Run website dev server
+```
+
+## Project Structure
+
+```
+packages/
+  desktop/          # Tauri desktop app
+    src-tauri/      # Rust/Tauri code
+    ui/             # React frontend (Vite)
+      src/          # React components, hooks, etc.
+      e2e/          # Playwright tests
+  go-backend/       # Go server (cmd/server)
+  website/          # Marketing website
+```
+
+## Key Files
+
+- `organization/FAMILIAR.md` - Product source of truth (keep updated when changing features)
+- `Makefile` - All build/test commands
+- `.env` - Environment variables (not committed)
+
+## Guidelines
+
+- Run `make test` before committing changes
+- Keep `organization/FAMILIAR.md` updated when modifying features
+- Go backend runs on port 18080 during development

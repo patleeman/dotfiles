@@ -1,0 +1,104 @@
+/**
+ * WebSocket event types
+ */
+export const WS_EVENTS = {
+  // Agent lifecycle
+  AGENT_CREATED: 'agent_created',
+  AGENT_UPDATED: 'agent_updated',
+  AGENT_STATE_CHANGED: 'agent_state_changed',
+  AGENT_CONFIG_UPDATED: 'agent_config_updated',
+  CREATE_AGENT: 'create_agent',
+
+  // Execution
+  EXECUTION_LOG: 'execution_log',
+  AGENT_ERROR: 'agent_error',
+  AGENT_PAUSED: 'agent_paused',
+  AGENT_RESUMED: 'agent_resumed',
+
+  // Chat/Streaming
+  CHUNK: 'chunk',
+  STREAM_START: 'stream_start',
+  STREAM_END: 'stream_end',
+  USER_MESSAGE: 'user_message',
+  ASSISTANT_MESSAGE: 'assistant_message',
+
+  // Tools
+  TOOL_CALL: 'tool_call',
+  TOOL_OUTPUT: 'tool_output',
+  TOOL_ERROR: 'tool_error',
+  TOOL_APPROVAL_REQUESTED: 'tool_approval_requested',
+  TOOL_APPROVAL_RESOLVED: 'tool_approval_resolved',
+
+  // Scope/Plan
+  SCOPE_PROPOSED: 'scope_proposed',
+  SCOPE_APPROVED: 'scope_approved',
+  SCOPE_REJECTED: 'scope_rejected',
+
+  // Compaction
+  COMPACTION_REQUESTED: 'compaction_requested',
+  COMPACTION_COMPLETED: 'compaction_completed',
+  CONVERSATION_CLEARED: 'conversation_cleared',
+
+  // Tasks
+  TASK_COMPLETED: 'task_completed',
+  TASK_FAILED: 'task_failed',
+  SCHEDULED_TASK_CREATED: 'scheduled_task_created',
+  SCHEDULED_TASK_UPDATED: 'scheduled_task_updated',
+
+  // CLI
+  CLI_OUTPUT: 'cli_output',
+  SHELL_OUTPUT: 'shell_output',
+
+  // Secrets
+  SECRET_REQUEST: 'secret_request',
+
+  // Interactions
+  USER_INTERACTION: 'user_interaction',
+  MODEL_RESPONDED: 'model_responded',
+  MODEL_THINKING: 'model_thinking',
+} as const;
+
+export type WSEventType = typeof WS_EVENTS[keyof typeof WS_EVENTS];
+
+/**
+ * Agent states
+ */
+export const AGENT_STATES = {
+  IDLE: 'idle',
+  RUNNING: 'running',
+  PAUSED: 'paused',
+  WAITING: 'waiting',
+  AWAITING_APPROVAL: 'awaiting_approval',
+  AWAITING_SECRET: 'awaiting_secret',
+  ERROR: 'error',
+  COMPLETED: 'completed',
+} as const;
+
+export type AgentState = typeof AGENT_STATES[keyof typeof AGENT_STATES];
+
+/**
+ * Message roles
+ */
+export const MESSAGE_ROLES = {
+  USER: 'user',
+  ASSISTANT: 'assistant',
+  SYSTEM: 'system',
+  TOOL: 'tool',
+} as const;
+
+export type MessageRole = typeof MESSAGE_ROLES[keyof typeof MESSAGE_ROLES];
+
+/**
+ * Provider names
+ */
+export const PROVIDERS = {
+  ANTHROPIC: 'anthropic',
+  OPENAI: 'openai',
+  OPENROUTER: 'openrouter',
+  GEMINI: 'gemini',
+  OLLAMA: 'ollama',
+  LMSTUDIO: 'lmstudio',
+  CUSTOM: 'custom',
+} as const;
+
+export type Provider = typeof PROVIDERS[keyof typeof PROVIDERS];

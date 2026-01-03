@@ -1,0 +1,148 @@
+Exit code 2
+# github.com/patrick/familiar/packages/go-backend/internal/utils [github.com/patrick/familiar/packages/go-backend/internal/utils.test]
+internal/utils/browser_manager_test.go:7:2: "time" imported and not used
+# github.com/patrick/familiar/packages/go-backend/internal/tools [github.com/patrick/familiar/packages/go-backend/internal/tools.test]
+internal/tools/tools_test.go:26:36: too many arguments in call to NewSpawnSubAgentTool
+	have (nil, func(parentID string, name string, prompt string, objective string, engine string, workingDir string) (string, error))
+	want (func(parentID string, name string, prompt string, objective string, workingDir string) (string, error))
+internal/tools/base_test.go:7:2: "github.com/patrick/familiar/packages/go-backend/pkg/types" imported and not used
+# github.com/patrick/familiar/packages/go-backend/internal/inference [github.com/patrick/familiar/packages/go-backend/internal/inference.test]
+internal/inference/gemini_test.go:5:2: "strings" imported and not used
+# github.com/patrick/familiar/packages/go-backend/internal/agent [github.com/patrick/familiar/packages/go-backend/internal/agent.test]
+internal/agent/cli_executor_test.go:17:3: unknown field CLIConfig in struct literal of type "github.com/patrick/familiar/packages/go-backend/pkg/types".Agent
+internal/agent/cli_executor_test.go:17:21: undefined: types.CLIConfig
+internal/agent/cli_executor_test.go:23:14: undefined: NewCLIExecutor
+internal/agent/cli_executor_test.go:40:16: undefined: CLIExecutor
+internal/agent/cli_executor_test.go:59:16: undefined: CLIExecutor
+internal/agent/cli_executor_test.go:76:16: undefined: CLIExecutor
+internal/agent/cli_executor_test.go:96:16: undefined: CLIExecutor
+internal/agent/cli_executor_test.go:108:16: undefined: CLIExecutor
+internal/agent/cli_executor_test.go:121:16: undefined: CLIExecutor
+internal/agent/cli_executor_test.go:131:16: undefined: CLIExecutor
+internal/agent/cli_executor_test.go:131:16: too many errors
+# github.com/patrick/familiar/packages/go-backend/cmd/server
+cmd/server/agents.go:874:2: declared and not used: ctx
+cmd/server/server.go:595:20: cfg.SubAgent.ClaudeCode undefined (type struct{Enabled *bool "yaml:\"enabled\" json:\"enabled\""} has no field or method ClaudeCode)
+cmd/server/server.go:596:18: cfg.SubAgent.ClaudeCode undefined (type struct{Enabled *bool "yaml:\"enabled\" json:\"enabled\""} has no field or method ClaudeCode)
+cmd/server/server.go:596:39: undefined: config.ClaudeCodeConfig
+cmd/server/server.go:599:18: cfg.SubAgent.ClaudeCode undefined (type struct{Enabled *bool "yaml:\"enabled\" json:\"enabled\""} has no field or method ClaudeCode)
+cmd/server/server.go:608:18: cfg.SubAgent.ClaudeCode undefined (type struct{Enabled *bool "yaml:\"enabled\" json:\"enabled\""} has no field or method ClaudeCode)
+cmd/server/server.go:613:20: cfg.SubAgent.Codex undefined (type struct{Enabled *bool "yaml:\"enabled\" json:\"enabled\""} has no field or method Codex)
+cmd/server/server.go:614:18: cfg.SubAgent.Codex undefined (type struct{Enabled *bool "yaml:\"enabled\" json:\"enabled\""} has no field or method Codex)
+cmd/server/server.go:614:34: undefined: config.CodexConfig
+cmd/server/server.go:617:18: cfg.SubAgent.Codex undefined (type struct{Enabled *bool "yaml:\"enabled\" json:\"enabled\""} has no field or method Codex)
+cmd/server/server.go:617:18: too many errors
+make: *** [test-backend] Error 1
+
+cd packages/go-backend && go test -v ./...
+FAIL	github.com/patrick/familiar/packages/go-backend/cmd/server [build failed]
+FAIL	github.com/patrick/familiar/packages/go-backend/internal/agent [build failed]
+=== RUN   TestLoadConfig_Defaults
+--- PASS: TestLoadConfig_Defaults (0.00s)
+=== RUN   TestSaveAndLoadConfig
+--- PASS: TestSaveAndLoadConfig (0.00s)
+=== RUN   TestIsMacOS
+--- PASS: TestIsMacOS (0.00s)
+=== RUN   TestGetKeychainPassword
+=== RUN   TestGetKeychainPassword/non-existent_password_returns_empty
+=== RUN   TestGetKeychainPassword/empty_account_name
+--- PASS: TestGetKeychainPassword (0.03s)
+    --- PASS: TestGetKeychainPassword/non-existent_password_returns_empty (0.01s)
+    --- PASS: TestGetKeychainPassword/empty_account_name (0.01s)
+=== RUN   TestSetKeychainPassword
+=== RUN   TestSetKeychainPassword/set_and_get_password
+=== RUN   TestSetKeychainPassword/update_existing_password
+--- PASS: TestSetKeychainPassword (0.17s)
+    --- PASS: TestSetKeychainPassword/set_and_get_password (0.07s)
+    --- PASS: TestSetKeychainPassword/update_existing_password (0.09s)
+=== RUN   TestDeleteKeychainPassword
+=== RUN   TestDeleteKeychainPassword/delete_existing_password
+=== RUN   TestDeleteKeychainPassword/delete_non-existent_password
+--- PASS: TestDeleteKeychainPassword (0.08s)
+    --- PASS: TestDeleteKeychainPassword/delete_existing_password (0.07s)
+    --- PASS: TestDeleteKeychainPassword/delete_non-existent_password (0.01s)
+=== RUN   TestKeychainPasswordWithSpecialCharacters
+=== RUN   TestKeychainPasswordWithSpecialCharacters/special_chars:_password_with_spaces
+=== RUN   TestKeychainPassw
+
+... [5007 characters truncated] ...
+
+tMaskSecrets/single_secret_masking
+=== RUN   TestMaskSecrets/multiple_secrets_masking
+=== RUN   TestMaskSecrets/empty_secrets_list
+=== RUN   TestMaskSecrets/nil_secrets_list
+=== RUN   TestMaskSecrets/empty_secret_string
+=== RUN   TestMaskSecrets/secret_not_in_text
+=== RUN   TestMaskSecrets/secret_appears_multiple_times
+=== RUN   TestMaskSecrets/partial_match_should_not_mask
+    vault_test.go:185: expected original text for partial match, got password is ********45
+--- FAIL: TestMaskSecrets (0.00s)
+    --- PASS: TestMaskSecrets/single_secret_masking (0.00s)
+    --- PASS: TestMaskSecrets/multiple_secrets_masking (0.00s)
+    --- PASS: TestMaskSecrets/empty_secrets_list (0.00s)
+    --- PASS: TestMaskSecrets/nil_secrets_list (0.00s)
+    --- PASS: TestMaskSecrets/empty_secret_string (0.00s)
+    --- PASS: TestMaskSecrets/secret_not_in_text (0.00s)
+    --- PASS: TestMaskSecrets/secret_appears_multiple_times (0.00s)
+    --- FAIL: TestMaskSecrets/partial_match_should_not_mask (0.00s)
+=== RUN   TestGetVaultSecretValues
+=== RUN   TestGetVaultSecretValues/single_secret_retrieval
+=== RUN   TestGetVaultSecretValues/multiple_secrets_retrieval
+=== RUN   TestGetVaultSecretValues/missing_secret_excluded
+=== RUN   TestGetVaultSecretValues/all_secrets_missing
+=== RUN   TestGetVaultSecretValues/empty_names_list
+--- PASS: TestGetVaultSecretValues (0.04s)
+    --- PASS: TestGetVaultSecretValues/single_secret_retrieval (0.00s)
+    --- PASS: TestGetVaultSecretValues/multiple_secrets_retrieval (0.00s)
+    --- PASS: TestGetVaultSecretValues/missing_secret_excluded (0.01s)
+    --- PASS: TestGetVaultSecretValues/all_secrets_missing (0.02s)
+    --- PASS: TestGetVaultSecretValues/empty_names_list (0.00s)
+FAIL
+FAIL	github.com/patrick/familiar/packages/go-backend/internal/config	1.610s
+FAIL	github.com/patrick/familiar/packages/go-backend/internal/inference [build failed]
+2026/01/03 06:18:54 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+=== RUN   TestScheduler
+2026/01/03 06:18:54 INFO Applying migration id=1 name=initial_schema
+2026/01/03 06:18:54 INFO Applying migration id=2 name=add_target_agent_id_to_tasks
+2026/01/03 06:18:54 INFO Applying migration id=3 name=add_system_prompt_to_agents
+2026/01/03 06:18:54 INFO Applying migration id=4 name=add_pending_events_and_subscriptions
+2026/01/03 06:18:54 INFO Applying migration id=5 name=remove_cli_subagent_columns
+2026/01/03 06:18:54 INFO Scheduler started
+2026/01/03 06:18:54 INFO Triggering missed one-off task id=task1 trigger_at=2026-01-03T11:18:54Z
+2026/01/03 06:18:54 INFO Running scheduled task target_agent_id=agent1 task_id=task1
+2026/01/03 06:18:55 INFO Running scheduled task target_agent_id=agent1 task_id=task2
+2026/01/03 06:18:56 INFO Running scheduled task target_agent_id=agent1 task_id=task2
+2026/01/03 06:18:57 INFO Scheduler stopped
+--- PASS: TestScheduler (3.41s)
+=== RUN   TestCheckMissedTasks
+2026/01/03 06:18:57 INFO Applying migration id=1 name=initial_schema
+2026/01/03 06:18:57 INFO Applying migration id=2 name=add_target_agent_id_to_tasks
+2026/01/03 06:18:57 INFO Applying migration id=3 name=add_system_prompt_to_agents
+2026/01/03 06:18:57 INFO Applying migration id=4 name=add_pending_events_and_subscriptions
+2026/01/03 06:18:57 INFO Applying migration id=5 name=remove_cli_subagent_columns
+2026/01/03 06:18:57 INFO Triggering missed one-off task id=missed1 trigger_at=2026-01-03T10:18:57Z
+2026/01/03 06:18:57 INFO Running scheduled task target_agent_id=agent1 task_id=missed1
+--- PASS: TestCheckMissedTasks (0.11s)
+PASS
+ok  	github.com/patrick/familiar/packages/go-backend/internal/scheduler	(cached)
+2026/01/03 06:18:54 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+=== RUN   TestDBAgentOperations
+2026/01/03 06:18:54 INFO Applying migration id=1 name=initial_schema
+2026/01/03 06:18:54 INFO Applying migration id=2 name=add_target_agent_id_to_tasks
+2026/01/03 06:18:54 INFO Applying migration id=3 name=add_system_prompt_to_agents
+2026/01/03 06:18:54 INFO Applying migration id=4 name=add_pending_events_and_subscriptions
+2026/01/03 06:18:54 INFO Applying migration id=5 name=remove_cli_subagent_columns
+--- PASS: TestDBAgentOperations (0.01s)
+=== RUN   TestDBScopeOperations
+2026/01/03 06:18:54 INFO Applying migration id=1 name=initial_schema
+2026/01/03 06:18:54 INFO Applying migration id=2 name=add_target_agent_id_to_tasks
+2026/01/03 06:18:54 INFO Applying migration id=3 name=add_system_prompt_to_agents
+2026/01/03 06:18:54 INFO Applying migration id=4 name=add_pending_events_and_subscriptions
+2026/01/03 06:18:54 INFO Applying migration id=5 name=remove_cli_subagent_columns
+--- PASS: TestDBScopeOperations (0.00s)
+PASS
+ok  	github.com/patrick/familiar/packages/go-backend/internal/storage	(cached)
+FAIL	github.com/patrick/familiar/packages/go-backend/internal/tools [build failed]
+FAIL	github.com/patrick/familiar/packages/go-backend/internal/utils [build failed]
+?   	github.com/patrick/familiar/packages/go-backend/pkg/types	[no test files]
+FAIL

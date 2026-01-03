@@ -1,0 +1,34 @@
+   860→
+   861→	// Broadcast agent_spawned
+   862→	s.globalBroadcast(map[string]interface{}{
+   863→		"type":      "agent_spawned",
+   864→		"parent_id": parentID,
+   865→		"child":     newAgent,
+   866→	})
+   867→
+   868→	go s.handleAgentScopeSetup(agentID)
+   869→
+   870→	return agentID, nil
+   871→}
+   872→
+   873→func (s *Server) handleAgentScopeSetup(agentID string) {
+   874→	ctx, cancel := context.WithCancel(context.Background())
+   875→	if _, loaded := s.proposing.LoadOrStore(agentID, cancel); loaded {
+   876→		slog.Debug("Scope setup already in progress", "agent_id", agentID)
+   877→		cancel()
+   878→		return
+   879→	}
+   880→	defer func() {
+   881→		s.proposing.Delete(agentID)
+   882→		cancel()
+   883→	}()
+   884→
+   885→	sa, err := s.getOrCreateStatefulAgent(agentID)
+   886→	if err != nil {
+   887→		slog.Error("Failed to get agent for scope setup", "agent_id", agentID, "error", err)
+   888→		errDetail := &types.ErrorDetail{
+   889→			Category:    types.ErrorInitialization,
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

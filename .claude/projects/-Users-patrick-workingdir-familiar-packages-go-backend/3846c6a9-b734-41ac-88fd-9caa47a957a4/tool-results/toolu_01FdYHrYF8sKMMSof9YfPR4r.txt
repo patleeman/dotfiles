@@ -1,0 +1,25 @@
+Web search results for query: "opencode anomalyco Claude Max API limits implementation"
+
+Links: [{"title":"Feature Request: Show Error Message When Claude Usage Limit Is Reached · Issue #877 · anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/877"},{"title":"Support Claude Pro/Max Plans via OAuth Authentication · Issue #4799 · RooCodeInc/Roo-Code","url":"https://github.com/RooCodeInc/Roo-Code/issues/4799"},{"title":"Frequent API errors with Claude · Issue #4166 · anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/4166"},{"title":"OpenCode v1.0.25 Hangs Indefinitely with LM Studio + Qwen Models Due to Empty tool_calls Array · Issue #4255 · anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/4255"},{"title":"anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/6551"},{"title":"OpenCode doesn't perform as well as Claude Code when processing large files · Issue #2003 · anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/2003"},{"title":"How I Built claude_max to unlock Claude Code's Full Power with Anthropic's Max Subscription","url":"https://idsc2025.substack.com/p/how-i-built-claude_max-to-unlock"},{"title":"Feature Request: API Fallback for Pro/Max Subscriptions When Limits Are Reached · Issue #2944 · anthropics/claude-code","url":"https://github.com/anthropics/claude-code/issues/2944"},{"title":"[FEATURE]: Anthropic (and others) caching improvement · Issue #5416 · anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/5416"},{"title":"Opencode calls 'Claude 3.5 Haiku' on session start, despite selecting a custom model · Issue #1243 · anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/1243"}]
+
+Based on the search results, here's what I found about OpenCode (anomalyco) and Claude Max API limits implementation:
+
+## Key Findings
+
+### Usage Limit Handling Issues
+Currently, when the Claude usage limit is reached, Opencode simply gets stuck at "working...". This makes it unclear to the user what has happened, and I have to manually open Claude to check if the usage limit has been reached.(no content)The expected behavior is that when the Claude usage limit is reached, Opencode should display a clear error message to the user indicating that the limit has been hit.
+
+### OAuth Implementation for Claude Max
+OpenCode implements PKCE OAuth flow using Anthropic's endpoints with client ID `9d1c250a-e61b-44d9-88ed-5944d1962f5e`.(no content)The fork of the opencode terminal coding agent allows use of Claude subscriptions directly through OAuth.(no content)RooCode users currently pay expensive per-token API pricing when Claude Pro/Max subscriptions offer better value with fixed monthly costs and usage limits that reset every 5 hours.
+
+### Claude Max Python SDK (claude_max)
+A developer built the claude_max tool to take the Claude Code SDK for Python and add features where instead of being restricted to only your API balance, you can leverage your Claude Max subscription ($200/month at the highest tier) directly. It uses your existing Claude Code / Max plan subscription instead of needing an API balance.(no content)The implementation successfully uses OAuth 2.0 with PKCE security, enabling Python developers to fully utilize Claude Code Max subscriptions.
+
+### API Fallback Feature Request
+There's a feature request for API fallback for Pro/Max subscriptions when limits are reached - users should be prompted to configure their Claude API key to continue the session. Rather than stopping work, they can seamlessly switch to API usage for critical deadlines.
+
+### Caching Improvements
+Some users noticed token usage was somewhat higher with the same general workflow in opencode compared to claude code. Research determined the cache model and prompt structure being used was suboptimal for claude-based models.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.

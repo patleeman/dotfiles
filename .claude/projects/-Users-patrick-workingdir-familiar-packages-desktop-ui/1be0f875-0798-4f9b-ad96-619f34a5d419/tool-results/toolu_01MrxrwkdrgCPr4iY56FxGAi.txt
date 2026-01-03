@@ -1,0 +1,12 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/TriggersView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   137→                                    <span className="uppercase tracking-[0.2em] text-[9px] font-black">Loading triggers...</span>
+   138→                                </div>
+   139→                            </div>
+   140→                        ) : (triggersData?.length || 0) === 0 ? (
+   141→                            <div className="px-4 py-12 text-center text-text-tertiary/30 uppercase tracking-[0.2em] text-[9px] font-black">
+   142→                                No triggers found
+   143→                            </div>
+   144→                        ) : (
+   145→                            [...(triggersData || [])]
+   146→                                .sort((a, b) => a.localeCompare(b))
+   147→                                .map((triggerId: string) => (

@@ -1,0 +1,251 @@
+import { test as base, expect, Page, Locator } from '@playwright/test';
+
+// Page object for the Dashboard/Agent list
+class DashboardPage {
+  readonly page: Page;
+  readonly createAgentButton: Locator;
+  readonly agentList: Locator;
+  readonly searchInput: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.createAgentButton = page.getByRole('button', { name: /create|new agent/i });
+    this.agentList = page.locator('[data-testid="agent-list"]');
+    this.searchInput = page.getByPlaceholder(/search/i);
+  }
+
+  async goto() {
+    await this.page.goto('/');
+  }
+
+  async createAgent(name?: string) {
+    await this.createAgentButton.click();
+    // Wait for agent to be created and potentially renamed
+    if (name) {
+      // The new agent should appear in the list
+      await this.page.waitForSelector(`text=${name}`, { timeout: 5000 }).catch(() => {
+        // Agent might have a default name
+      });
+    }
+  }
+
+  async selectAgent(nameOrId: string) {
+    await this.page.click(`text=${nameOrId}`);
+  }
+
+  async deleteAgent(name: string) {
+    // Right-click to open context menu
+    await this.page.click(`text=${name}`, { button: 'right' });
+    await this.page.click('text=Delete');
+    // Confirm deletion if dialog appears
+    const confirmButton = this.page.getByRole('button', { name: /confirm|yes|delete/i });
+    if (await confirmButton.isVisible()) {
+      await confirmButton.click();
+    }
+  }
+
+  async getAgentCount() {
+    const agents = await this.page.locator('[data-testid="agent-item"]').all();
+    return agents.length;
+  }
+}
+
+// Page object for Agent Workspace
+class AgentWorkspacePage {
+  readonly page: Page;
+  readonly chatInput: Locator;
+  readonly sendButton: Locator;
+  readonly stopButton: Locator;
+  readonly logViewer: Locator;
+  readonly messagesContainer: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.chatInput = page.locator('textarea[placeholder*="message"], input[placeholder*="message"]');
+    this.sendButton = page.getByRole('button', { name: /send/i });
+    this.stopButton = page.getByRole('button', { name: /stop/i });
+    this.logViewer = page.locator('[data-testid="log-viewer"]');
+    this.messagesContainer = page.locator('[data-testid="messages"]');
+  }
+
+  async sendMessage(text: string) {
+    await this.chatInput.fill(text);
+    await this.chatInput.press('Enter');
+  }
+
+  async waitForResponse(timeout = 30000) {
+    // Wait for any response to appear
+    await this.page.waitForSelector('[data-testid="agent-message"]', { timeout });
+  }
+
+  async stopAgent() {
+    await this.stopButton.click();
+  }
+
+  async approveToolCall() {
+    const allowButton = this.page.getByRole('button', { name: /allow/i }).first();
+    await allowButton.click();
+  }
+
+  async rejectToolCall() {
+    const rejectButton = this.page.getByRole('button', { name: /reject/i }).first();
+    await rejectButton.click();
+  }
+}
+
+// Page object for Settings
+class SettingsPage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async goto() {
+    await this.page.goto('/settings');
+  }
+
+  async selectProvider(provider: string) {
+    await this.page.click(`text=${provider}`);
+  }
+
+  async addApiKey(provider: string, key: string) {
+    await this.selectProvider(provider);
+    const input = this.page.getByPlaceholder(/paste key/i);
+    await input.fill(key);
+    await this.page.getByRole('button', { name: /register/i }).click();
+  }
+
+  async removeApiKey(provider: string) {
+    await this.selectProvider(provider);
+    await this.page.getByRole('button', { name: /wipe key/i }).click();
+  }
+
+  async toggleProvider(provider: string) {
+    await this.selectProvider(provider);
+    const toggle = this.page.getByRole('button', { name: /on|off/i }).first();
+    await toggle.click();
+  }
+
+  async selectTheme(theme: string) {
+    await this.page.click(`button:has-text("${theme}")`);
+  }
+
+  async addVaultSecret(key: string, value: string) {
+    await this.page.getByPlaceholder(/github_token/i).fill(key);
+    await this.page.getByPlaceholder(/secret value/i).fill(value);
+    await this.page.getByRole('button', { name: /store in vault/i }).click();
+  }
+
+  async toggleAutoCompaction() {
+    await this.page.getByRole('button', { name: /active|inactive/i }).first().click();
+  }
+}
+
+// Page object for Skills
+class SkillsPage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async goto() {
+    await this.page.goto('/skills');
+  }
+
+  async getSkillCount() {
+    const skills = await this.page.locator('[data-testid="skill-item"]').all();
+    return skills.length;
+  }
+
+  async selectSkill(name: string) {
+    await this.page.click(`text=${name}`);
+  }
+
+  async deleteSkill(name: string) {
+    await this.page.click(`text=${name}`, { button: 'right' });
+    await this.page.click('text=Delete');
+    // Confirm if needed
+    const confirmButton = this.page.getByRole('button', { name: /confirm|yes|delete/i });
+    if (await confirmButton.isVisible()) {
+      await confirmButton.click();
+    }
+  }
+}
+
+// Page object for Triggers
+class TriggersPage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async goto() {
+    await this.page.goto('/triggers');
+  }
+
+  async getTriggerCount() {
+    const triggers = await this.page.locator('[data-testid="trigger-item"]').all();
+    return triggers.length;
+  }
+
+  async selectTrigger(name: string) {
+    await this.page.click(`text=${name}`);
+  }
+}
+
+// Page object for Usage
+class UsagePage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async goto() {
+    await this.page.goto('/usage');
+  }
+
+  async getProviderSummary() {
+    return this.page.locator('text=Provider Summary').isVisible();
+  }
+
+  async getModelUtilization() {
+    return this.page.locator('text=Model Utilization').isVisible();
+  }
+}
+
+// Extended test fixture with page objects
+type Fixtures = {
+  dashboardPage: DashboardPage;
+  agentWorkspacePage: AgentWorkspacePage;
+  settingsPage: SettingsPage;
+  skillsPage: SkillsPage;
+  triggersPage: TriggersPage;
+  usagePage: UsagePage;
+};
+
+export const test = base.extend<Fixtures>({
+  dashboardPage: async ({ page }, use) => {
+    await use(new DashboardPage(page));
+  },
+  agentWorkspacePage: async ({ page }, use) => {
+    await use(new AgentWorkspacePage(page));
+  },
+  settingsPage: async ({ page }, use) => {
+    await use(new SettingsPage(page));
+  },
+  skillsPage: async ({ page }, use) => {
+    await use(new SkillsPage(page));
+  },
+  triggersPage: async ({ page }, use) => {
+    await use(new TriggersPage(page));
+  },
+  usagePage: async ({ page }, use) => {
+    await use(new UsagePage(page));
+  },
+});
+
+export { expect };

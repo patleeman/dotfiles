@@ -1,0 +1,282 @@
+2026-01-03T04:21:47.111Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (16.6ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T04:21:47.129Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (17.4ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T04:21:47.143Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude, /Users/patrick/workingdir/familiar/.claude, /Users/patrick/workingdir/familiar/.claude...
+2026-01-03T04:21:47.154Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T04:21:47.154Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T04:21:47.154Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T04:21:47.154Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'userSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T04:21:47.154Z [DEBUG] Applying permission update: Adding 12 allow rule(s) to destination 'localSettings': ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)"]
+2026-01-03T04:21:47.155Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T04:21:47.155Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T04:21:47.156Z [DEBUG] Loading plugin ralph-wiggum from source: "./plugins/ralph-wiggum"
+2026-01-03T04:21:47.175Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-03T04:21:47.175Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-03T04:21:47.175Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-03T04:21:47.175Z [DEBUG] Path /Users/patrick/workingdir/familiar already tracked for repo patleeman/familiar
+2026-01-03T04:21:47.176Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T04:21:47.176Z [DEBUG] Plugin ralph-wiggum@claude-plugins-official version 6d3752c000e2 already cached at /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T04:21:47.176Z [DEBUG] Copied local plugin ralph-wiggum to versioned cache: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T04:21:47.176Z [DEBUG] Loaded hooks from standard location for plugin ralph-wiggum: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/hooks/hooks.json
+2026-01-03T04:21:47.176Z [DEBUG] Found 1 plugins (1 enabled, 0 disabled)
+2026-01-03T04:21:47.182Z [DEBUG] Stats cache is up to date
+2026-01-03T04:21:47.184Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T04:21:47.184Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T04:21:47.186Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T04:21:47.197Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T04:21:47.197Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T04:21:47.197Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T04:21:47.197Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767414107197-aptho8.sh
+2026-01-03T04:21:47.197Z [DEBUG] Shell binary exists: true
+2026-01-03T04:21:47.197Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T04:21:47.198Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/16545703-3dc1-4b2e-993d-cd694fa6f227-agent-16545703-3dc1-4b2e-993d-cd694fa6f227.json.tmp.97430.1767414107198
+2026-01-03T04:21:47.198Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T04:21:47.198Z [DEBUG] Renaming /Users/patrick/.claude/todos/16545703-3dc1-4b2e-993d-cd694fa6f227-agent-16545703-3dc1-4b2e-993d-cd694fa6f227.json.tmp.97430.1767414107198 to /Users/patrick/.claude/todos/16545703-3dc1-4b2e-993d-cd694fa6f227-agent-16545703-3dc1-4b2e-993d-cd694fa6f227.json
+2026-01-03T04:21:47.199Z [DEBUG] File /Users/patrick/.claude/todos/16545703-3dc1-4b2e-993d-cd694fa6f227-agent-16545703-3dc1-4b2e-993d-cd694fa6f227.json written atomically
+2026-01-03T04:21:47.202Z [DEBUG] getPluginSkills: Processing 1 enabled plugins
+2026-01-03T04:21:47.202Z [DEBUG] Checking plugin ralph-wiggum: skillsPath=none, skillsPaths=0 paths
+2026-01-03T04:21:47.202Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T04:21:47.202Z [DEBUG] Loading hooks from plugin: ralph-wiggum
+2026-01-03T04:21:47.202Z [DEBUG] Registered 1 hooks from 1 plugins
+2026-01-03T04:21:47.203Z [DEBUG] Loaded 3 commands from plugin ralph-wiggum default directory
+2026-01-03T04:21:47.203Z [DEBUG] Total plugin commands loaded: 3
+2026-01-03T04:21:47.205Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T04:21:47.206Z [DEBUG] Protecting locked version from cleanup: 2.0.67
+2026-01-03T04:21:47.206Z [ERROR] Error: Error: NON-FATAL: Lock acquisition failed for /Users/patrick/.local/share/claude/versions/2.0.76 (expected in multi-process scenarios)
+    at XZR (/$bunfs/root/claude:2430:2165)
+    at fUA (/$bunfs/root/claude:2430:1885)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:21:47.245Z [DEBUG] Loaded 1 unique skills (managed: 0, user: 0, project: 0, legacy commands: 1)
+2026-01-03T04:21:47.245Z [DEBUG] getSkills returning: 1 skill dir commands, 0 plugin skills
+2026-01-03T04:21:47.286Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414107286
+2026-01-03T04:21:47.286Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:21:47.286Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:21:47.286Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:21:47.286Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414107286 to /Users/patrick/.claude.json
+2026-01-03T04:21:47.287Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:21:47.414Z [DEBUG] Metrics opt-out API response: enabled=true, vcsLinking=false
+2026-01-03T04:21:47.517Z [DEBUG] Shell snapshot created successfully (42836 bytes)
+2026-01-03T04:21:47.606Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T04:21:47.612Z [DEBUG] All plugins already exist, skipping migration
+2026-01-03T04:21:47.614Z [DEBUG] Initialized versioned plugins system with 1 plugins
+2026-01-03T04:21:47.616Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414107616
+2026-01-03T04:21:47.616Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:21:47.616Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:21:47.616Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:21:47.616Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414107616 to /Users/patrick/.claude.json
+2026-01-03T04:21:47.616Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:21:48.249Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-03T04:21:48.249Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:21:48.249Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-03T04:21:48.254Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T04:21:48.264Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-03T04:21:48.264Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:21:48.264Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-03T04:21:48.267Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-03T04:21:48.267Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:21:48.267Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-03T04:21:48.269Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/Users/patrick/.local/share/claude/versions/2.0.76)
+2026-01-03T04:21:48.275Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T04:21:48.275Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-03T04:21:48.280Z [DEBUG] Skills and commands included in Skill tool: commit-and-push, ralph-wiggum:help, ralph-wiggum:cancel-ralph, ralph-wiggum:ralph-loop
+2026-01-03T04:21:48.304Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414108304
+2026-01-03T04:21:48.304Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:21:48.304Z [DEBUG] Temp file written successfully, size: 58877 bytes
+2026-01-03T04:21:48.305Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:21:48.305Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414108304 to /Users/patrick/.claude.json
+2026-01-03T04:21:48.305Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:21:48.307Z [DEBUG] Official marketplace auto-install skipped: already_attempted
+2026-01-03T04:21:48.307Z [DEBUG] performStartupChecks called
+2026-01-03T04:21:48.307Z [DEBUG] Starting background plugin installations
+2026-01-03T04:21:48.307Z [DEBUG] performBackgroundPluginInstallations called
+2026-01-03T04:21:48.311Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T04:21:48.313Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414108313
+2026-01-03T04:21:48.313Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:21:48.313Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:21:48.313Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:21:48.313Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414108313 to /Users/patrick/.claude.json
+2026-01-03T04:21:48.313Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:21:48.314Z [DEBUG] Found 1 enabled plugins
+2026-01-03T04:21:48.314Z [DEBUG] All plugins already exist, skipping migration
+2026-01-03T04:21:48.314Z [DEBUG] Found 1 installed plugins (V2 format)
+2026-01-03T04:21:48.314Z [DEBUG] Loaded plugins - Enabled: 1, Disabled: 0, Commands: 3, Agents: 0, Errors: 0
+2026-01-03T04:21:48.314Z [DEBUG] Found 0 missing plugins (not installed):
+2026-01-03T04:21:48.314Z [DEBUG] Setting installation status: 0 marketplaces, 0 installable plugins, 0 uninstallable plugins
+2026-01-03T04:21:48.316Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T04:21:48.332Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414108332
+2026-01-03T04:21:48.332Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:21:48.332Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:21:48.332Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:21:48.332Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414108332 to /Users/patrick/.claude.json
+2026-01-03T04:21:48.332Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:21:48.421Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoduQbBofoX7wkoPvNR"}
+2026-01-03T04:21:48.494Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T04:21:48.495Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T04:21:48.538Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodut7KFpHtrJkcgMqj"}
+2026-01-03T04:21:48.564Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodv5XEspUK8L5KCsVU"}
+2026-01-03T04:21:48.565Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodv5XEspUK8L5KCsVU"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:21:48.567Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T04:21:48.638Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodugxHtPB8VWsracrM"}
+2026-01-03T04:21:48.764Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodviTzsAw3oXUjFMf8"}
+2026-01-03T04:21:48.796Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodvb2kLPCBtrcWwCJ1"}
+2026-01-03T04:21:48.797Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodvb2kLPCBtrcWwCJ1"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:21:48.825Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T04:21:48.825Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:21:48.825Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T04:21:48.888Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodw2KZjcpkpVLgR5vi"}
+2026-01-03T04:21:48.888Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodw2KZjcpkpVLgR5vi"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:21:48.913Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T04:21:48.913Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:21:48.913Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T04:21:48.944Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodwa4T5Q4Bb35nCFp8"}
+2026-01-03T04:21:48.945Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodwa4T5Q4Bb35nCFp8"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:21:48.946Z [DEBUG] Summarizing all 7 messages (~0 tokens)
+2026-01-03T04:21:49.098Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodxLCepfLZAdLX8AoH"}
+2026-01-03T04:21:49.217Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodxyPw4vFw3TwQV7zC"}
+2026-01-03T04:21:49.218Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjodxyPw4vFw3TwQV7zC"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:22:04.320Z [DEBUG] UserCommandMessage rendering: "ide" (args: "none")
+2026-01-03T04:22:04.320Z [DEBUG] isSkillFormat: false
+2026-01-03T04:22:04.335Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T04:22:04.339Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414124339
+2026-01-03T04:22:04.339Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:22:04.339Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:22:04.339Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:22:04.339Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414124339 to /Users/patrick/.claude.json
+2026-01-03T04:22:04.339Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:22:04.351Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414124351
+2026-01-03T04:22:04.351Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:22:04.351Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:22:04.351Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:22:04.351Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414124351 to /Users/patrick/.claude.json
+2026-01-03T04:22:04.351Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:22:04.355Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414124355
+2026-01-03T04:22:04.355Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:22:04.355Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:22:04.355Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:22:04.355Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414124355 to /Users/patrick/.claude.json
+2026-01-03T04:22:04.355Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:22:04.397Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T04:22:04.397Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T04:22:59.240Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T04:22:59.241Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T04:22:59.241Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T04:22:59.241Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T04:22:59.258Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T04:22:59.258Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:22:59.258Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T04:22:59.259Z [DEBUG] FileHistory: Added snapshot for c935a712-5705-4eb8-9067-43906443bb5b, tracking 0 files
+2026-01-03T04:22:59.269Z [DEBUG] Total plugin output styles loaded: 0
+2026-01-03T04:22:59.444Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoj8zYQ5ac7VbApMp3P"}
+2026-01-03T04:22:59.594Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoj9jSNQHQMxF7zaHJZ"}
+2026-01-03T04:22:59.595Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoj9jSNQHQMxF7zaHJZ"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:22:59.597Z [ERROR] SyntaxError: SyntaxError: JSON Parse error: Expected '}'
+    at <parse> (:0)
+    at parse (unknown)
+    at <anonymous> (/$bunfs/root/claude:78:751)
+    at A (/$bunfs/root/claude:11:6978)
+    at vf_ (/$bunfs/root/claude:947:2739)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:22:59.754Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoj9ATna8aDCtPQdMM7"}
+2026-01-03T04:22:59.924Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjojB9mYkiXEdrH1ZMe7"}
+2026-01-03T04:22:59.924Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjojB9mYkiXEdrH1ZMe7"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:22:59.939Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414179939
+2026-01-03T04:22:59.939Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:22:59.939Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:22:59.939Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:22:59.939Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414179939 to /Users/patrick/.claude.json
+2026-01-03T04:22:59.940Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:22:59.948Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T04:22:59.948Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T04:22:59.948Z [DEBUG] Matched 1 unique hooks for query "no match query" (1 before deduplication)
+2026-01-03T04:22:59.979Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414179979
+2026-01-03T04:22:59.979Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:22:59.979Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:22:59.979Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:22:59.979Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414179979 to /Users/patrick/.claude.json
+2026-01-03T04:22:59.979Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:22:59.981Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767414179981
+2026-01-03T04:22:59.981Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:22:59.981Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:22:59.981Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:22:59.981Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767414179981 to /Users/patrick/.claude.json
+2026-01-03T04:22:59.981Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:30:26.387Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T04:30:26.491Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T04:30:26.491Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T04:31:26.391Z [DEBUG] Getting matching hook commands for Notification with query: idle_prompt
+2026-01-03T04:31:26.391Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T04:31:26.392Z [DEBUG] Matched 1 unique hooks for query "idle_prompt" (1 before deduplication)
+2026-01-03T04:31:26.627Z [DEBUG] Notification:idle_prompt [bash -c 'terminal-notifier -title "Claude: ${CLAUDE_PROJECT_DIR##*/}" -message "Claude needs your attention" -activate com.apple.Terminal -sound Glass'] completed with status 0
+2026-01-03T04:31:26.627Z [DEBUG] Hook output does not start with {, treating as plain text
+2026-01-03T05:00:26.545Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T05:00:26.546Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T05:30:26.548Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T05:30:26.549Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T06:00:26.565Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T06:00:26.567Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T06:30:26.585Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T06:30:26.586Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T07:00:26.581Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T07:00:26.581Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T07:30:26.602Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T07:30:26.602Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T08:00:26.604Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T08:00:26.604Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T08:30:26.645Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T08:30:26.647Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T09:00:26.640Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T09:00:26.640Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T09:30:26.629Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T09:30:26.630Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T10:00:26.651Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T10:00:26.651Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T10:30:26.664Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T10:30:26.665Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:00:26.671Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:00:26.672Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:15:14.604Z [DEBUG] UserCommandMessage rendering: "usage" (args: "none")
+2026-01-03T11:15:14.604Z [DEBUG] isSkillFormat: false
+2026-01-03T11:15:14.620Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:15:14.623Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767438914623
+2026-01-03T11:15:14.623Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:15:14.623Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T11:15:14.623Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:15:14.623Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767438914623 to /Users/patrick/.claude.json
+2026-01-03T11:15:14.624Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:15:14.637Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767438914637
+2026-01-03T11:15:14.637Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:15:14.637Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T11:15:14.637Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:15:14.637Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767438914637 to /Users/patrick/.claude.json
+2026-01-03T11:15:14.637Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:15:14.639Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97430.1767438914639
+2026-01-03T11:15:14.639Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:15:14.639Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T11:15:14.639Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:15:14.639Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97430.1767438914639 to /Users/patrick/.claude.json
+2026-01-03T11:15:14.639Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:15:14.719Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:15:14.719Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:15:16.347Z [DEBUG] Getting matching hook commands for SessionEnd with query: prompt_input_exit
+2026-01-03T11:15:16.347Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:15:16.347Z [DEBUG] Matched 0 unique hooks for query "prompt_input_exit" (0 before deduplication)

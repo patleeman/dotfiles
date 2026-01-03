@@ -1,0 +1,4 @@
+total 59672
+drwxr-xr-x@  3 patrick  staff        96 Jan  3 06:45 .
+drwxr-xr-x@ 25 patrick  staff       800 Jan  3 06:36 ..
+-rwxr-xr-x@  1 patrick  staff  30549794 Jan  3 06:46 familiar-go

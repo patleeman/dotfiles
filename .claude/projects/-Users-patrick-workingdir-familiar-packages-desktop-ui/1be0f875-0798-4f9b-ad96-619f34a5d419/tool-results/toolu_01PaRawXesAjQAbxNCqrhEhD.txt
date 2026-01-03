@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   311→              </div>
+   312→            </section>
+   313→            <section className="space-y-2">
+   314→              <div className="flex flex-col gap-1 px-1">
+   315→                <div className="text-[10px] font-black text-accent uppercase tracking-widest">
+   316→                  Skill Output Volume
+   317→                </div>
+   318→                <div className="text-[9px] text-text-primary/40 font-black leading-relaxed max-w-2xl italic">
+   319→                  Attributes tool output volume to specific skills by detecting when tool arguments reference a skill's directory.
+   320→                </div>
+   321→              </div>
+   322→              <div className="border border-border/20 bg-surface/5">
+   323→                <table className="w-full text-left border-collapse table-fixed">
+   324→                  <thead>

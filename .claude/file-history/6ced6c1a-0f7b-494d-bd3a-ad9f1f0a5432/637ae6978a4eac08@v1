@@ -1,0 +1,58 @@
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { ToolApproval } from './ToolApproval';
+
+describe('ToolApproval', () => {
+  const defaultProps = {
+    agentId: 'agent-1',
+    toolCallId: 'call-1',
+    toolName: 'shell_exec',
+    args: { command: 'ls -la' },
+    translation: 'DESCRIPTION: List files in current directory\nRISK: Safe',
+    onApprove: vi.fn().mockResolvedValue(undefined),
+  };
+
+  it('renders tool name and command', () => {
+    render(<ToolApproval {...defaultProps} />);
+    expect(screen.getByText('shell_exec')).toBeInTheDocument();
+    // Use getAllByText and check for presence since it appears twice
+    expect(screen.getAllByText(/ls -la/i)[0]).toBeInTheDocument();
+  });
+
+  it('renders translation and risk level', () => {
+    render(<ToolApproval {...defaultProps} />);
+    expect(screen.getByText(/List files in current directory/)).toBeInTheDocument();
+    expect(screen.getByText(/Safe/i)).toBeInTheDocument();
+  });
+
+  it('calls onApprove when Allow is clicked', async () => {
+    render(<ToolApproval {...defaultProps} />);
+    await act(async () => {
+      fireEvent.click(screen.getByText('[ ALLOW ]'));
+    });
+    expect(defaultProps.onApprove).toHaveBeenCalledWith('allow', undefined);
+  });
+
+  it('calls onApprove with pattern when Always Allow is clicked', async () => {
+    render(<ToolApproval {...defaultProps} toolName="system_shell" />);
+    await act(async () => {
+      fireEvent.click(screen.getByText(/\[ ALWAYS_ALLOW:.* \]/));
+    });
+    expect(defaultProps.onApprove).toHaveBeenCalledWith('always_allow', 'ls');
+  });
+
+  it('calls onApprove when Reject is clicked', async () => {
+    render(<ToolApproval {...defaultProps} />);
+    await act(async () => {
+      fireEvent.click(screen.getByText('[ REJECT ]'));
+    });
+    expect(defaultProps.onApprove).toHaveBeenCalledWith('reject', undefined);
+  });
+
+  it('renders processed state when isProcessed is true', () => {
+    render(<ToolApproval {...defaultProps} isProcessed={true} decision="allow" />);
+    expect(screen.getByText(/Permission GRANTED:/)).toBeInTheDocument();
+    expect(screen.queryByText('[ ALLOW ]')).not.toBeInTheDocument();
+  });
+});
+

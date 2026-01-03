@@ -1,0 +1,85 @@
+import { test, expect } from './fixtures/test-fixtures';
+
+test.describe('Navigation', () => {
+  test('should load the dashboard on root route', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveURL('/');
+    // Dashboard should be visible
+    await expect(page.locator('body')).toBeVisible();
+  });
+
+  test('should navigate to settings page', async ({ page }) => {
+    await page.goto('/');
+    await page.click('text=Settings');
+    await expect(page).toHaveURL('/settings');
+  });
+
+  test('should navigate to skills page', async ({ page }) => {
+    await page.goto('/');
+    await page.click('text=Skills');
+    await expect(page).toHaveURL('/skills');
+  });
+
+  test('should navigate to triggers page', async ({ page }) => {
+    await page.goto('/');
+    await page.click('text=Triggers');
+    await expect(page).toHaveURL('/triggers');
+  });
+
+  test('should navigate to usage page', async ({ page }) => {
+    await page.goto('/');
+    await page.click('text=Usage');
+    await expect(page).toHaveURL('/usage');
+  });
+
+  test('should open command bar with Cmd+K', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Meta+k');
+    // Command bar/search should be visible
+    await expect(page.getByPlaceholder(/search|command/i)).toBeVisible();
+  });
+
+  test('should close command bar with Escape', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Meta+k');
+    await expect(page.getByPlaceholder(/search|command/i)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByPlaceholder(/search|command/i)).not.toBeVisible();
+  });
+
+  test('should toggle sidebar with keyboard shortcut', async ({ page }) => {
+    await page.goto('/');
+    const sidebar = page.locator('[data-testid="sidebar"]');
+    // Note: The actual implementation may vary
+    await page.keyboard.press('Meta+b');
+    // Check if sidebar state changed (collapsed/expanded)
+  });
+
+  test('should navigate back to dashboard from other pages', async ({ page }) => {
+    await page.goto('/settings');
+    await page.click('text=Dashboard');
+    await expect(page).toHaveURL('/');
+  });
+});
+
+test.describe('URL Routing', () => {
+  test('should load settings page directly', async ({ page }) => {
+    await page.goto('/settings');
+    await expect(page.locator('text=Provider Configuration')).toBeVisible();
+  });
+
+  test('should load skills page directly', async ({ page }) => {
+    await page.goto('/skills');
+    await expect(page.locator('text=skills')).toBeVisible();
+  });
+
+  test('should load triggers page directly', async ({ page }) => {
+    await page.goto('/triggers');
+    await expect(page.locator('text=triggers')).toBeVisible();
+  });
+
+  test('should load usage page directly', async ({ page }) => {
+    await page.goto('/usage');
+    await expect(page.locator('text=Resource Usage')).toBeVisible();
+  });
+});

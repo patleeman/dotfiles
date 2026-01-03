@@ -1,0 +1,57 @@
+     1→package config
+     2→
+     3→import (
+     4→	"bytes"
+     5→	"os/exec"
+     6→	"runtime"
+     7→	"strings"
+     8→)
+     9→
+    10→const KeychainService = "familiar"
+    11→
+    12→func IsMacOS() bool {
+    13→	return runtime.GOOS == "darwin"
+    14→}
+    15→
+    16→func GetKeychainPassword(account string) string {
+    17→	if !IsMacOS() {
+    18→		return ""
+    19→	}
+    20→
+    21→	cmd := exec.Command("security", "find-generic-password", "-s", KeychainService, "-a", account, "-w")
+    22→	var out bytes.Buffer
+    23→	cmd.Stdout = &out
+    24→	err := cmd.Run()
+    25→	if err != nil {
+    26→		return ""
+    27→	}
+    28→
+    29→	return strings.TrimSpace(out.String())
+    30→}
+    31→
+    32→func SetKeychainPassword(account, password string) error {
+    33→	if !IsMacOS() {
+    34→		return nil
+    35→	}
+    36→
+    37→	// Try to delete first to avoid "already exists" error
+    38→	DeleteKeychainPassword(account)
+    39→
+    40→	cmd := exec.Command("security", "add-generic-password", "-s", KeychainService, "-a", account, "-w", password, "-U")
+    41→	return cmd.Run()
+    42→}
+    43→
+    44→func DeleteKeychainPassword(account string) error {
+    45→	if !IsMacOS() {
+    46→		return nil
+    47→	}
+    48→
+    49→	cmd := exec.Command("security", "delete-generic-password", "-s", KeychainService, "-a", account)
+    50→	return cmd.Run()
+    51→}
+    52→
+    53→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

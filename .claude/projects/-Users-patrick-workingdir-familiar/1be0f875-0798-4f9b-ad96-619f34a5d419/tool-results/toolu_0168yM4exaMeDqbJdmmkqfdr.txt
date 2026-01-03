@@ -1,0 +1,12 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   147→                      </tr>
+   148→                    ) : (
+   149→                      providers.map((p, i) => (
+   150→                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+   151→                          <td className="px-4 py-1 truncate font-black text-text-primary uppercase">
+   152→                            {p.provider}
+   153→                          </td>
+   154→                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+   155→                            {p.total_requests.toLocaleString()}
+   156→                          </td>
+   157→                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">

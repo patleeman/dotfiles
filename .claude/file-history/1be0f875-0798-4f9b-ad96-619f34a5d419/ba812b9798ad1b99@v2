@@ -1,0 +1,79 @@
+# UI Text Cleanup Plan: Remove IRC-Style Formatting
+
+## Goal
+Replace all IRC-inspired text patterns with clean, sentence case text for better readability.
+
+## Pattern Transformations
+
+| IRC Pattern | Clean Replacement |
+|------------|------------------|
+| `[ 11 MODULES ]` | `11 Modules` |
+| `/SKILLS` | `Skills` |
+| `/PROVIDER_MODEL_ID` | `Model` |
+| `[ NO_DATA_AVAILABLE ]` | `No data available` |
+| `[01] PROVIDER_SUMMARY` | `Provider Summary` |
+| `[ SYNCING_NODES... ]` | `Syncing...` |
+| `*** /skillName` | Just the skill name |
+| `[ADD]`, `[CANCEL]` | `Add`, `Cancel` |
+| `PASTE_KEY...` | `Paste key...` |
+
+## Files to Modify
+
+### 1. UsageSidebar.tsx (~35 changes)
+- Header: `/RESOURCE_LEDGER` → `Resource Usage`
+- Stats: `[ REQ:X ]` → `Requests: X`
+- Section headers: `[01] PROVIDER_SUMMARY` → `Provider Summary`
+- Table headers: `/PROVIDER`, `/REQUESTS`, etc. → `Provider`, `Requests`, etc.
+- Empty states: `[ NO_DATA_AVAILABLE ]` → `No data available`
+- Loading: `/GATHERING_USAGE_DATA` → `Loading usage data...`
+
+### 2. SettingsSidebar.tsx (~40 changes)
+- Section headers: `/PROVIDER_CONFIG` → `Provider Configuration`
+- Categories: `/CLOUD`, `/LOCAL`, `/CUSTOM` → `Cloud`, `Local`, `Custom`
+- Buttons: `[ADD]`, `[CANCEL]`, `[DELETE]` → `Add`, `Cancel`, `Delete`
+- Status: `[ON]`, `[OFF]` → `On`, `Off`
+- Fields: `/AUTH_TOKEN` → `API Key`
+- Placeholders: `PASTE_KEY...` → `Paste key...`
+- Toggles: `/AUTO_COMPACTION` → `Auto-compact conversations`
+- Security: `/UNRESTRICTED_EXECUTION` → `Unrestricted execution`
+
+### 3. SkillsSidebar.tsx (~15 changes)
+- Header: `/SKILLS` → `Skills`
+- Count: `[ 11 MODULES ]` → `11 modules`
+- Column: `/SKILL_ID` → `Skill`
+- Loading: `[ SYNCING_NODES... ]` → `Loading skills...`
+- Empty: `[ NO_ACTIVE_SKILLS_FOUND ]` → `No skills found`
+- Context menu: `*** /skillName` → skill name only
+
+### 4. TriggersSidebar.tsx (~15 changes)
+- Header: `/TRIGGERS` → `Triggers`
+- Count: `[ 0 SOURCES ]` → `0 triggers`
+- Column: `/TRIGGER_ID` → `Trigger`
+- Loading: `[ SCANNING_SYSTEM... ]` → `Loading triggers...`
+- Empty: `[ NO_TRIGGERS_FOUND ]` → `No triggers found`
+
+### 5. ToolApproval.tsx (~4 changes)
+- Header: `/PERMISSION_REQUIRED` → `Permission Required`
+- Buttons: `[ ALLOW ]` → `Allow`, `[ REJECT ]` → `Reject`
+
+### 6. SecretRequest.tsx (~6 changes)
+- Header: `/SECRET_INPUTS_REQUIRED` → `Secret Required`
+- Status text: clean up caps formatting
+- Buttons: `[ SAVE_AND_CONTINUE ]` → `Save and Continue`
+
+### 7. InlineScopeProposal.tsx (~1 change)
+- Header: `/PLAN_UPDATE` → `Plan Update`
+
+## Implementation Order
+1. UsageSidebar.tsx (most visible, user mentioned specifically)
+2. SkillsSidebar.tsx (user mentioned `/CALENDAR` example)
+3. SettingsSidebar.tsx (largest file)
+4. TriggersSidebar.tsx
+5. ToolApproval.tsx
+6. SecretRequest.tsx
+7. InlineScopeProposal.tsx
+
+## Notes
+- Keep styling classes intact, only change text content
+- Maintain semantic meaning while making text human-readable
+- Use sentence case consistently (capitalize first word only, except proper nouns)

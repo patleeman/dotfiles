@@ -1,0 +1,140 @@
+package tools
+
+import (
+	"context"
+	"os"
+	"strings"
+	"testing"
+)
+
+func TestSpawnSubAgentTool(t *testing.T) {
+	spawnerCalled := false
+	spawner := func(parentID string, name string, prompt string, objective string, workingDir string) (string, error) {
+		spawnerCalled = true
+		if name != "TestAgent" {
+			t.Errorf("expected name TestAgent, got %s", name)
+		}
+		if workingDir != "/tmp/work" {
+			t.Errorf("expected working directory /tmp/work, got %s", workingDir)
+		}
+		return "sub-123", nil
+	}
+
+	tool := NewSpawnSubAgentTool(spawner)
+	args := map[string]interface{}{
+		"name":              "TestAgent",
+		"prompt":            "Test Prompt",
+		"objective":         "Test Objective",
+		"working_directory": "/tmp/work",
+	}
+	toolCtx := map[string]interface{}{
+		"agent_id": "parent-456",
+	}
+
+	res, err := tool.Execute(context.Background(), args, toolCtx)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	if !spawnerCalled {
+		t.Error("spawner was not called")
+	}
+
+	if res.Metadata["sub_agent_id"] != "sub-123" {
+		t.Errorf("expected sub_agent_id sub-123, got %v", res.Metadata["sub_agent_id"])
+	}
+}
+
+func TestWorkspaceTools(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "test-workspace-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	toolCtx := map[string]interface{}{
+		"workspace_path": tmpDir,
+	}
+
+	// 1. Test WorkspaceWriteTool
+	writeTool := NewWorkspaceWriteTool()
+	writeArgs := map[string]interface{}{
+		"path":    "test.txt",
+		"content": "hello workspace",
+	}
+	_, err = writeTool.Execute(context.Background(), writeArgs, toolCtx)
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// 2. Test WorkspaceLsTool
+	lsTool := NewWorkspaceLsTool()
+	lsArgs := map[string]interface{}{
+		"path": ".",
+	}
+	resLs, err := lsTool.Execute(context.Background(), lsArgs, toolCtx)
+	if err != nil {
+		t.Fatalf("Ls failed: %v", err)
+	}
+	if !strings.Contains(resLs.Content, "test.txt") {
+		t.Errorf("expected test.txt in ls output, got %s", resLs.Content)
+	}
+
+	// 3. Test WorkspaceReadTool
+	readTool := NewWorkspaceReadTool()
+	readArgs := map[string]interface{}{
+		"path": "test.txt",
+	}
+	resRead, err := readTool.Execute(context.Background(), readArgs, toolCtx)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+	if resRead.Content != "hello workspace" {
+		t.Errorf("expected hello workspace, got %s", resRead.Content)
+	}
+
+	// 4. Test Security (Access outside workspace)
+	badArgs := map[string]interface{}{
+		"path": "../outside.txt",
+	}
+	_, err = readTool.Execute(context.Background(), badArgs, toolCtx)
+	if err == nil || !strings.Contains(err.Error(), "permission denied") {
+		t.Error("expected permission denied error for outside path")
+	}
+}
+
+func TestMessageAgentTool(t *testing.T) {
+	messengerCalled := false
+	messenger := func(senderID string, recipientID string, content string) error {
+		messengerCalled = true
+		if content != "All good" {
+			t.Errorf("expected content All good, got %s", content)
+		}
+		if recipientID != "parent-456" {
+			t.Errorf("expected recipient parent-456, got %s", recipientID)
+		}
+		return nil
+	}
+
+	parentChecker := func(senderID string) (bool, error) {
+		return false, nil
+	}
+
+	tool := NewMessageAgentTool(messenger, parentChecker)
+	args := map[string]interface{}{
+		"recipient_id": "parent-456",
+		"content":      "All good",
+	}
+	toolCtx := map[string]interface{}{
+		"agent_id": "sub-123",
+	}
+
+	_, err := tool.Execute(context.Background(), args, toolCtx)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	if !messengerCalled {
+		t.Error("messenger was not called")
+	}
+}

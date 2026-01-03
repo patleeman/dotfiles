@@ -1,0 +1,157 @@
+     1→import React, { useState } from 'react';
+     2→import { clsx } from 'clsx';
+     3→import { api } from '../../lib/api';
+     4→
+     5→interface SecretRequestProps {
+     6→    agentId: string;
+     7→    toolCallId: string;
+     8→    secretKeys?: string[];
+     9→    secretKey?: string; // deprecated
+    10→    args?: any;
+    11→    isProcessed?: boolean;
+    12→}
+    13→
+    14→export const SecretRequest: React.FC<SecretRequestProps> = ({
+    15→    secretKeys: initialSecretKeys,
+    16→    secretKey: initialSecretKey,
+    17→    args,
+    18→    isProcessed
+    19→}) => {
+    20→    const [values, setValues] = useState<Record<string, string>>({});
+    21→    const [submittingKeys, setSubmittingKeys] = useState<Record<string, boolean>>({});
+    22→    const [submittedKeys, setSubmittedKeys] = useState<Record<string, boolean>>({});
+    23→    const [errors, setErrors] = useState<Record<string, string>>({});
+    24→
+    25→    // Extract keys from various possible sources
+    26→    const keys = (() => {
+    27→        if (initialSecretKeys && initialSecretKeys.length > 0) return initialSecretKeys;
+    28→        if (initialSecretKey) return [initialSecretKey];
+    29→        if (!args) return ['Secret'];
+    30→        try {
+    31→            const parsed = typeof args === 'string' ? JSON.parse(args) : args;
+    32→            if (Array.isArray(parsed.keys)) return parsed.keys;
+    33→            if (parsed.key) return [parsed.key];
+    34→            return ['Secret'];
+    35→        } catch (e) {
+    36→            return ['Secret'];
+    37→        }
+    38→    })();
+    39→
+    40→    const handleSingleSubmit = async (key: string) => {
+    41→        const val = values[key];
+    42→        if (!val || !val.trim()) return;
+    43→
+    44→        setSubmittingKeys(prev => ({ ...prev, [key]: true }));
+    45→        setErrors(prev => ({ ...prev, [key]: '' }));
+    46→        try {
+    47→            await api.setVaultSecret(key, val);
+    48→            setSubmittedKeys(prev => ({ ...prev, [key]: true }));
+    49→        } catch (err) {
+    50→            console.error(`Failed to save secret ${key}:`, err);
+    51→            setErrors(prev => ({ ...prev, [key]: 'Failed to save secret.' }));
+    52→        } finally {
+    53→            setSubmittingKeys(prev => ({ ...prev, [key]: false }));
+    54→        }
+    55→    };
+    56→
+    57→    const allSubmitted = keys.every((k: string) => submittedKeys[k] || isProcessed);
+    58→
+    59→    if (allSubmitted) {
+    60→        return (
+    61→            <div className="flex flex-col gap-1 opacity-40 font-mono text-[10px] pl-2">
+    62→                {keys.map((key: string) => (
+    63→                    <div key={key} className="flex flex-row items-baseline gap-2">
+    64→                        <span className="text-status-success font-black">[@]</span>
+    65→                        <span className="italic uppercase">Secret Stored:</span>
+    66→                        <span className="text-accent">{key}</span>
+    67→                    </div>
+    68→                ))}
+    69→            </div>
+    70→        );
+    71→    }
+    72→
+    73→    return (
+    74→        <div className="flex flex-col gap-2 py-2 px-3 my-2 border-l border-accent/40 bg-surface/5 font-mono text-[11px] animate-in fade-in slide-in-from-left-1 duration-200">
+    75→            <div className="flex items-center gap-2 text-accent/80 font-black tracking-widest uppercase text-[10px]">
+    76→                <span>/SECRET_INPUTS_REQUIRED</span>
+    77→                <span className="opacity-20">//</span>
+    78→                <span className="text-text-primary/60">{keys.length} KEY{keys.length > 1 ? 'S' : ''} NEEDED</span>
+    79→            </div>
+    80→
+    81→            <div className="flex flex-col gap-4 pl-4 uppercase">
+    82→                <div className="flex items-start gap-2 text-text-secondary leading-normal italic opacity-80 font-black text-[9px]">
+    83→                    <span className="text-status-success mt-0.5 shrink-0">[@]</span>
+    84→                    <p>
+    85→                        Secrets required. Stored in <span className="text-text-primary not-italic font-black">SYSTEM_KEYCHAIN</span>. 
+    86→                        <span className="text-text-primary not-italic font-black block mt-1 underline">NOT_SENT_TO_LLM.</span>
+    87→                    </p>
+    88→                </div>
+    89→
+    90→                <div className="flex flex-col gap-4">
+    91→                    {keys.map((key: string, index: number) => (
+    92→                        <div key={key} className="flex flex-col gap-2">
+    93→                            <div className="flex items-center gap-2">
+    94→                                <span className="text-text-tertiary/40 font-black text-[9px] w-4">{index + 1}.</span>
+    95→                                <span className="text-text-primary font-black uppercase text-[10px] tracking-widest">{key}</span>
+    96→                                {(submittedKeys[key] || isProcessed) && (
+    97→                                    <div className="flex items-center gap-2 text-status-success text-[9px] font-black tracking-widest ml-2">
+    98→                                        <span>[@] STORED</span>
+    99→                                    </div>
+   100→                                )}
+   101→                            </div>
+   102→
+   103→                            {!submittedKeys[key] && !isProcessed && (
+   104→                                <div className="flex flex-col gap-2 pl-6">
+   105→                                    <div className="relative">
+   106→                                        <input
+   107→                                            type="password"
+   108→                                            value={values[key] || ''}
+   109→                                            onChange={(e) => setValues(prev => ({ ...prev, [key]: e.target.value }))}
+   110→                                            onKeyDown={(e) => {
+   111→                                                if (e.key === 'Enter') {
+   112→                                                    e.preventDefault();
+   113→                                                    handleSingleSubmit(key);
+   114→                                                }
+   115→                                            }}
+   116→                                            placeholder={`VALUE FOR ${key}...`}
+   117→                                            disabled={submittingKeys[key]}
+   118→                                            autoFocus={index === 0}
+   119→                                            className="w-full bg-background/40 border border-accent/20 px-2 py-1.5 text-[11px] text-text-primary placeholder:text-text-tertiary/20 focus:outline-none focus:border-accent/40 transition-colors uppercase"
+   120→                                        />
+   121→                                    </div>
+   122→
+   123→                                    {errors[key] && (
+   124→                                        <div className="flex items-center gap-2 text-status-error text-[9px] font-black uppercase tracking-widest">
+   125→                                            <span>[!] {errors[key]}</span>
+   126→                                        </div>
+   127→                                    )}
+   128→
+   129→                                    <div className="flex items-center gap-2 mt-1">
+   130→                                        <button
+   131→                                            type="button"
+   132→                                            onClick={() => handleSingleSubmit(key)}
+   133→                                            disabled={submittingKeys[key] || !(values[key] || '').trim()}
+   134→                                            className="text-accent hover:text-accent-hover transition-all uppercase font-black text-[10px] tracking-widest disabled:opacity-20 active:scale-95"
+   135→                                        >
+   136→                                            {submittingKeys[key] ? (
+   137→                                                '[ PROCESSING... ]'
+   138→                                            ) : (
+   139→                                                `[ ${index === keys.length - 1 ? 'SAVE_AND_CONTINUE' : 'SAVE_SECRET'} ]`
+   140→                                            )}
+   141→                                        </button>
+   142→                                    </div>
+   143→                                </div>
+   144→                            )}
+   145→                        </div>
+   146→                    ))}
+   147→                </div>
+   148→            </div>
+   149→        </div>
+   150→    );
+   151→};
+   152→
+   153→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

@@ -1,0 +1,13 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/SkillsView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   152→                      isCreating === skill.name && "opacity-50 pointer-events-none"
+   153→                    )}
+   154→                  >
+   155→                    <div className="flex items-center gap-2 text-text-primary font-black uppercase tracking-tighter text-[10px]">
+   156→                      {isCreating === skill.name && (
+   157→                        <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+   158→                      )}
+   159→                      {skill.name}
+   160→                    </div>
+   161→                    <div className="text-text-secondary opacity-50 text-[10px] leading-relaxed uppercase tracking-tight font-black">
+   162→                      {skill.description}
+   163→                    </div>

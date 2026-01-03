@@ -1,0 +1,606 @@
+package inference
+
+import (
+	"bufio"
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/patrick/familiar/packages/go-backend/internal/auth"
+	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+)
+
+// ClaudeCodeProvider implements the Provider interface using Claude Code OAuth subscription
+type ClaudeCodeProvider struct {
+	baseURL string
+	client  *http.Client
+}
+
+// NewClaudeCodeProvider creates a new Claude Code provider
+func NewClaudeCodeProvider() (*ClaudeCodeProvider, error) {
+	// Verify OAuth token exists and is valid
+	if !auth.IsClaudeCodeConnected() {
+		return nil, errors.New("Claude Code not connected. Please connect via Settings")
+	}
+
+	return &ClaudeCodeProvider{
+		baseURL: "https://api.anthropic.com/v1/messages",
+		client:  &http.Client{Timeout: 300 * time.Second},
+	}, nil
+}
+
+func (p *ClaudeCodeProvider) Name() string {
+	return "claude-code"
+}
+
+func (p *ClaudeCodeProvider) ListModels(ctx context.Context) ([]string, error) {
+	// Claude Code subscription supports specific models
+	return []string{
+		"claude-sonnet-4-5",
+		"claude-opus-4-5",
+		"claude-haiku-4-5",
+	}, nil
+}
+
+func (p *ClaudeCodeProvider) GetContextLimit(model string) int {
+	// Claude models generally support 200k tokens
+	return 200000
+}
+
+func (p *ClaudeCodeProvider) getAuthHeader() (string, error) {
+	accessToken, err := auth.GetValidAccessToken()
+	if err != nil {
+		return "", err
+	}
+	return "Bearer " + accessToken, nil
+}
+
+// convertMessages converts messages to Anthropic API format
+// This is duplicated from AnthropicProvider to avoid coupling and ensure stability
+func (p *ClaudeCodeProvider) convertMessages(messages []types.Message) ([]map[string]interface{}, string) {
+	var systemPrompt string
+	var anthropicMessages []map[string]interface{}
+
+	for _, msg := range messages {
+		slog.Debug("ClaudeCode: processing message", "role", msg.Role, "content_type", fmt.Sprintf("%T", msg.Content), "num_attachments", len(msg.Attachments))
+
+		if msg.Role == "system" {
+			if content, ok := msg.Content.(string); ok {
+				systemPrompt += content + "\n"
+			}
+		} else {
+			var anthropicParts []map[string]interface{}
+
+			// Handle Content field
+			if c, ok := msg.Content.(string); ok && c != "" {
+				slog.Debug("ClaudeCode: content is string", "has_attachments", len(msg.Attachments) > 0)
+				if len(msg.Attachments) > 0 {
+					anthropicParts = append(anthropicParts, map[string]interface{}{
+						"type": "text",
+						"text": c,
+					})
+				}
+			} else if parts, ok := msg.Content.([]interface{}); ok {
+				slog.Debug("ClaudeCode: processing multimodal content array", "num_parts", len(parts), "role", msg.Role)
+				for _, part := range parts {
+					if pMap, ok := part.(map[string]interface{}); ok {
+						partType, _ := pMap["type"].(string)
+						if partType == "text" {
+							anthropicParts = append(anthropicParts, map[string]interface{}{
+								"type": "text",
+								"text": pMap["text"],
+							})
+						} else if partType == "image_url" {
+							slog.Debug("ClaudeCode: found image_url part")
+							if imgUrl, ok := pMap["image_url"].(map[string]interface{}); ok {
+								url, _ := imgUrl["url"].(string)
+								if len(url) > 50 {
+									slog.Debug("ClaudeCode: image_url extracted", "url_prefix", url[:50])
+								}
+								if strings.HasPrefix(url, "data:") {
+									// data:image/jpeg;base64,/9j/4AAQSkZJRg...
+									parts := strings.SplitN(url, ",", 2)
+									if len(parts) == 2 {
+										header := parts[0]
+										data := parts[1]
+										mediaType := strings.TrimPrefix(strings.Split(header, ";")[0], "data:")
+										slog.Debug("ClaudeCode: adding image block", "media_type", mediaType, "data_len", len(data))
+										anthropicParts = append(anthropicParts, map[string]interface{}{
+											"type": "image",
+											"source": map[string]interface{}{
+												"type":       "base64",
+												"media_type": mediaType,
+												"data":       data,
+											},
+										})
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Handle Attachments field
+			slog.Debug("ClaudeCode: processing attachments", "count", len(msg.Attachments))
+			for _, att := range msg.Attachments {
+				slog.Debug("ClaudeCode: attachment", "type", att.Type, "mime", att.MimeType, "name", att.Name, "data_len", len(att.Data))
+				if att.Type == "image" {
+					slog.Debug("ClaudeCode: adding image from attachment")
+					anthropicParts = append(anthropicParts, map[string]interface{}{
+						"type": "image",
+						"source": map[string]interface{}{
+							"type":       "base64",
+							"media_type": att.MimeType,
+							"data":       att.Data,
+						},
+					})
+				} else if claudeDocumentTypes[att.MimeType] {
+					anthropicParts = append(anthropicParts, map[string]interface{}{
+						"type": "document",
+						"source": map[string]interface{}{
+							"type":       "base64",
+							"media_type": att.MimeType,
+							"data":       att.Data,
+						},
+					})
+				} else {
+					anthropicParts = append(anthropicParts, map[string]interface{}{
+						"type": "text",
+						"text": "[File Attachment: " + att.Name + " (" + att.MimeType + ")]",
+					})
+				}
+			}
+
+			// Handle ToolCalls field
+			for _, tc := range msg.ToolCalls {
+				var input map[string]interface{}
+				json.Unmarshal([]byte(tc.Function.Arguments), &input)
+				anthropicParts = append(anthropicParts, map[string]interface{}{
+					"type":  "tool_use",
+					"id":    tc.ID,
+					"name":  tc.Function.Name,
+					"input": input,
+				})
+			}
+
+			// Handle ToolCallID (this is a tool result message)
+			if msg.ToolCallID != "" {
+				anthropicParts = append(anthropicParts, map[string]interface{}{
+					"type":        "tool_result",
+					"tool_use_id": msg.ToolCallID,
+					"content":     msg.Content,
+				})
+			}
+
+			var finalContent interface{}
+			if len(anthropicParts) > 0 {
+				if msg.ToolCallID != "" {
+					// For tool results, content must be the parts
+					finalContent = anthropicParts
+				} else if c, ok := msg.Content.(string); ok && c != "" && len(msg.ToolCalls) > 0 {
+					// For assistant messages with text + tool calls
+					finalContent = append([]map[string]interface{}{{
+						"type": "text",
+						"text": c,
+					}}, anthropicParts...)
+				} else {
+					finalContent = anthropicParts
+				}
+			} else {
+				finalContent = msg.Content
+			}
+
+			role := msg.Role
+			if role == "tool" {
+				role = "user"
+			}
+
+			// Anthropic requires alternating user and assistant roles.
+			// Merge consecutive same-role messages into a single message with multiple content blocks.
+			if len(anthropicMessages) > 0 && anthropicMessages[len(anthropicMessages)-1]["role"] == role {
+				lastIdx := len(anthropicMessages) - 1
+				lastContent := anthropicMessages[lastIdx]["content"]
+
+				var lastParts []map[string]interface{}
+				if lp, ok := lastContent.([]map[string]interface{}); ok {
+					lastParts = lp
+				} else if ls, ok := lastContent.(string); ok && ls != "" {
+					lastParts = []map[string]interface{}{{
+						"type": "text",
+						"text": ls,
+					}}
+				}
+
+				var newParts []map[string]interface{}
+				if np, ok := finalContent.([]map[string]interface{}); ok {
+					newParts = np
+				} else if ns, ok := finalContent.(string); ok && ns != "" {
+					newParts = []map[string]interface{}{{
+						"type": "text",
+						"text": ns,
+					}}
+				}
+
+				if len(newParts) > 0 {
+					anthropicMessages[lastIdx]["content"] = append(lastParts, newParts...)
+				}
+				continue
+			}
+
+			anthropicMessages = append(anthropicMessages, map[string]interface{}{
+				"role":    role,
+				"content": finalContent,
+			})
+		}
+	}
+	return anthropicMessages, systemPrompt
+}
+
+func (p *ClaudeCodeProvider) convertTools(tools []interface{}) []interface{} {
+	if tools == nil {
+		return nil
+	}
+	anthropicTools := make([]interface{}, 0, len(tools))
+	for _, t := range tools {
+		if tMap, ok := t.(map[string]interface{}); ok {
+			// Check if it's an OpenAI-style tool definition
+			if toolType, ok := tMap["type"].(string); ok && toolType == "function" {
+				if function, ok := tMap["function"].(map[string]interface{}); ok {
+					anthropicTool := map[string]interface{}{
+						"name":         function["name"],
+						"description":  function["description"],
+						"input_schema": function["parameters"],
+					}
+					anthropicTools = append(anthropicTools, anthropicTool)
+					continue
+				}
+			}
+		}
+		// If not in OpenAI format or already converted, pass through
+		anthropicTools = append(anthropicTools, t)
+	}
+	return anthropicTools
+}
+
+func (p *ClaudeCodeProvider) ChatCompletion(ctx context.Context, messages []types.Message, model string, tools []interface{}, options map[string]interface{}) (*types.ChatResponse, error) {
+	authHeader, err := p.getAuthHeader()
+	if err != nil {
+		return nil, fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Parse thinking configuration from model string
+	baseModel, reasoningLevel := ParseThinkingModel(model)
+
+	anthropicMessages, systemPrompt := p.convertMessages(messages)
+
+	// Set max_tokens higher when thinking is enabled
+	maxTokens := 4096
+	thinkingBudget := GetAnthropicBudget(reasoningLevel)
+	if thinkingBudget > 0 {
+		maxTokens = thinkingBudget + 8192 // Budget for thinking + reasonable response
+	}
+
+	payload := map[string]interface{}{
+		"model":      baseModel,
+		"messages":   anthropicMessages,
+		"max_tokens": maxTokens,
+	}
+
+	// Inject thinking parameter if level is set
+	if reasoningLevel != ReasoningNone {
+		payload["thinking"] = map[string]interface{}{
+			"type":          "enabled",
+			"budget_tokens": thinkingBudget,
+		}
+		slog.Debug("ClaudeCode: Enabling extended thinking", "model", baseModel, "level", reasoningLevel, "budget", thinkingBudget)
+	}
+
+	if systemPrompt != "" {
+		payload["system"] = systemPrompt
+	}
+	if tools != nil {
+		payload["tools"] = p.convertTools(tools)
+		if toolChoice, ok := options["tool_choice"]; ok {
+			payload["tool_choice"] = toolChoice
+		}
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", p.baseURL, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	// Key difference: Use Authorization Bearer instead of x-api-key
+	req.Header.Set("Authorization", authHeader)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("anthropic-beta", "pdfs-2024-09-25")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Handle auth errors - try to refresh token
+	if resp.StatusCode == http.StatusUnauthorized {
+		slog.Warn("ClaudeCode: Received 401, attempting token refresh")
+		// Invalidate cache and try to get a fresh token
+		if _, refreshErr := auth.GetValidAccessToken(); refreshErr != nil {
+			return nil, fmt.Errorf("authentication expired. Please reconnect Claude Code in Settings: %w", refreshErr)
+		}
+		// Note: We don't retry here to avoid infinite loops. The next request will use the refreshed token.
+		return nil, errors.New("authentication refreshed. Please retry the request")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("claude code request failed with status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var data map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	contentBlocks := data["content"].([]interface{})
+	var contentText string
+	var reasoningText string
+	var toolCalls []types.ToolCall
+
+	for _, b := range contentBlocks {
+		block, ok := b.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if block["type"] == "text" {
+			text, _ := block["text"].(string)
+			contentText += text
+		} else if block["type"] == "thinking" {
+			thinking, _ := block["thinking"].(string)
+			reasoningText += thinking
+		} else if block["type"] == "tool_use" {
+			id, _ := block["id"].(string)
+			name, _ := block["name"].(string)
+			args, _ := json.Marshal(block["input"])
+			toolCalls = append(toolCalls, types.ToolCall{
+				ID:   id,
+				Type: "function",
+				Function: types.ToolFunction{
+					Name:      name,
+					Arguments: string(args),
+				},
+			})
+		}
+	}
+
+	usageData, _ := data["usage"].(map[string]interface{})
+	return &types.ChatResponse{
+		Content:    contentText,
+		Reasoning:  reasoningText,
+		ToolCalls:  toolCalls,
+		RawMessage: data,
+		Usage: types.Usage{
+			InputTokens:  int(usageData["input_tokens"].(float64)),
+			OutputTokens: int(usageData["output_tokens"].(float64)),
+		},
+	}, nil
+}
+
+func (p *ClaudeCodeProvider) ChatCompletionStream(ctx context.Context, messages []types.Message, model string, tools []interface{}, options map[string]interface{}) (<-chan types.ChatStreamChunk, <-chan error) {
+	chunkCh := make(chan types.ChatStreamChunk)
+	errCh := make(chan error, 1)
+
+	go func() {
+		defer close(chunkCh)
+		defer close(errCh)
+
+		authHeader, err := p.getAuthHeader()
+		if err != nil {
+			errCh <- fmt.Errorf("authentication failed: %w", err)
+			return
+		}
+
+		// Parse thinking configuration from model string
+		baseModel, reasoningLevel := ParseThinkingModel(model)
+
+		anthropicMessages, systemPrompt := p.convertMessages(messages)
+
+		// Set max_tokens higher when thinking is enabled
+		maxTokens := 4096
+		thinkingBudget := GetAnthropicBudget(reasoningLevel)
+		if thinkingBudget > 0 {
+			maxTokens = thinkingBudget + 8192
+		}
+
+		payload := map[string]interface{}{
+			"model":      baseModel,
+			"messages":   anthropicMessages,
+			"max_tokens": maxTokens,
+			"stream":     true,
+		}
+
+		// Inject thinking parameter if level is set
+		if reasoningLevel != ReasoningNone {
+			payload["thinking"] = map[string]interface{}{
+				"type":          "enabled",
+				"budget_tokens": thinkingBudget,
+			}
+			slog.Debug("ClaudeCode: Enabling extended thinking (stream)", "model", baseModel, "level", reasoningLevel, "budget", thinkingBudget)
+		}
+
+		if systemPrompt != "" {
+			payload["system"] = systemPrompt
+		}
+		if tools != nil {
+			payload["tools"] = p.convertTools(tools)
+		}
+
+		body, err := json.Marshal(payload)
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "POST", p.baseURL, bytes.NewBuffer(body))
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		// Use Bearer auth instead of x-api-key
+		req.Header.Set("Authorization", authHeader)
+		req.Header.Set("anthropic-version", "2023-06-01")
+		req.Header.Set("anthropic-beta", "pdfs-2024-09-25")
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := p.client.Do(req)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusUnauthorized {
+			errCh <- errors.New("authentication expired. Please reconnect Claude Code in Settings")
+			return
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			respBody, _ := io.ReadAll(resp.Body)
+			errCh <- fmt.Errorf("claude code stream request failed with status %d: %s", resp.StatusCode, string(respBody))
+			return
+		}
+
+		reader := bufio.NewReader(resp.Body)
+		var currentInputTokens, currentOutputTokens int
+
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				if err != io.EOF {
+					errCh <- err
+				}
+				return
+			}
+
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+
+			if strings.HasPrefix(line, "data: ") {
+				dataStr := strings.TrimPrefix(line, "data: ")
+				if dataStr == "" {
+					continue
+				}
+				var event map[string]interface{}
+				if err := json.Unmarshal([]byte(dataStr), &event); err != nil {
+					slog.Debug("ClaudeCode: failed to unmarshal event", "error", err, "data", dataStr)
+					continue
+				}
+
+				eventType, _ := event["type"].(string)
+				switch eventType {
+				case "message_start":
+					if msg, ok := event["message"].(map[string]interface{}); ok {
+						if usage, ok := msg["usage"].(map[string]interface{}); ok {
+							if it, ok := usage["input_tokens"].(float64); ok {
+								currentInputTokens = int(it)
+							}
+						}
+					}
+
+				case "content_block_start":
+					idx := 0
+					if i, ok := event["index"].(float64); ok {
+						idx = int(i)
+					}
+					if block, ok := event["content_block"].(map[string]interface{}); ok {
+						blockType, _ := block["type"].(string)
+						if blockType == "tool_use" {
+							id, _ := block["id"].(string)
+							name, _ := block["name"].(string)
+							chunkCh <- types.ChatStreamChunk{
+								ToolCalls: []types.ToolCallChunk{{
+									Index: &idx,
+									ID:    id,
+									Type:  "function",
+									Function: types.FunctionChunk{
+										Name: name,
+									},
+								}},
+							}
+						}
+					}
+
+				case "content_block_delta":
+					idx := 0
+					if i, ok := event["index"].(float64); ok {
+						idx = int(i)
+					}
+					if delta, ok := event["delta"].(map[string]interface{}); ok {
+						deltaType, _ := delta["type"].(string)
+						if deltaType == "text_delta" {
+							text, _ := delta["text"].(string)
+							chunkCh <- types.ChatStreamChunk{Content: text}
+						} else if deltaType == "input_json_delta" {
+							partial, _ := delta["partial_json"].(string)
+							chunkCh <- types.ChatStreamChunk{
+								ToolCalls: []types.ToolCallChunk{{
+									Index: &idx,
+									Function: types.FunctionChunk{
+										Arguments: partial,
+									},
+								}},
+							}
+						} else if deltaType == "thinking_delta" {
+							thinking, _ := delta["thinking"].(string)
+							chunkCh <- types.ChatStreamChunk{Reasoning: thinking}
+						}
+					}
+
+				case "message_delta":
+					if usage, ok := event["usage"].(map[string]interface{}); ok {
+						if ot, ok := usage["output_tokens"].(float64); ok {
+							currentOutputTokens = int(ot)
+						}
+						chunkCh <- types.ChatStreamChunk{
+							Usage: &types.Usage{
+								InputTokens:  currentInputTokens,
+								OutputTokens: currentOutputTokens,
+								TotalTokens:  currentInputTokens + currentOutputTokens,
+							},
+						}
+					}
+
+				case "error":
+					if errObj, ok := event["error"].(map[string]interface{}); ok {
+						msg, _ := errObj["message"].(string)
+						errCh <- fmt.Errorf("claude code stream error: %s", msg)
+					}
+					return
+				}
+			}
+		}
+	}()
+
+	return chunkCh, errCh
+}
+
+func (p *ClaudeCodeProvider) Close() error {
+	return nil
+}

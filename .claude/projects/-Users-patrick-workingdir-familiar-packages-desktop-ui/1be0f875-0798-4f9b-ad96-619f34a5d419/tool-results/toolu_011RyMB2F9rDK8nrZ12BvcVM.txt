@@ -1,0 +1,14 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/TriggersView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   175→                    className="fixed z-[100] w-44 bg-[#0a0a0a] border border-[#333] font-mono text-[10px] overflow-hidden animate-in fade-in duration-75"
+   176→                    style={{ top: contextMenu.y, left: contextMenu.x }}
+   177→                    onClick={(e) => e.stopPropagation()}
+   178→                >
+   179→                    <div className="px-2 py-1 border-b border-[#333] bg-[#111] text-[#666]">
+   180→                        <span className="text-[8px] tracking-wider">
+   181→                            {contextMenu.triggerId}
+   182→                        </span>
+   183→                    </div>
+   184→
+   185→                    <button
+   186→                        className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   187→                        onClick={() => {

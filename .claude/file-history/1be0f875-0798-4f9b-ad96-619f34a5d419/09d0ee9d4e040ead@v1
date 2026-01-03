@@ -1,0 +1,1697 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../../lib/api';
+import { clsx } from 'clsx';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { useSystem } from '../../context/SystemContext';
+import { useAgents } from '../../context/AgentContext';
+
+export const SettingsView: React.FC = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { setExplorerCollapsed } = useAgents();
+  const { data: config, refetch: refetchConfig } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => api.getConfig(),
+  });
+
+  const { data: apiKeys, refetch: refetchKeys } = useQuery({
+    queryKey: ['apiKeys'],
+    queryFn: () => api.getApiKeys(),
+  });
+
+  const { data: vaultSecrets, refetch: refetchVault } = useQuery({
+    queryKey: ['vaultSecrets'],
+    queryFn: () => api.listVaultSecrets(),
+  });
+
+  const { data: status } = useQuery({
+    queryKey: ['status'],
+    queryFn: () => api.getStatus(),
+    refetchInterval: 5000,
+  });
+
+  const handleToggleAlwaysAllowAll = async () => {
+    const current = !!config?.security?.always_allow_all;
+    if (!current) {
+      const confirmed = await ask("WARNING: This will automatically approve ALL tool calls (including shell and browser) from ALL agents and sub-agents. This grants autonomous agents full control over your local system and web presence. Are you sure you want to disable all security oversight?", {
+        title: "Danger: Disable All Approvals",
+        kind: "error",
+      });
+      if (!confirmed) return;
+    }
+
+    try {
+      await api.updateConfig({ security: { always_allow_all: !current } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to toggle always allow all:', err);
+    }
+  };
+
+  const handleUpdateShellPermissionMode = async (mode: string) => {
+    try {
+      await api.updateConfig({ security: { shell_permission_mode: mode } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update shell permission mode:', err);
+    }
+  };
+
+  const handleToggleSubAgentsGlobal = async () => {
+    try {
+      const current = !!config?.sub_agent?.enabled;
+      await api.updateConfig({ sub_agent: { enabled: !current } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to toggle sub-agents globally:', err);
+    }
+  };
+
+
+
+  const handleToggleCLIEnabled = async (cli: 'claude_code' | 'codex') => {
+    try {
+      const current = !!config?.sub_agent?.[cli]?.enabled;
+      await api.updateConfig({ sub_agent: { [cli]: { enabled: !current } } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error(`Failed to toggle ${cli}:`, err);
+    }
+  };
+
+  const handleUpdateClaudeTools = async (tools: string) => {
+    try {
+      const toolList = tools.split(',').map(t => t.trim()).filter(Boolean);
+      await api.updateConfig({ sub_agent: { claude_code: { allowed_tools: toolList } } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update Claude tools:', err);
+    }
+  };
+
+  const handleUpdateCodexMode = async (mode: string) => {
+    try {
+      await api.updateConfig({ sub_agent: { codex: { approval_mode: mode } } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update Codex mode:', err);
+    }
+  };
+
+  const [theme, setTheme] = useState(config?.ui?.theme || 'default');
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [newKey, setNewKey] = useState<{ provider: string; key: string }>({ provider: '', key: '' });
+  const [newVaultSecret, setNewVaultSecret] = useState<{ name: string; value: string }>({ name: '', value: '' });
+  const [customBaseUrl, setCustomBaseUrl] = useState('');
+  const [isAddingCustomProvider, setIsAddingCustomProvider] = useState(false);
+  const [newCustomProviderName, setNewCustomProviderName] = useState('');
+
+  const [editingProvider, setEditingProvider] = useState<string | null>(null);
+  const [editingCapability, setEditingCapability] = useState<string>('chat');
+  const [newModelName, setNewModelName] = useState('');
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
+  const { activeSettingsTab: activeTab } = useSystem();
+
+  const [recordingHotkey, setRecordingHotkey] = useState<string | null>(null);
+  const autoFetchedProviders = useRef<Set<string>>(new Set());
+
+  // Thinking configuration state - track which model is being edited
+  const [editingThinkingModel, setEditingThinkingModel] = useState<string | null>(null);
+
+  // Reasoning levels
+  type ReasoningLevel = '' | 'low' | 'medium' | 'high';
+  const reasoningLevels: { value: ReasoningLevel; label: string }[] = [
+    { value: '', label: 'None' },
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+  ];
+
+  // Helper to parse model string for reasoning level
+  // e.g., "claude-haiku-4.5:thinking-high" -> { baseModel: "claude-haiku-4.5", level: "high" }
+  const parseModelLevel = (model: string): { baseModel: string; level: ReasoningLevel } => {
+    for (const l of ['low', 'medium', 'high'] as ReasoningLevel[]) {
+      const suffix = `:thinking-${l}`;
+      if (model.endsWith(suffix)) {
+        return { baseModel: model.replace(suffix, ''), level: l };
+      }
+    }
+    // Legacy: :thinking without level = high
+    if (model.endsWith(':thinking')) {
+      return { baseModel: model.replace(':thinking', ''), level: 'high' };
+    }
+    return { baseModel: model, level: '' };
+  };
+
+  // Helper to build model string from base and level
+  const buildModelString = (baseModel: string, level: ReasoningLevel): string => {
+    if (level) {
+      return `${baseModel}:thinking-${level}`;
+    }
+    return baseModel;
+  };
+
+  // Providers that support thinking/reasoning
+  const thinkingProviders = ['openrouter', 'anthropic', 'openai', 'gemini'];
+
+  // Update a model's reasoning level
+  const handleUpdateModelLevel = async (oldModel: string, newLevel: ReasoningLevel) => {
+    if (!editingProvider || !editingCapability) return;
+
+    const { baseModel } = parseModelLevel(oldModel);
+    const newModel = buildModelString(baseModel, newLevel);
+
+    if (newModel === oldModel) return; // No change
+
+    const models = availableModels[editingProvider]?.[editingCapability] || [];
+    const updatedModels = models.map(m => m === oldModel ? newModel : m);
+
+    const updatedAvailableModels = {
+      ...availableModels,
+      [editingProvider]: {
+        ...(availableModels[editingProvider] || {}),
+        [editingCapability]: updatedModels
+      }
+    };
+
+    setIsSaving(true);
+    try {
+      await api.updateConfig({ available_models: updatedAvailableModels });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update model reasoning level:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    setExplorerCollapsed(false);
+  }, []);
+
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerSuccess = useCallback(() => {
+    setShowSuccess(true);
+    if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+    successTimeoutRef.current = setTimeout(() => setShowSuccess(false), 3000);
+  }, []);
+
+  useEffect(() => {
+    if (recordingHotkey) {
+      const handleGlobalKeyDown = (e: KeyboardEvent) => {
+        // Don't intercept if it's just a modifier key
+        if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.key === 'Escape') {
+          setRecordingHotkey(null);
+          return;
+        }
+
+        const modifiers = [];
+        if (e.metaKey) modifiers.push('Cmd');
+        else if (e.ctrlKey) modifiers.push('Ctrl');
+
+        if (e.shiftKey) modifiers.push('Shift');
+        if (e.altKey) modifiers.push('Alt');
+
+        let key = e.key;
+        if (key === ' ') key = 'Space';
+        if (key.length === 1) key = key.toUpperCase();
+
+        const hotkey = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
+
+        handleUpdateHotkey(recordingHotkey, hotkey);
+        setRecordingHotkey(null);
+      };
+
+      window.addEventListener('keydown', handleGlobalKeyDown, true);
+      return () => window.removeEventListener('keydown', handleGlobalKeyDown, true);
+    }
+  }, [recordingHotkey, config]);
+
+  const handleUpdateHotkey = async (key: string, value: string) => {
+    const updatedHotkeys = { ...((config?.ui as any)?.hotkeys || {}), [key]: value };
+    try {
+      await api.updateConfig({ ui: { hotkeys: updatedHotkeys } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update hotkey:', err);
+    }
+  };
+
+  const hotkeyDefaults: Record<string, string> = {
+    'global_back': 'Escape',
+    'new_agent': 'Cmd+N',
+    'focus_input': 'Cmd+L',
+    'toggle_sidebar': 'Cmd+B',
+    'toggle_settings': 'Cmd+,',
+    'toggle_pause': 'Cmd+P',
+    'compact': 'Cmd+Shift+C',
+    'toggle_unibar': 'Cmd+K',
+    'delete_agent': 'Cmd+D',
+    'toggle_explorer': 'Cmd+E',
+  };
+
+  const hotkeyLabels: Record<string, string> = {
+    'global_back': 'Global Back / Exit Dashboard',
+    'new_agent': 'Create New Agent (Dashboard)',
+    'focus_input': 'Focus Chat Input (Workspace)',
+    'toggle_sidebar': 'Toggle Sidebar (Workspace)',
+    'toggle_settings': 'Toggle Settings (Workspace)',
+    'toggle_pause': 'Toggle Pause/Resume',
+    'compact': 'Compact History (Workspace)',
+    'toggle_unibar': 'Omnibar / Command Palette',
+    'delete_agent': 'Delete Highlighted Agent (Dashboard)',
+    'toggle_explorer': 'Toggle Explorer Panel',
+  };
+
+  // Pointer-based drag state (bypasses Tauri's drag interception)
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragSourceIndex, setDragSourceIndex] = useState<number | null>(null);
+  const [dragTargetIndex, setDragTargetIndex] = useState<number | null>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't scroll if we're recording a hotkey or typing in an input
+      if (recordingHotkey) return;
+
+      const activeElement = document.activeElement;
+      const isInput = activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement as HTMLElement)?.isContentEditable;
+
+      if (isInput && !(e.metaKey || e.ctrlKey)) return;
+
+      if (e.key === 'ArrowUp') {
+        if (scrollRef.current) {
+          e.preventDefault();
+          scrollRef.current.scrollBy({ top: -100, behavior: 'smooth' });
+        }
+      }
+      if (e.key === 'ArrowDown') {
+        if (scrollRef.current) {
+          e.preventDefault();
+          scrollRef.current.scrollBy({ top: 100, behavior: 'smooth' });
+        }
+      }
+      if (e.key === ' ' && !isInput) {
+        if (scrollRef.current) {
+          e.preventDefault();
+          const direction = e.shiftKey ? -1 : 1;
+          scrollRef.current.scrollBy({
+            top: direction * scrollRef.current.clientHeight * 0.8,
+            behavior: 'smooth'
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [recordingHotkey]);
+
+
+
+  useEffect(() => {
+    if (!editingProvider && config?.available_models && apiKeys) {
+      const availableModels = config.available_models;
+      const providers = Object.keys(availableModels);
+
+      // Preference order for default selection
+      const preference = ['openrouter', 'anthropic', 'openai', 'gemini'];
+      const defaultProvider = preference.find(p => providers.some(ap => ap.toLowerCase() === p));
+
+      if (defaultProvider) {
+        const matching = providers.find(p => p.toLowerCase() === defaultProvider);
+        if (matching) {
+          setEditingProvider(matching);
+          setNewKey(prev => ({ ...prev, provider: matching }));
+        }
+      } else if (providers.length > 0) {
+        setEditingProvider(providers[0]);
+        setNewKey(prev => ({ ...prev, provider: providers[0] }));
+      }
+    }
+  }, [config, editingProvider, apiKeys]);
+
+  useEffect(() => {
+    if (editingProvider && config?.custom_providers?.[editingProvider]) {
+      setCustomBaseUrl(config?.custom_providers[editingProvider].base_url || '');
+    } else {
+      setCustomBaseUrl('');
+    }
+  }, [editingProvider, config?.custom_providers]);
+
+  const availableModels = config?.available_models || {};
+  const localProvidersList = ['ollama', 'lmstudio'];
+  const standardProviders = ['openrouter', 'anthropic', 'openai', 'gemini', 'ollama', 'lmstudio'];
+
+  const handleFetchModels = useCallback(async (provider: string) => {
+    if (isFetchingModels) return;
+    setIsFetchingModels(true);
+    try {
+      const response = await api.fetchModels(provider);
+      if (response && response.models) {
+        const updatedAvailableModels = {
+          ...availableModels,
+          [provider]: {
+            ...(availableModels[provider] || {}),
+            chat: response.models
+          }
+        };
+
+        // If this is the active provider and has no model set, pick the first one
+        const updates: any = { available_models: updatedAvailableModels };
+        if (provider === config?.inference?.chat?.provider && (!config?.inference?.chat?.model || (availableModels[provider]?.chat?.length || 0) === 0)) {
+          if (response.models.length > 0) {
+            updates.inference = {
+              ...config.inference,
+              chat: {
+                ...config.inference.chat,
+                model: response.models[0]
+              }
+            };
+          }
+        }
+
+        await api.updateConfig(updates);
+        await refetchConfig();
+        triggerSuccess();
+      }
+    } catch (err) {
+      console.error('Failed to fetch models:', err);
+    } finally {
+      setIsFetchingModels(false);
+    }
+  }, [availableModels, config, isFetchingModels, refetchConfig, triggerSuccess]);
+
+  useEffect(() => {
+    if (editingProvider && localProvidersList.includes(editingProvider.toLowerCase())) {
+      const currentChatModels = availableModels[editingProvider]?.chat || [];
+      if (currentChatModels.length === 0 && !isFetchingModels && !autoFetchedProviders.current.has(editingProvider.toLowerCase())) {
+        autoFetchedProviders.current.add(editingProvider.toLowerCase());
+        handleFetchModels(editingProvider);
+      }
+    }
+  }, [editingProvider, availableModels, isFetchingModels, handleFetchModels]);
+
+  const allProviders = Object.keys(availableModels);
+  const cloudProviders = allProviders.filter(p => standardProviders.includes(p.toLowerCase()) && !localProvidersList.includes(p.toLowerCase()));
+  const localProviders = allProviders.filter(p => standardProviders.includes(p.toLowerCase()) && localProvidersList.includes(p.toLowerCase()));
+  const userCustomProvidersList = allProviders.filter(p => !standardProviders.includes(p.toLowerCase()));
+
+  const currentModels = (editingProvider && editingCapability) ? (availableModels[editingProvider]?.[editingCapability] || []) : [];
+  const hasCustomBaseUrl = !!customBaseUrl.trim();
+
+  const handleAddCustomProvider = async () => {
+    if (!newCustomProviderName.trim()) return;
+    const name = newCustomProviderName.trim().toLowerCase();
+    if (standardProviders.includes(name) || userCustomProvidersList.includes(name)) {
+      alert('Provider name already exists or is reserved.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updatedCustomProviders = {
+        ...(config?.custom_providers || {}),
+        [name]: { base_url: '' }
+      };
+      await api.updateConfig({ custom_providers: updatedCustomProviders });
+      await refetchConfig();
+      setEditingProvider(name);
+      setIsAddingCustomProvider(false);
+      setNewCustomProviderName('');
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to add custom provider:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveCustomProvider = async (name: string) => {
+    const confirmed = await ask(`Are you sure you want to delete the custom provider "${name}"?`, {
+      title: 'Delete Provider',
+      kind: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    setIsSaving(true);
+    try {
+      // Wipe API key from keychain first
+      try {
+        await api.removeApiKey(name);
+      } catch (keyErr) {
+        console.warn(`Failed to remove API key for ${name}:`, keyErr);
+      }
+
+      const updatedCustomProviders = { ...(config?.custom_providers || {}) };
+      delete updatedCustomProviders[name];
+
+      const updatedAvailableModels = { ...(config?.available_models || {}) };
+      delete updatedAvailableModels[name];
+
+      await api.updateConfig({
+        custom_providers: updatedCustomProviders,
+        available_models: updatedAvailableModels
+      });
+      await queryClient.invalidateQueries({ queryKey: ['config'] });
+      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+      if (editingProvider === name) {
+        setEditingProvider(cloudProviders[0] || 'openai');
+      }
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to remove custom provider:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddModel = async () => {
+    if (!editingProvider || !editingCapability || !newModelName.trim()) return;
+
+    const modelToAdd = newModelName.trim();
+    if (currentModels.includes(modelToAdd)) return;
+
+    const updatedModels = [...currentModels, modelToAdd];
+    const updatedAvailableModels = {
+      ...availableModels,
+      [editingProvider]: {
+        ...(availableModels[editingProvider] || {}),
+        [editingCapability]: updatedModels
+      }
+    };
+
+    const updates: any = { available_models: updatedAvailableModels };
+
+    // If this is the first model for this provider, and it's the default provider, set it as default model
+    if (editingProvider === config?.inference?.chat?.provider && editingCapability === 'chat' && currentModels.length === 0) {
+      updates.inference = {
+        ...config.inference,
+        chat: {
+          ...config.inference.chat,
+          model: modelToAdd
+        }
+      };
+    }
+
+    setIsSaving(true);
+    try {
+      await api.updateConfig(updates);
+      setNewModelName('');
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to add model:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveModel = async (modelName: string) => {
+    if (!editingProvider || !editingCapability) return;
+    const updatedModels = currentModels.filter(m => m !== modelName);
+    const updatedAvailableModels = {
+      ...availableModels,
+      [editingProvider]: {
+        ...(availableModels[editingProvider] || {}),
+        [editingCapability]: updatedModels
+      }
+    };
+
+    const updates: any = { available_models: updatedAvailableModels };
+
+    // If we removed the top model, or changed the list, and this is the default provider, update the default model
+    if (editingProvider === config?.inference?.chat?.provider && editingCapability === 'chat' && updatedModels.length > 0) {
+      if (updatedModels[0] !== currentModels[0]) {
+        updates.inference = {
+          ...config.inference,
+          chat: {
+            ...config.inference.chat,
+            model: updatedModels[0]
+          }
+        };
+      }
+    }
+
+    setIsSaving(true);
+    try {
+      await api.updateConfig(updates);
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to remove model:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveModelOrder = async (newModels: string[]) => {
+    if (!editingProvider || !editingCapability) return;
+
+    const updatedAvailableModels = {
+      ...availableModels,
+      [editingProvider]: {
+        ...(availableModels[editingProvider] || {}),
+        [editingCapability]: newModels
+      }
+    };
+
+    const updates: any = { available_models: updatedAvailableModels };
+
+    // If we moved something to the top, and this is the default provider, update the default model
+    if (editingProvider === config?.inference?.chat?.provider && editingCapability === 'chat') {
+      updates.inference = {
+        ...config.inference,
+        chat: {
+          ...config.inference.chat,
+          model: newModels[0]
+        }
+      };
+    }
+
+    setIsSaving(true);
+    try {
+      await api.updateConfig(updates);
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update model order:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleMoveModel = async (modelName: string, direction: 'up' | 'down') => {
+    if (!editingProvider || !editingCapability) return;
+
+    const index = currentModels.indexOf(modelName);
+    if (index === -1) return;
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === currentModels.length - 1) return;
+
+    const newModels = [...currentModels];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    [newModels[index], newModels[targetIndex]] = [newModels[targetIndex], newModels[index]];
+
+    await saveModelOrder(newModels);
+  };
+
+  // Pointer-based drag handlers (works in Tauri)
+  const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setDragSourceIndex(index);
+    setDragTargetIndex(index);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging || dragSourceIndex === null || !containerRef.current) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const y = e.clientY - containerRect.top;
+
+    // Find which item we're over
+    let newTargetIndex = dragSourceIndex;
+    for (let i = 0; i < itemRefs.current.length; i++) {
+      const item = itemRefs.current[i];
+      if (!item) continue;
+      const rect = item.getBoundingClientRect();
+      const itemY = rect.top - containerRect.top + rect.height / 2;
+      if (y < itemY) {
+        newTargetIndex = i;
+        break;
+      }
+      newTargetIndex = i + 1;
+    }
+    newTargetIndex = Math.max(0, Math.min(newTargetIndex, currentModels.length - 1));
+
+    if (newTargetIndex !== dragTargetIndex) {
+      setDragTargetIndex(newTargetIndex);
+    }
+  }, [isDragging, dragSourceIndex, dragTargetIndex, currentModels.length]);
+
+  const handlePointerUp = useCallback(async (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+
+    const sourceIndex = dragSourceIndex;
+    const targetIndex = dragTargetIndex;
+
+    setIsDragging(false);
+    setDragSourceIndex(null);
+    setDragTargetIndex(null);
+
+    if (sourceIndex === null || targetIndex === null || sourceIndex === targetIndex) return;
+
+    const newModels = [...currentModels];
+    const [removed] = newModels.splice(sourceIndex, 1);
+    newModels.splice(targetIndex, 0, removed);
+
+    await saveModelOrder(newModels);
+  }, [isDragging, dragSourceIndex, dragTargetIndex, currentModels, saveModelOrder]);
+
+  const handleUpdateTheme = async (newTheme: string) => {
+    setTheme(newTheme);
+    try {
+      await api.updateConfig({ ui: { theme: newTheme } });
+      localStorage.setItem('pa_theme', newTheme);
+      if (newTheme === 'default') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', newTheme);
+      }
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update theme:', err);
+    }
+  };
+
+  const handleToggleAutoCompaction = async () => {
+    try {
+      const current = config?.agent?.auto_compaction_enabled !== false; // Default to true if undefined
+      await api.updateConfig({ agent: { auto_compaction_enabled: !current } });
+      await refetchConfig();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to toggle auto-compaction:', err);
+    }
+  };
+
+  const handleSetApiKey = async () => {
+    if (!newKey.provider || !newKey.key) return;
+    setIsSaving(true);
+    try {
+      await api.setApiKey(newKey.provider, newKey.key);
+      setNewKey({ provider: '', key: '' });
+      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to set API key:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveCustomBaseUrl = async () => {
+    if (!customBaseUrl.trim() || !editingProvider) return;
+    setIsSaving(true);
+    try {
+      const updatedCustomProviders = {
+        ...(config?.custom_providers || {}),
+        [editingProvider]: { base_url: customBaseUrl.trim() }
+      };
+      await api.updateConfig({ custom_providers: updatedCustomProviders });
+      await queryClient.invalidateQueries({ queryKey: ['config'] });
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to update custom provider base URL:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveApiKey = async (provider: string) => {
+    const confirmed = await ask(`Are you sure you want to wipe the API key for ${provider.toUpperCase()}? This will prevent agents from using this provider until a new key is registered.`, {
+      title: 'Wipe API Key',
+      kind: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await api.removeApiKey(provider);
+      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+    } catch (err) {
+      console.error('Failed to remove API key:', err);
+    }
+  };
+
+  const handleToggleProvider = async (provider: string, currentEnabled: boolean) => {
+    setIsSaving(true);
+    try {
+      const updatedProviders = {
+        ...(config?.providers || {}),
+        [provider]: { enabled: !currentEnabled }
+      };
+      await api.updateConfig({ providers: updatedProviders });
+      await queryClient.invalidateQueries({ queryKey: ['config'] });
+      await queryClient.invalidateQueries({ queryKey: ['apiKeys'] });
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to toggle provider:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSetVaultSecret = async () => {
+    if (!newVaultSecret.name || !newVaultSecret.value) return;
+    setIsSaving(true);
+    try {
+      await api.setVaultSecret(newVaultSecret.name, newVaultSecret.value);
+      setNewVaultSecret({ name: '', value: '' });
+      await refetchVault();
+      triggerSuccess();
+    } catch (err) {
+      console.error('Failed to set vault secret:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveVaultSecret = async (name: string) => {
+    const confirmed = await ask(`Are you sure you want to delete the secret "${name}"? This cannot be undone.`, {
+      title: 'Delete Secret',
+      kind: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await api.removeVaultSecret(name);
+      refetchVault();
+    } catch (err) {
+      console.error('Failed to remove vault secret:', err);
+    }
+  };
+
+  const themes = [
+    { id: 'default', name: 'Matrix Dark', colors: 'bg-[#181c21]', accent: 'bg-[#22d3ee]' },
+    { id: 'light', name: 'Paper White', colors: 'bg-[#f2f2f2]', accent: 'bg-[#2563eb]' },
+    { id: 'cobalt2', name: 'Cobalt2', colors: 'bg-[#193549]', accent: 'bg-[#ffc600]' },
+    { id: 'nerv', name: 'NERV HQ', colors: 'bg-[#1c1c1c]', accent: 'bg-[#ff9500]' },
+  ];
+
+  return (
+    <div className="flex h-full bg-background font-mono text-[13px] overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-background relative">
+        <div className="flex-1 overflow-auto p-8 custom-scrollbar relative" ref={scrollRef}>
+          <div className="max-w-4xl mx-auto pb-20">
+            {activeTab === 'models' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+                {/* Model Registry Section */}
+                <section className="space-y-3">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2 text-accent/80">
+                      <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">Provider Configuration</h2>
+                    </div>
+                    <p className="text-[10px] text-text-tertiary/60 italic leading-normal font-black tracking-tight">
+                      LLM providers and endpoints. Credentials stored in system keychain.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row bg-surface/5 border border-border/10 overflow-hidden min-h-[450px]">
+                    {/* Left Sidebar: Providers */}
+                    <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-border/10 bg-background/20 flex flex-col font-mono">
+                      <div className="p-3 border-b border-border/10 bg-background/10">
+                        <span className="text-[10px] font-black text-accent/60 uppercase tracking-[0.2em]">/INDEX</span>
+                      </div>
+                      <div className="flex-1 overflow-auto p-1.5 space-y-0.5 custom-scrollbar">
+                        <div className="px-2 pb-1">
+                          <span className="text-[8px] font-black text-text-tertiary/30 uppercase tracking-widest">/CLOUD</span>
+                        </div>
+                        {cloudProviders.map(p => {
+                          const providerData = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+                          const isConfigured = providerData?.configured;
+                          const isEnabled = providerData?.enabled === true;
+                          return (
+                            <button
+                              key={p}
+                              onClick={() => {
+                                setEditingProvider(p);
+                                setNewKey(prev => ({ ...prev, provider: p }));
+                              }}
+                              className={clsx(
+                                "w-full px-2 py-1 text-left text-[11px] font-black uppercase transition-all flex items-center justify-between",
+                                editingProvider === p
+                                  ? "text-accent"
+                                  : "text-text-tertiary/60 hover:text-text-secondary hover:translate-x-0.5",
+                                !isEnabled && "opacity-40"
+                              )}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="w-2">{editingProvider === p ? '>' : ' '}</span>
+                                <span className="truncate">/{p}</span>
+                              </div>
+                              <div className={clsx(
+                                "w-1 h-1 rounded-full",
+                                isConfigured ? "bg-status-success animate-pulse" : "bg-status-error/40"
+                              )} />
+                            </button>
+                          );
+                        })}
+
+                        <div className="pt-4 mt-2">
+                          <div className="px-2 pb-1 flex items-center justify-between">
+                            <span className="text-[8px] font-black text-text-tertiary/30 uppercase tracking-widest">/CUSTOM</span>
+                            <button
+                              onClick={() => setIsAddingCustomProvider(true)}
+                              className="text-accent/60 hover:text-accent transition-colors text-[10px]"
+                            >
+                              [+]
+                            </button>
+                          </div>
+
+                          {isAddingCustomProvider && (
+                            <div className="px-1.5 py-1 space-y-1">
+                              <input
+                                autoFocus
+                                type="text"
+                                placeholder="NAME..."
+                                value={newCustomProviderName}
+                                onChange={(e) => setNewCustomProviderName(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleAddCustomProvider();
+                                  if (e.key === 'Escape') setIsAddingCustomProvider(false);
+                                }}
+                                className="w-full bg-transparent border-b border-accent/20 px-1 py-0.5 text-[10px] text-text-primary focus:outline-none font-mono uppercase"
+                              />
+                              <div className="flex gap-1">
+                                  <button
+                                    onClick={handleAddCustomProvider}
+                                    className="flex-1 py-0.5 text-accent text-[9px] font-black border border-accent/20 hover:bg-accent/5"
+                                  >
+                                    [ADD]
+                                  </button>
+                                  <button
+                                    onClick={() => setIsAddingCustomProvider(false)}
+                                    className="flex-1 py-0.5 text-text-tertiary/60 text-[9px] font-black border border-border/10 hover:bg-surface/10"
+                                  >
+                                    [CANCEL]
+                                  </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {userCustomProvidersList.map(p => {
+                            const providerData = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+                            const isConfigured = providerData?.configured;
+                            const isEnabled = providerData?.enabled === true;
+                            return (
+                              <button
+                                key={p}
+                                onClick={() => {
+                                  setEditingProvider(p);
+                                  setNewKey(prev => ({ ...prev, provider: p }));
+                                }}
+                                className={clsx(
+                                  "w-full px-2 py-1 text-left text-[11px] font-black uppercase transition-all flex items-center justify-between",
+                                  editingProvider === p
+                                    ? "text-accent"
+                                    : "text-text-tertiary/60 hover:text-text-secondary hover:translate-x-0.5",
+                                  !isEnabled && "opacity-40"
+                                )}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2">{editingProvider === p ? '>' : ' '}</span>
+                                  <span className="truncate">/{p}</span>
+                                </div>
+                                <div className={clsx(
+                                  "w-1 h-1 rounded-full",
+                                  isConfigured ? "bg-status-success animate-pulse" : "bg-status-error/40"
+                                )} />
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="pt-4 mt-2">
+                          <div className="px-2 pb-1">
+                            <span className="text-[8px] font-black text-text-tertiary/30 uppercase tracking-widest">/LOCAL</span>
+                          </div>
+
+                          <div className="space-y-0.5">
+                            {localProviders.map(p => {
+                              const isEnabled = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase())?.enabled === true;
+                              return (
+                                <button
+                                  key={p}
+                                  onClick={() => {
+                                    setNewKey(prev => ({ ...prev, provider: p }));
+                                    setEditingProvider(p);
+                                  }}
+                                  className={clsx(
+                                    "w-full px-2 py-1 text-left text-[11px] font-black uppercase transition-all flex items-center justify-between",
+                                    editingProvider === p
+                                      ? "text-accent"
+                                      : "text-text-tertiary/60 hover:text-text-secondary hover:translate-x-0.5",
+                                    !isEnabled && "opacity-40"
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-2">{editingProvider === p ? '>' : ' '}</span>
+                                    <span className="truncate">/{p}</span>
+                                  </div>
+                                  <div className="w-1 h-1 rounded-full bg-status-success animate-pulse" />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Panel: Skills and Models */}
+                    <div className="flex-1 flex flex-col bg-background/5 font-mono">
+                      {!editingProvider ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-text-tertiary/20 space-y-2">
+                          <span className="text-[10px] uppercase font-black tracking-[0.3em]">[AWAITING_SELECTION]</span>
+                          <div className="animate-pulse">_</div>
+                        </div>
+                      ) : (
+                        <div className="flex-1 overflow-auto p-5 space-y-8 custom-scrollbar">
+                          {/* Provider Header & API Key Management */}
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between border-b border-border/10 pb-3">
+                              <div className="flex items-center gap-3">
+                                <span className="text-[13px] font-black text-text-primary uppercase tracking-[0.1em]">
+                                  /{editingProvider}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {(() => {
+                                  const providerData = apiKeys?.find(k => k.provider.toLowerCase() === editingProvider.toLowerCase());
+                                  const isEnabled = providerData?.enabled === true;
+
+                                  return (
+                                    <button
+                                      onClick={() => handleToggleProvider(editingProvider, isEnabled)}
+                                      className={clsx(
+                                        "text-[9px] font-black px-2 py-0.5 transition-all tracking-widest uppercase border active:scale-95",
+                                        isEnabled
+                                          ? "text-status-success border-status-success/20 hover:bg-status-success/5"
+                                          : "text-status-error border-status-error/20 hover:bg-status-error/5"
+                                      )}
+                                    >
+                                      {isEnabled ? '[ON]' : '[OFF]'}
+                                    </button>
+                                  );
+                                })()}
+
+                                {userCustomProvidersList.includes(editingProvider) && (
+                                  <button
+                                    onClick={() => handleRemoveCustomProvider(editingProvider)}
+                                    className="text-[9px] text-text-tertiary/40 hover:text-status-error transition-all uppercase font-black px-2 py-0.5 border border-border/10 hover:bg-status-error/5 active:scale-95"
+                                  >
+                                    [DELETE]
+                                  </button>
+                                )}
+
+                                {apiKeys?.find(k => k.provider.toLowerCase() === editingProvider.toLowerCase())?.configured && !localProvidersList.includes(editingProvider.toLowerCase()) && (
+                                  <button
+                                    onClick={() => handleRemoveApiKey(editingProvider)}
+                                    className="text-[9px] text-text-tertiary/40 hover:text-status-error transition-all uppercase font-black px-2 py-0.5 border border-border/10 hover:bg-status-error/5 active:scale-95"
+                                  >
+                                    [WIPE_KEY]
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* API Key Input */}
+                            {!localProvidersList.includes(editingProvider.toLowerCase()) ? (
+                              <div className="space-y-2">
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-black text-text-tertiary/60 uppercase tracking-widest">/AUTH_TOKEN</span>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <div className="flex-1 relative">
+                                    <input
+                                      type="password"
+                                      placeholder="PASTE_KEY..."
+                                      value={newKey.key}
+                                      onChange={(e) => setNewKey(prev => ({ ...prev, key: e.target.value }))}
+                                      onKeyDown={(e) => e.key === 'Enter' && handleSetApiKey()}
+                                      className="w-full bg-transparent border-b border-border/10 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all uppercase"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={handleSetApiKey}
+                                    disabled={isSaving || !newKey.key}
+                                    className="px-3 py-1 text-accent hover:text-accent-hover font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-20"
+                                  >
+                                    [REGISTER]
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-[9px] text-accent/40 font-black uppercase tracking-widest">
+                                /LOCAL_ACTIVE: NO_AUTH_REQUIRED
+                              </div>
+                            )}
+                          </div>
+
+                          {userCustomProvidersList.includes(editingProvider) && (
+                            <div className="space-y-2">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[9px] font-black text-text-tertiary/60 uppercase tracking-widest">/ENDPOINT_URL</span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <div className="flex-1 relative">
+                                  <input
+                                    type="text"
+                                    placeholder="https://api.provider.com/v1"
+                                    value={customBaseUrl}
+                                    onChange={(e) => setCustomBaseUrl(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveCustomBaseUrl()}
+                                    className="w-full bg-transparent border-b border-border/10 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all"
+                                  />
+                                </div>
+                                <button
+                                  onClick={handleSaveCustomBaseUrl}
+                                  disabled={isSaving || !customBaseUrl.trim()}
+                                  className="px-3 py-1 text-accent hover:text-accent-hover font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-20"
+                                >
+                                  [SAVE]
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Model Registry Content */}
+                          <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-black text-text-tertiary/60 uppercase tracking-widest">/MODELS</span>
+                              {localProvidersList.includes(editingProvider?.toLowerCase() || '') && (
+                                <button
+                                  onClick={() => editingProvider && handleFetchModels(editingProvider)}
+                                  disabled={isFetchingModels}
+                                  className={clsx(
+                                    "text-[9px] font-black uppercase tracking-widest transition-all",
+                                    isFetchingModels ? "text-text-tertiary/20 animate-pulse" : "text-accent hover:text-accent-hover"
+                                  )}
+                                >
+                                  [{isFetchingModels ? 'DISCOVERING...' : 'DISCOVER_LOCAL_MODELS'}]
+                                </button>
+                              )}
+                            </div>
+
+                            {['chat'].map(cap => {
+                              const models = availableModels[editingProvider]?.[cap] || [];
+                              const isEditing = editingCapability === cap;
+
+                              const isOpenRouter = editingProvider?.toLowerCase() === 'openrouter';
+                              const supportsThinking = thinkingProviders.includes(editingProvider?.toLowerCase() || '');
+
+                              return (
+                                <div key={cap} className="space-y-1">
+                                  {/* Column headers */}
+                                  {(supportsThinking || isOpenRouter) && models.length > 0 && (
+                                    <div className="flex items-center gap-2 px-2 py-1 border-b border-border/10">
+                                      <div className="w-6" /> {/* Spacer for drag handle */}
+                                      <span className="flex-1 text-[8px] font-black text-text-tertiary/40 uppercase tracking-widest">MODEL NAME</span>
+                                      {isOpenRouter && (
+                                        <span className="text-[8px] font-black text-text-tertiary/40 uppercase tracking-widest w-24 text-right">PRICING (INPUT/OUTPUT per 1M TOK)</span>
+                                      )}
+                                      {supportsThinking && (
+                                        <span className="text-[8px] font-black text-text-tertiary/40 uppercase tracking-widest w-20 text-right">REASONING</span>
+                                      )}
+                                      <div className="w-6" /> {/* Spacer for delete button */}
+                                    </div>
+                                  )}
+                                  <div
+                                    ref={containerRef}
+                                    className="flex flex-col gap-0.5 min-h-[50px]"
+                                  >
+                                    {models.map((model, index) => {
+                                      const { baseModel, level } = parseModelLevel(model);
+                                      // Use baseModel for pricing lookup since pricing is stored by base model name
+                                      const pricing = isOpenRouter && config?.model_pricing?.['openrouter']?.[cap]?.[baseModel];
+
+                                      return (
+                                        <div
+                                          key={model}
+                                          ref={el => { itemRefs.current[index] = el; }}
+                                          className={clsx(
+                                            "flex items-center justify-between px-2 py-1 border-b border-border/5 group transition-all relative select-none gap-2",
+                                            isDragging && dragSourceIndex === index && "opacity-50",
+                                            isDragging && dragTargetIndex === index && dragSourceIndex !== index && "border-t border-accent"
+                                          )}
+                                        >
+                                          {/* Drag handle */}
+                                          <div
+                                            className="text-text-tertiary/20 hover:text-accent transition-all cursor-grab active:cursor-grabbing p-1 -m-1 touch-none shrink-0"
+                                            onPointerDown={(e) => handlePointerDown(e, index)}
+                                            onPointerMove={handlePointerMove}
+                                            onPointerUp={handlePointerUp}
+                                            onPointerCancel={handlePointerUp}
+                                          >
+                                            <span className="text-[8px] font-black">{index === 0 ? '@' : '#'}</span>
+                                          </div>
+
+                                          {/* Model name */}
+                                          <div className="flex-1 min-w-0">
+                                            <span className={clsx(
+                                              "text-[10px] transition-colors truncate font-mono uppercase block",
+                                              index === 0 ? "text-accent font-black" : "text-text-primary/60 group-hover:text-text-primary"
+                                            )}>/{baseModel}</span>
+                                          </div>
+
+                                          {/* Pricing column for OpenRouter */}
+                                          {isOpenRouter && (
+                                            <div className="text-[9px] text-text-tertiary/60 font-mono text-right shrink-0 w-24">
+                                              {pricing ? (
+                                                <span>${pricing.prompt.toFixed(2)}/${pricing.completion.toFixed(2)}</span>
+                                              ) : (
+                                                <span className="text-text-tertiary/20">—</span>
+                                              )}
+                                            </div>
+                                          )}
+
+                                          {/* Reasoning level dropdown */}
+                                          {supportsThinking && (
+                                            <select
+                                              value={level}
+                                              onChange={(e) => handleUpdateModelLevel(model, e.target.value as typeof level)}
+                                              className={clsx(
+                                                "bg-transparent border px-1.5 py-0.5 text-[9px] font-black uppercase cursor-pointer transition-all shrink-0 w-20",
+                                                level
+                                                  ? "text-status-success border-status-success/30 bg-status-success/5"
+                                                  : "text-text-tertiary/50 border-border/20 hover:border-border/40"
+                                              )}
+                                              style={{ WebkitAppearance: 'none', appearance: 'none', paddingRight: '16px', backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%23666%27%3e%3cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27/%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 2px center', backgroundSize: '10px' }}
+                                            >
+                                              {reasoningLevels.map(l => (
+                                                <option key={l.value} value={l.value}>{l.label}</option>
+                                              ))}
+                                            </select>
+                                          )}
+
+                                          {/* Remove button */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setEditingCapability(cap);
+                                              handleRemoveModel(model);
+                                            }}
+                                            className="text-text-tertiary/20 hover:text-status-error opacity-0 group-hover:opacity-100 transition-all text-[10px] font-black shrink-0"
+                                          >
+                                            [X]
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+
+                                    {/* Inline Add Model Input */}
+                                    <div className="flex gap-2 group/input mt-1">
+                                      <div className="flex-1 relative">
+                                        <input
+                                          type="text"
+                                          placeholder={`+ ADD_NODE...`}
+                                          value={isEditing ? newModelName : ''}
+                                          onFocus={() => setEditingCapability(cap)}
+                                          onChange={(e) => {
+                                            setEditingCapability(cap);
+                                            setNewModelName(e.target.value);
+                                          }}
+                                          onKeyDown={(e) => e.key === 'Enter' && handleAddModel()}
+                                          className="w-full bg-transparent border-b border-dashed border-border/20 px-0 py-0.5 text-[10px] text-text-primary placeholder:text-text-tertiary/20 focus:outline-none focus:border-accent/40 focus:border-solid font-mono transition-all uppercase"
+                                        />
+                                      </div>
+                                      {isEditing && newModelName.trim() && (
+                                        <button
+                                          onClick={handleAddModel}
+                                          className="text-accent text-[10px] font-black"
+                                        >
+                                          [+]
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {activeTab === 'general' && (
+              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+                {/* Appearance Section */}
+                <section className="space-y-3">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-accent/80">
+                        <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">/INTERFACE_THEME</h2>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-text-tertiary/60 italic leading-normal uppercase font-black tracking-tight">
+                      VISUAL STYLES UPDATE INSTANTLY ACROSS ALL SESSIONS.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {themes.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => handleUpdateTheme(t.id)}
+                        className={clsx(
+                          "group relative flex flex-col p-2 border transition-all text-left h-20 active:scale-[0.98]",
+                          theme === t.id
+                            ? "border-accent bg-accent/5 shadow-[0_0_15px_rgba(var(--accent),0.05)]"
+                            : "border-border/10 hover:border-accent/40 bg-surface/5"
+                        )}
+                      >
+                        <div className={clsx("w-full flex-1 mb-1.5 border border-border/10 overflow-hidden relative opacity-60", t.colors)}>
+                          <div className="absolute top-0 left-0 w-full h-1 bg-surface/20 border-b border-border/10" />
+                          <div className={clsx("absolute bottom-1 right-1 w-2 h-2 rounded-full", t.accent)} />
+                        </div>
+                        <div className="flex items-center justify-between font-mono">
+                          <span className={clsx(
+                            "text-[10px] font-black uppercase tracking-widest",
+                            theme === t.id ? "text-accent" : "text-text-tertiary/60 group-hover:text-text-secondary"
+                          )}>
+                            {theme === t.id ? `[${t.name}]` : `  ${t.name}`}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <div className="grid grid-cols-1 gap-12">
+                  {/* Agent Behavior Section */}
+                  <section className="space-y-3">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 text-accent/80">
+                        <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">/BEHAVIOR_CORE</h2>
+                      </div>
+                      <p className="text-[10px] text-text-tertiary/60 italic leading-normal uppercase font-black tracking-tight">
+                        GLOBAL EXECUTION AND MEMORY POLICIES.
+                      </p>
+                    </div>
+
+                    <div className="bg-surface/5 border border-border/10 p-4 space-y-3 font-mono">
+                      <div className="flex items-center justify-between border-b border-border/5 pb-3">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em]">/AUTO_COMPACTION</span>
+                          </div>
+                          <p className="text-[10px] text-text-tertiary/60 italic px-3 leading-normal font-black uppercase tracking-tight">
+                            REDUCE TOKEN OVERHEAD AUTOMATICALLY AT THRESHOLD.
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleToggleAutoCompaction}
+                          className={clsx(
+                            "text-[10px] font-black px-2 py-1 transition-all tracking-widest uppercase active:scale-95",
+                            config?.agent?.auto_compaction_enabled !== false
+                              ? "text-status-success hover:bg-status-success/5"
+                              : "text-status-error hover:bg-status-error/5"
+                          )}
+                        >
+                          {config?.agent?.auto_compaction_enabled !== false ? '[ACTIVE]' : '[INACTIVE]'}
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Sub-Agent Ecosystem */}
+                  <section className="space-y-4">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-accent/80">
+                          <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">/SUB_AGENTS</h2>
+                        </div>
+                        <button
+                          onClick={handleToggleSubAgentsGlobal}
+                          className={clsx(
+                            "text-[10px] font-black px-2 py-0.5 transition-all tracking-widest uppercase border active:scale-95 font-mono",
+                            config?.sub_agent?.enabled
+                              ? "text-status-success border-status-success/20 hover:bg-status-success/5"
+                              : "text-status-error border-status-error/20 hover:bg-status-error/5"
+                          )}
+                        >
+                          {config?.sub_agent?.enabled ? '[MASTER_ON]' : '[MASTER_OFF]'}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-text-tertiary/60 italic leading-normal uppercase font-black tracking-tight">
+                        AUTONOMOUS CHILD-NODES FOR SPECIALIZED TASK PROCESSING.
+                      </p>
+                    </div>
+
+                    <div className={clsx(
+                      "flex flex-col gap-4 transition-opacity duration-300 font-mono",
+                      !config?.sub_agent?.enabled && "opacity-30 pointer-events-none grayscale"
+                    )}>
+                      {/* Configuration Controls */}
+                      <div className="flex flex-col gap-4">
+
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Claude Code */}
+                          <div className="bg-surface/5 border border-border/10 p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-black uppercase tracking-widest text-text-primary">/CLAUDE_CODE</span>
+                                {status?.components?.claude === 'ok' && status?.auth?.claude?.startsWith('ok') && (
+                                  <span className="text-[8px] font-black text-status-success uppercase">[READY]</span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleToggleCLIEnabled('claude_code')}
+                                className={clsx(
+                                  "text-[9px] font-black px-1.5 py-0.5 transition-all border active:scale-95",
+                                  config?.sub_agent?.claude_code?.enabled
+                                    ? "text-status-success border-status-success/20 hover:bg-status-success/5"
+                                    : "text-text-tertiary/40 border-border/10 hover:text-text-secondary"
+                                )}
+                              >
+                                {config?.sub_agent?.claude_code?.enabled ? '[ON]' : '[OFF]'}
+                              </button>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-text-tertiary/40 uppercase tracking-widest ml-1">/TOOLS</label>
+                                <input
+                                  type="text"
+                                  defaultValue={config?.sub_agent?.claude_code?.allowed_tools?.join(', ')}
+                                  onBlur={(e) => handleUpdateClaudeTools(e.target.value)}
+                                  placeholder="Edit, Bash, Read..."
+                                  className="w-full bg-transparent border-b border-border/10 px-0 py-1 text-[10px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all uppercase"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Codex */}
+                          <div className="bg-surface/5 border border-border/10 p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-black uppercase tracking-widest text-text-primary">/CODEX</span>
+                                {status?.components?.codex === 'ok' && status?.auth?.codex?.startsWith('ok') && (
+                                  <span className="text-[8px] font-black text-status-success uppercase">[READY]</span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleToggleCLIEnabled('codex')}
+                                className={clsx(
+                                  "text-[9px] font-black px-1.5 py-0.5 transition-all border active:scale-95",
+                                  config?.sub_agent?.codex?.enabled
+                                    ? "text-status-success border-status-success/20 hover:bg-status-success/5"
+                                    : "text-text-tertiary/40 border-border/10 hover:text-text-secondary"
+                                )}
+                              >
+                                {config?.sub_agent?.codex?.enabled ? '[ON]' : '[OFF]'}
+                              </button>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-black text-text-tertiary/40 uppercase tracking-widest ml-1">/APPROVAL</label>
+                                <div className="flex gap-1">
+                                  {['untrusted', 'on-failure', 'on-request', 'never'].map((mode) => (
+                                    <button
+                                      key={mode}
+                                      onClick={() => handleUpdateCodexMode(mode)}
+                                      className={clsx(
+                                        "flex-1 py-1 text-[8px] font-black uppercase border transition-all active:scale-95",
+                                        config?.sub_agent?.codex?.approval_mode?.toLowerCase() === mode.toLowerCase()
+                                          ? "text-accent border-accent/40 bg-accent/5"
+                                          : "border-border/10 text-text-tertiary/40 hover:text-text-secondary hover:bg-surface/5"
+                                      )}
+                                    >
+                                      {config?.sub_agent?.codex?.approval_mode?.toLowerCase() === mode.toLowerCase() 
+                                        ? `[${mode.toUpperCase().replace('-', '_')}]` 
+                                        : mode.toUpperCase().replace('-', '_')}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            )
+            }
+
+            {activeTab === 'security' && (
+              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+                {/* Unrestricted Execution Mode Toggle */}
+                <div className={clsx(
+                  "p-4 border transition-all duration-500",
+                  config?.security?.always_allow_all
+                    ? "bg-status-error text-background border-status-error shadow-[0_0_25px_rgba(var(--status-error),0.2)]"
+                    : "bg-status-error/5 border-status-error/10"
+                )}>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex flex-col gap-1 pr-4">
+                      <div className="flex items-center gap-2">
+                        <span className={clsx(
+                          "text-[11px] font-black uppercase tracking-[0.2em]",
+                          config?.security?.always_allow_all ? "text-background" : "text-status-error"
+                        )}>/UNRESTRICTED_EXECUTION</span>
+                        {config?.security?.always_allow_all && (
+                          <span className="text-[8px] font-black bg-background text-status-error px-1 py-0.5 animate-pulse tracking-widest">[SYSTEM_UNLOCKED]</span>
+                        )}
+                      </div>
+                      <p className={clsx(
+                        "text-[9px] italic leading-relaxed max-w-2xl font-black uppercase tracking-tight",
+                        config?.security?.always_allow_all ? "text-background/90" : "text-text-tertiary/60"
+                      )}>
+                        BYPASS_ALL_SECURITY_CHECKS. AGENTS GAIN FULL UNMONITORED SYSTEM ACCESS. USE ONLY IN TRUSTED ENVIRONMENTS.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleToggleAlwaysAllowAll}
+                      className={clsx(
+                        "text-[9px] font-black px-3 py-1.5 transition-all tracking-[0.1em] uppercase border whitespace-nowrap active:scale-95",
+                        config?.security?.always_allow_all
+                          ? "bg-background text-status-error border-background"
+                          : "bg-status-error text-background border-status-error"
+                      )}
+                    >
+                      {config?.security?.always_allow_all ? '[RESTORE_SECURITY]' : '[DISABLE_SECURITY]'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Shell Execution Policy */}
+                <section className={clsx(
+                  "space-y-3 transition-all duration-300",
+                  config?.security?.always_allow_all && "opacity-40 grayscale"
+                )}>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-accent/80">
+                        <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">/SHELL_POLICY</h2>
+                      </div>
+                      {config?.security?.always_allow_all && (
+                        <span className="text-[8px] font-black text-status-error uppercase tracking-widest bg-status-error/10 px-1.5 py-0.5">
+                          [OVERRIDDEN_BY_UNRESTRICTED_MODE]
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-text-tertiary/60 italic leading-normal uppercase font-black tracking-tight">
+                      CONTROL AUTO-APPROVAL LEVELS FOR TERMINAL COMMANDS.
+                    </p>
+                  </div>
+
+                  <div className={clsx(
+                    "bg-surface/5 border border-border/10 p-5 space-y-4",
+                    config?.security?.always_allow_all && "pointer-events-none"
+                  )}>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em]">/EXECUTION_MODE</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { id: 'restricted', label: 'RESTRICTED', desc: 'Minimal safe set' },
+                        { id: 'read-only', label: 'READ_ONLY', desc: 'All inspections' },
+                        { id: 'non-destructive', label: 'MUTABLE', desc: 'No deletions' },
+                        { id: 'unrestricted', label: 'OPEN', desc: 'No approvals' },
+                      ].map((mode) => (
+                        <button
+                          key={mode.id}
+                          onClick={() => handleUpdateShellPermissionMode(mode.id)}
+                          className={clsx(
+                            "flex flex-col items-start p-3 border transition-all text-left group active:scale-[0.98]",
+                            config?.security?.shell_permission_mode === mode.id
+                              ? "border-accent bg-accent/5 shadow-[0_0_15px_rgba(var(--accent),0.05)]"
+                              : "border-border/10 hover:border-accent/40 bg-surface/5"
+                          )}
+                        >
+                          <span className={clsx(
+                            "text-[10px] font-black uppercase tracking-widest mb-1",
+                            config?.security?.shell_permission_mode === mode.id ? "text-accent" : "text-text-tertiary/60 group-hover:text-text-secondary"
+                          )}>
+                            {config?.security?.shell_permission_mode === mode.id ? `[${mode.label}]` : `  ${mode.label}`}
+                          </span>
+                          <span className="text-[8px] text-text-tertiary/40 font-black uppercase leading-tight">
+                            {mode.desc}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                {/* Vault Section */}
+                <section className="space-y-3">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2 text-accent/80">
+                      <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">/SECURE_VAULT</h2>
+                    </div>
+                    <p className="text-[10px] text-text-tertiary/60 italic leading-normal uppercase font-black tracking-tight">
+                      PROTECTED TOKENS AND ENVIRONMENT VARIABLES.
+                    </p>
+                  </div>
+
+                  <div className="bg-surface/5 border border-border/10 p-5 space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em]">/VAULT_INDEX</span>
+                        <p className="text-[10px] text-text-tertiary/60 italic px-3 font-black uppercase tracking-tight">
+                          ACCESS IN TOOLS VIA <code className="text-accent underline">{"{{vault:KEY}}"}</code>.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {vaultSecrets && vaultSecrets.length > 0 ? (
+                          vaultSecrets.map((secret: any) => (
+                            <div
+                              key={secret.name}
+                              className="flex items-center justify-between px-3 py-1.5 bg-background/20 border border-border/5 group hover:border-accent/20 transition-all"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-black text-accent/40 uppercase">[KEY]</span>
+                                <span className="text-[11px] font-black text-text-primary/70 font-mono truncate max-w-[120px]">
+                                  /{secret.name}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveVaultSecret(secret.name)}
+                                className="text-text-tertiary/20 hover:text-status-error opacity-0 group-hover:opacity-100 transition-all text-[10px] font-black"
+                              >
+                                [X]
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-full py-6 border border-dashed border-border/10 flex flex-col items-center justify-center text-text-tertiary/20">
+                            <span className="text-[9px] uppercase font-black tracking-[0.2em]">[VAULT_NULL]</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Secret Form */}
+                      <div className="mt-4 p-4 border-t border-border/5 space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-text-tertiary/40 uppercase tracking-widest ml-1">/KEY</label>
+                            <input
+                              type="text"
+                              placeholder="GITHUB_TOKEN..."
+                              value={newVaultSecret.name}
+                              onChange={(e) => setNewVaultSecret(prev => ({ ...prev, name: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') }))}
+                              className="w-full bg-transparent border-b border-border/10 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all uppercase"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-text-tertiary/40 uppercase tracking-widest ml-1">/VALUE</label>
+                            <input
+                              type="password"
+                              placeholder="ENCRYPTED..."
+                              value={newVaultSecret.value}
+                              onChange={(e) => setNewVaultSecret(prev => ({ ...prev, value: e.target.value }))}
+                              className="w-full bg-transparent border-b border-border/10 px-0 py-1 text-[11px] text-text-primary focus:outline-none focus:border-accent/40 font-mono transition-all"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleSetVaultSecret}
+                          disabled={isSaving || !newVaultSecret.name || !newVaultSecret.value}
+                          className="w-full py-1 text-accent hover:text-accent-hover font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-20 active:scale-[0.98]"
+                        >
+                          [STORE_IN_VAULT]
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            )
+            }
+
+            {activeTab === 'shortcuts' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 font-mono">
+                {/* All Hotkeys Section */}
+                <section className="space-y-3">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2 text-accent/80">
+                      <h2 className="text-[12px] font-black uppercase tracking-[0.2em]">/SHORTCUTS</h2>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface/5 border border-border/10 p-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
+                      {Object.entries(hotkeyLabels).map(([key, label]) => (
+                        <div key={key} className="flex items-center justify-between py-1.5 border-b border-border/5 last:border-0 md:[&:nth-last-child(-n+2)]:border-0">
+                          <span className="text-[10px] font-black text-text-tertiary/60 uppercase tracking-widest">/{label.toUpperCase().replace(/ /g, '_').replace(/[()]/g, '')}</span>
+                          <button
+                            onClick={() => setRecordingHotkey(key)}
+                            className={clsx(
+                              "font-mono text-[10px] font-black transition-all min-w-[90px] text-right",
+                              recordingHotkey === key
+                                ? "text-accent animate-pulse"
+                                : "text-accent/60 hover:text-accent"
+                            )}
+                          >
+                            {recordingHotkey === key ? '[REC...]' : `[${((config?.ui as any)?.hotkeys?.[key] || hotkeyDefaults[key] || 'N/A').toUpperCase()}]`}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                        <div className="mt-6 pt-3 border-t border-border/5">
+                      <p className="text-[9px] text-text-tertiary/20 uppercase tracking-tighter italic font-black">
+                        [ESCAPE_TO_CANCEL] // SYSTEM_RESERVED_KEYS_OVERRIDE
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            )
+            }
+          </div >
+        </div >
+      </div >
+    </div >
+  );
+};

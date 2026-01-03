@@ -1,0 +1,61 @@
+import { useEffect } from 'react';
+import { check } from '@tauri-apps/plugin-updater';
+import { ask, message } from '@tauri-apps/plugin-dialog';
+import { relaunch } from '@tauri-apps/plugin-process';
+
+export function useAutoUpdate() {
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      // Don't check for updates in development mode to avoid console errors
+      // if the update server isn't reachable yet.
+      if (import.meta.env.DEV) {
+        return;
+      }
+
+      try {
+        const update = await check();
+        if (update?.available) {
+          const yes = await ask(
+            `A new version (${update.version}) is available. Would you like to install it now?\n\nRelease notes: ${update.body || 'No release notes provided.'}`,
+            {
+              title: 'Update Available',
+              kind: 'info',
+              okLabel: 'Update and Restart',
+              cancelLabel: 'Later',
+            }
+          );
+
+          if (yes) {
+            let downloaded = 0;
+            let contentLength = 0;
+            
+            await update.downloadAndInstall((event) => {
+              switch (event.event) {
+                case 'Started':
+                  contentLength = event.data.contentLength || 0;
+                  break;
+                case 'Progress':
+                  downloaded += event.data.chunkLength;
+                  break;
+                case 'Finished':
+                  break;
+              }
+            });
+
+            await relaunch();
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check for updates:', error);
+      }
+    };
+
+    // Check on startup
+    checkForUpdates();
+
+    // Optionally check every few hours
+    const interval = setInterval(checkForUpdates, 1000 * 60 * 60 * 4); // 4 hours
+    return () => clearInterval(interval);
+  }, []);
+}
+

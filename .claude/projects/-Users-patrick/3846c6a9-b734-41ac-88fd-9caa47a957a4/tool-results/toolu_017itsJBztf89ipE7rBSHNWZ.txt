@@ -1,0 +1,597 @@
+     1→package inference
+     2→
+     3→import (
+     4→	"bufio"
+     5→	"bytes"
+     6→	"context"
+     7→	"encoding/json"
+     8→	"errors"
+     9→	"fmt"
+    10→	"io"
+    11→	"log/slog"
+    12→	"net/http"
+    13→	"strings"
+    14→	"time"
+    15→
+    16→	"github.com/patrick/familiar/packages/go-backend/internal/config"
+    17→	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+    18→)
+    19→
+    20→type AnthropicProvider struct {
+    21→	apiKey  string
+    22→	baseURL string
+    23→	client  *http.Client
+    24→}
+    25→
+    26→func NewAnthropicProvider(apiKey string) (*AnthropicProvider, error) {
+    27→	if apiKey == "" {
+    28→		apiKey = config.GetKeychainPassword("anthropic-api-key")
+    29→	}
+    30→	if apiKey == "" {
+    31→		return nil, errors.New("api key required for anthropic")
+    32→	}
+    33→
+    34→	return &AnthropicProvider{
+    35→		apiKey:  apiKey,
+    36→		baseURL: "https://api.anthropic.com/v1/messages",
+    37→		client:  &http.Client{Timeout: 300 * time.Second},
+    38→	}, nil
+    39→}
+    40→
+    41→func (p *AnthropicProvider) Name() string {
+    42→	return "anthropic"
+    43→}
+    44→
+    45→func (p *AnthropicProvider) ListModels(ctx context.Context) ([]string, error) {
+    46→	return nil, nil
+    47→}
+    48→
+    49→func (p *AnthropicProvider) GetContextLimit(model string) int {
+    50→	// Anthropic models generally support 200k tokens
+    51→	// https://docs.anthropic.com/claude/docs/models-overview
+    52→	if strings.Contains(model, "claude-3-5-sonnet") {
+    53→		return 200000
+    54→	}
+    55→	if strings.Contains(model, "claude-3-opus") || strings.Contains(model, "claude-3-sonnet") {
+    56→		return 200000
+    57→	}
+    58→	if strings.Contains(model, "claude-3-haiku") {
+    59→		return 200000
+    60→	}
+    61→
+    62→	// Try fetching from OpenRouter metadata as a dynamic fallback
+    63→	if limit, ok := GetContextLimitFromOpenRouter(model); ok {
+    64→		return limit
+    65→	}
+    66→
+    67→	return 200000 // Default for Claude 3+
+    68→}
+    69→
+    70→// Define supported document types for Claude
+    71→var claudeDocumentTypes = map[string]bool{
+    72→	"application/pdf": true,
+    73→	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true,
+    74→	"text/csv":   true,
+    75→	"text/plain": true,
+    76→	"text/html":  true,
+    77→	"application/vnd.oasis.opendocument.text": true,
+    78→	"application/rtf":                         true,
+    79→	"application/epub+zip":                    true,
+    80→	"application/json":                        true,
+    81→	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": true,
+    82→}
+    83→
+    84→func (p *AnthropicProvider) convertMessages(messages []types.Message) ([]map[string]interface{}, string) {
+    85→	var systemPrompt string
+    86→	var anthropicMessages []map[string]interface{}
+    87→
+    88→	for _, msg := range messages {
+    89→		slog.Debug("Anthropic: processing message", "role", msg.Role, "content_type", fmt.Sprintf("%T", msg.Content), "num_attachments", len(msg.Attachments))
+    90→
+    91→		if msg.Role == "system" {
+    92→			if content, ok := msg.Content.(string); ok {
+    93→				systemPrompt += content + "\n"
+    94→			}
+    95→		} else {
+    96→			var anthropicParts []map[string]interface{}
+    97→
+    98→			// Handle Content field
+    99→			if c, ok := msg.Content.(string); ok && c != "" {
+   100→				slog.Debug("Anthropic: content is string", "has_attachments", len(msg.Attachments) > 0)
+   101→				if len(msg.Attachments) > 0 {
+   102→					anthropicParts = append(anthropicParts, map[string]interface{}{
+   103→						"type": "text",
+   104→						"text": c,
+   105→					})
+   106→				}
+   107→			} else if parts, ok := msg.Content.([]interface{}); ok {
+   108→				slog.Debug("Anthropic: processing multimodal content array", "num_parts", len(parts), "role", msg.Role)
+   109→				for _, part := range parts {
+   110→					if pMap, ok := part.(map[string]interface{}); ok {
+   111→						partType, _ := pMap["type"].(string)
+   112→						if partType == "text" {
+   113→							anthropicParts = append(anthropicParts, map[string]interface{}{
+   114→								"type": "text",
+   115→								"text": pMap["text"],
+   116→							})
+   117→						} else if partType == "image_url" {
+   118→							slog.Debug("Anthropic: found image_url part")
+   119→							if imgUrl, ok := pMap["image_url"].(map[string]interface{}); ok {
+   120→								url, _ := imgUrl["url"].(string)
+   121→								slog.Debug("Anthropic: image_url extracted", "url_prefix", url[:min(50, len(url))])
+   122→								if strings.HasPrefix(url, "data:") {
+   123→									// data:image/jpeg;base64,/9j/4AAQSkZJRg...
+   124→									parts := strings.SplitN(url, ",", 2)
+   125→									if len(parts) == 2 {
+   126→										header := parts[0]
+   127→										data := parts[1]
+   128→										mediaType := strings.TrimPrefix(strings.Split(header, ";")[0], "data:")
+   129→										slog.Debug("Anthropic: adding image block", "media_type", mediaType, "data_len", len(data))
+   130→										anthropicParts = append(anthropicParts, map[string]interface{}{
+   131→											"type": "image",
+   132→											"source": map[string]interface{}{
+   133→												"type":       "base64",
+   134→												"media_type": mediaType,
+   135→												"data":       data,
+   136→											},
+   137→										})
+   138→									}
+   139→								}
+   140→							}
+   141→						}
+   142→					}
+   143→				}
+   144→			}
+   145→
+   146→			// Handle Attachments field
+   147→			slog.Debug("Anthropic: processing attachments", "count", len(msg.Attachments))
+   148→			for _, att := range msg.Attachments {
+   149→				slog.Debug("Anthropic: attachment", "type", att.Type, "mime", att.MimeType, "name", att.Name, "data_len", len(att.Data))
+   150→				if att.Type == "image" {
+   151→					slog.Debug("Anthropic: adding image from attachment")
+   152→					anthropicParts = append(anthropicParts, map[string]interface{}{
+   153→						"type": "image",
+   154→						"source": map[string]interface{}{
+   155→							"type":       "base64",
+   156→							"media_type": att.MimeType,
+   157→							"data":       att.Data,
+   158→						},
+   159→					})
+   160→				} else if claudeDocumentTypes[att.MimeType] {
+   161→					anthropicParts = append(anthropicParts, map[string]interface{}{
+   162→						"type": "document",
+   163→						"source": map[string]interface{}{
+   164→							"type":       "base64",
+   165→							"media_type": att.MimeType,
+   166→							"data":       att.Data,
+   167→						},
+   168→					})
+   169→				} else {
+   170→					anthropicParts = append(anthropicParts, map[string]interface{}{
+   171→						"type": "text",
+   172→						"text": "[File Attachment: " + att.Name + " (" + att.MimeType + ")]",
+   173→					})
+   174→				}
+   175→			}
+   176→
+   177→			// Handle ToolCalls field
+   178→			for _, tc := range msg.ToolCalls {
+   179→				var input map[string]interface{}
+   180→				json.Unmarshal([]byte(tc.Function.Arguments), &input)
+   181→				anthropicParts = append(anthropicParts, map[string]interface{}{
+   182→					"type":  "tool_use",
+   183→					"id":    tc.ID,
+   184→					"name":  tc.Function.Name,
+   185→					"input": input,
+   186→				})
+   187→			}
+   188→
+   189→			// Handle ToolCallID (this is a tool result message)
+   190→			if msg.ToolCallID != "" {
+   191→				anthropicParts = append(anthropicParts, map[string]interface{}{
+   192→					"type":        "tool_result",
+   193→					"tool_use_id": msg.ToolCallID,
+   194→					"content":     msg.Content,
+   195→				})
+   196→			}
+   197→
+   198→			var finalContent interface{}
+   199→			if len(anthropicParts) > 0 {
+   200→				if msg.ToolCallID != "" {
+   201→					// For tool results, content must be the parts
+   202→					finalContent = anthropicParts
+   203→				} else if c, ok := msg.Content.(string); ok && c != "" && len(msg.ToolCalls) > 0 {
+   204→					// For assistant messages with text + tool calls
+   205→					finalContent = append([]map[string]interface{}{{
+   206→						"type": "text",
+   207→						"text": c,
+   208→					}}, anthropicParts...)
+   209→				} else {
+   210→					finalContent = anthropicParts
+   211→				}
+   212→			} else {
+   213→				finalContent = msg.Content
+   214→			}
+   215→
+   216→			role := msg.Role
+   217→			if role == "tool" {
+   218→				role = "user"
+   219→			}
+   220→
+   221→			// Anthropic requires alternating user and assistant roles.
+   222→			// Merge consecutive same-role messages into a single message with multiple content blocks.
+   223→			if len(anthropicMessages) > 0 && anthropicMessages[len(anthropicMessages)-1]["role"] == role {
+   224→				lastIdx := len(anthropicMessages) - 1
+   225→				lastContent := anthropicMessages[lastIdx]["content"]
+   226→
+   227→				var lastParts []map[string]interface{}
+   228→				if lp, ok := lastContent.([]map[string]interface{}); ok {
+   229→					lastParts = lp
+   230→				} else if ls, ok := lastContent.(string); ok && ls != "" {
+   231→					lastParts = []map[string]interface{}{{
+   232→						"type": "text",
+   233→						"text": ls,
+   234→					}}
+   235→				}
+   236→
+   237→				var newParts []map[string]interface{}
+   238→				if np, ok := finalContent.([]map[string]interface{}); ok {
+   239→					newParts = np
+   240→				} else if ns, ok := finalContent.(string); ok && ns != "" {
+   241→					newParts = []map[string]interface{}{{
+   242→						"type": "text",
+   243→						"text": ns,
+   244→					}}
+   245→				}
+   246→
+   247→				if len(newParts) > 0 {
+   248→					anthropicMessages[lastIdx]["content"] = append(lastParts, newParts...)
+   249→				}
+   250→				continue
+   251→			}
+   252→
+   253→			anthropicMessages = append(anthropicMessages, map[string]interface{}{
+   254→				"role":    role,
+   255→				"content": finalContent,
+   256→			})
+   257→		}
+   258→	}
+   259→	return anthropicMessages, systemPrompt
+   260→}
+   261→
+   262→func (p *AnthropicProvider) ChatCompletion(ctx context.Context, messages []types.Message, model string, tools []interface{}, options map[string]interface{}) (*types.ChatResponse, error) {
+   263→	// Parse thinking configuration from model string
+   264→	baseModel, reasoningLevel := ParseThinkingModel(model)
+   265→
+   266→	anthropicMessages, systemPrompt := p.convertMessages(messages)
+   267→
+   268→	// Set max_tokens higher when thinking is enabled
+   269→	maxTokens := 4096
+   270→	thinkingBudget := GetAnthropicBudget(reasoningLevel)
+   271→	if thinkingBudget > 0 {
+   272→		maxTokens = thinkingBudget + 8192 // Budget for thinking + reasonable response
+   273→	}
+   274→
+   275→	payload := map[string]interface{}{
+   276→		"model":      baseModel,
+   277→		"messages":   anthropicMessages,
+   278→		"max_tokens": maxTokens,
+   279→	}
+   280→
+   281→	// Inject thinking parameter if level is set
+   282→	if reasoningLevel != ReasoningNone {
+   283→		payload["thinking"] = map[string]interface{}{
+   284→			"type":          "enabled",
+   285→			"budget_tokens": thinkingBudget,
+   286→		}
+   287→		slog.Debug("Anthropic: Enabling extended thinking", "model", baseModel, "level", reasoningLevel, "budget", thinkingBudget)
+   288→	}
+   289→
+   290→	if systemPrompt != "" {
+   291→		payload["system"] = systemPrompt
+   292→	}
+   293→	if tools != nil {
+   294→		payload["tools"] = p.convertTools(tools)
+   295→		if toolChoice, ok := options["tool_choice"]; ok {
+   296→			payload["tool_choice"] = toolChoice
+   297→		}
+   298→	}
+   299→
+   300→	body, err := json.Marshal(payload)
+   301→	if err != nil {
+   302→		return nil, err
+   303→	}
+   304→
+   305→	req, err := http.NewRequestWithContext(ctx, "POST", p.baseURL, bytes.NewBuffer(body))
+   306→	if err != nil {
+   307→		return nil, err
+   308→	}
+   309→
+   310→	req.Header.Set("x-api-key", p.apiKey)
+   311→	req.Header.Set("anthropic-version", "2023-06-01")
+   312→	req.Header.Set("anthropic-beta", "pdfs-2024-09-25")
+   313→	req.Header.Set("Content-Type", "application/json")
+   314→
+   315→	resp, err := p.client.Do(req)
+   316→	if err != nil {
+   317→		return nil, err
+   318→	}
+   319→	defer resp.Body.Close()
+   320→
+   321→	if resp.StatusCode != http.StatusOK {
+   322→		respBody, _ := io.ReadAll(resp.Body)
+   323→		return nil, fmt.Errorf("anthropic request failed with status %d: %s", resp.StatusCode, string(respBody))
+   324→	}
+   325→
+   326→	var data map[string]interface{}
+   327→	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+   328→		return nil, err
+   329→	}
+   330→
+   331→	contentBlocks := data["content"].([]interface{})
+   332→	var contentText string
+   333→	var reasoningText string
+   334→	var toolCalls []types.ToolCall
+   335→
+   336→	for _, b := range contentBlocks {
+   337→		block, ok := b.(map[string]interface{})
+   338→		if !ok {
+   339→			continue
+   340→		}
+   341→		if block["type"] == "text" {
+   342→			text, _ := block["text"].(string)
+   343→			contentText += text
+   344→		} else if block["type"] == "thinking" {
+   345→			thinking, _ := block["thinking"].(string)
+   346→			reasoningText += thinking
+   347→		} else if block["type"] == "tool_use" {
+   348→			id, _ := block["id"].(string)
+   349→			name, _ := block["name"].(string)
+   350→			args, _ := json.Marshal(block["input"])
+   351→			toolCalls = append(toolCalls, types.ToolCall{
+   352→				ID:   id,
+   353→				Type: "function",
+   354→				Function: types.ToolFunction{
+   355→					Name:      name,
+   356→					Arguments: string(args),
+   357→				},
+   358→			})
+   359→		}
+   360→	}
+   361→
+   362→	usageData, _ := data["usage"].(map[string]interface{})
+   363→	return &types.ChatResponse{
+   364→		Content:    contentText,
+   365→		Reasoning:  reasoningText,
+   366→		ToolCalls:  toolCalls,
+   367→		RawMessage: data,
+   368→		Usage: types.Usage{
+   369→			InputTokens:  int(usageData["input_tokens"].(float64)),
+   370→			OutputTokens: int(usageData["output_tokens"].(float64)),
+   371→		},
+   372→	}, nil
+   373→}
+   374→
+   375→func (p *AnthropicProvider) ChatCompletionStream(ctx context.Context, messages []types.Message, model string, tools []interface{}, options map[string]interface{}) (<-chan types.ChatStreamChunk, <-chan error) {
+   376→	chunkCh := make(chan types.ChatStreamChunk)
+   377→	errCh := make(chan error, 1)
+   378→
+   379→	go func() {
+   380→		defer close(chunkCh)
+   381→		defer close(errCh)
+   382→
+   383→		// Parse thinking configuration from model string
+   384→		baseModel, reasoningLevel := ParseThinkingModel(model)
+   385→
+   386→		anthropicMessages, systemPrompt := p.convertMessages(messages)
+   387→
+   388→		// Set max_tokens higher when thinking is enabled
+   389→		maxTokens := 4096
+   390→		thinkingBudget := GetAnthropicBudget(reasoningLevel)
+   391→		if thinkingBudget > 0 {
+   392→			maxTokens = thinkingBudget + 8192
+   393→		}
+   394→
+   395→		payload := map[string]interface{}{
+   396→			"model":      baseModel,
+   397→			"messages":   anthropicMessages,
+   398→			"max_tokens": maxTokens,
+   399→			"stream":     true,
+   400→		}
+   401→
+   402→		// Inject thinking parameter if level is set
+   403→		if reasoningLevel != ReasoningNone {
+   404→			payload["thinking"] = map[string]interface{}{
+   405→				"type":          "enabled",
+   406→				"budget_tokens": thinkingBudget,
+   407→			}
+   408→			slog.Debug("Anthropic: Enabling extended thinking (stream)", "model", baseModel, "level", reasoningLevel, "budget", thinkingBudget)
+   409→		}
+   410→
+   411→		if systemPrompt != "" {
+   412→			payload["system"] = systemPrompt
+   413→		}
+   414→		if tools != nil {
+   415→			payload["tools"] = p.convertTools(tools)
+   416→		}
+   417→
+   418→		body, err := json.Marshal(payload)
+   419→		if err != nil {
+   420→			errCh <- err
+   421→			return
+   422→		}
+   423→
+   424→		req, err := http.NewRequestWithContext(ctx, "POST", p.baseURL, bytes.NewBuffer(body))
+   425→		if err != nil {
+   426→			errCh <- err
+   427→			return
+   428→		}
+   429→
+   430→		req.Header.Set("x-api-key", p.apiKey)
+   431→		req.Header.Set("anthropic-version", "2023-06-01")
+   432→		req.Header.Set("anthropic-beta", "pdfs-2024-09-25")
+   433→		req.Header.Set("Content-Type", "application/json")
+   434→
+   435→		resp, err := p.client.Do(req)
+   436→		if err != nil {
+   437→			errCh <- err
+   438→			return
+   439→		}
+   440→		defer resp.Body.Close()
+   441→
+   442→		if resp.StatusCode != http.StatusOK {
+   443→			respBody, _ := io.ReadAll(resp.Body)
+   444→			errCh <- fmt.Errorf("anthropic stream request failed with status %d: %s", resp.StatusCode, string(respBody))
+   445→			return
+   446→		}
+   447→
+   448→		reader := bufio.NewReader(resp.Body)
+   449→		var currentInputTokens, currentOutputTokens int
+   450→
+   451→		for {
+   452→			line, err := reader.ReadString('\n')
+   453→			if err != nil {
+   454→				if err != io.EOF {
+   455→					errCh <- err
+   456→				}
+   457→				return
+   458→			}
+   459→
+   460→			line = strings.TrimSpace(line)
+   461→			if line == "" {
+   462→				continue
+   463→			}
+   464→
+   465→			if strings.HasPrefix(line, "data: ") {
+   466→				dataStr := strings.TrimPrefix(line, "data: ")
+   467→				if dataStr == "" {
+   468→					continue
+   469→				}
+   470→				var event map[string]interface{}
+   471→				if err := json.Unmarshal([]byte(dataStr), &event); err != nil {
+   472→					slog.Debug("Anthropic: failed to unmarshal event", "error", err, "data", dataStr)
+   473→					continue
+   474→				}
+   475→
+   476→				eventType, _ := event["type"].(string)
+   477→				switch eventType {
+   478→				case "message_start":
+   479→					if msg, ok := event["message"].(map[string]interface{}); ok {
+   480→						if usage, ok := msg["usage"].(map[string]interface{}); ok {
+   481→							if it, ok := usage["input_tokens"].(float64); ok {
+   482→								currentInputTokens = int(it)
+   483→							}
+   484→						}
+   485→					}
+   486→
+   487→				case "content_block_start":
+   488→					idx := 0
+   489→					if i, ok := event["index"].(float64); ok {
+   490→						idx = int(i)
+   491→					}
+   492→					if block, ok := event["content_block"].(map[string]interface{}); ok {
+   493→						blockType, _ := block["type"].(string)
+   494→						if blockType == "tool_use" {
+   495→							id, _ := block["id"].(string)
+   496→							name, _ := block["name"].(string)
+   497→							chunkCh <- types.ChatStreamChunk{
+   498→								ToolCalls: []types.ToolCallChunk{{
+   499→									Index: &idx,
+   500→									ID:    id,
+   501→									Type:  "function",
+   502→									Function: types.FunctionChunk{
+   503→										Name: name,
+   504→									},
+   505→								}},
+   506→							}
+   507→						}
+   508→					}
+   509→
+   510→				case "content_block_delta":
+   511→					idx := 0
+   512→					if i, ok := event["index"].(float64); ok {
+   513→						idx = int(i)
+   514→					}
+   515→					if delta, ok := event["delta"].(map[string]interface{}); ok {
+   516→						deltaType, _ := delta["type"].(string)
+   517→						if deltaType == "text_delta" {
+   518→							text, _ := delta["text"].(string)
+   519→							chunkCh <- types.ChatStreamChunk{Content: text}
+   520→						} else if deltaType == "input_json_delta" {
+   521→							partial, _ := delta["partial_json"].(string)
+   522→							chunkCh <- types.ChatStreamChunk{
+   523→								ToolCalls: []types.ToolCallChunk{{
+   524→									Index: &idx,
+   525→									Function: types.FunctionChunk{
+   526→										Arguments: partial,
+   527→									},
+   528→								}},
+   529→							}
+   530→						} else if deltaType == "thinking_delta" {
+   531→							thinking, _ := delta["thinking"].(string)
+   532→							chunkCh <- types.ChatStreamChunk{Reasoning: thinking}
+   533→						}
+   534→					}
+   535→
+   536→				case "message_delta":
+   537→					if usage, ok := event["usage"].(map[string]interface{}); ok {
+   538→						if ot, ok := usage["output_tokens"].(float64); ok {
+   539→							currentOutputTokens = int(ot)
+   540→						}
+   541→						chunkCh <- types.ChatStreamChunk{
+   542→							Usage: &types.Usage{
+   543→								InputTokens:  currentInputTokens,
+   544→								OutputTokens: currentOutputTokens,
+   545→								TotalTokens:  currentInputTokens + currentOutputTokens,
+   546→							},
+   547→						}
+   548→					}
+   549→
+   550→				case "error":
+   551→					if errObj, ok := event["error"].(map[string]interface{}); ok {
+   552→						msg, _ := errObj["message"].(string)
+   553→						errCh <- fmt.Errorf("anthropic stream error: %s", msg)
+   554→					}
+   555→					return
+   556→				}
+   557→			}
+   558→		}
+   559→	}()
+   560→
+   561→	return chunkCh, errCh
+   562→}
+   563→
+   564→func (p *AnthropicProvider) convertTools(tools []interface{}) []interface{} {
+   565→	if tools == nil {
+   566→		return nil
+   567→	}
+   568→	anthropicTools := make([]interface{}, 0, len(tools))
+   569→	for _, t := range tools {
+   570→		if tMap, ok := t.(map[string]interface{}); ok {
+   571→			// Check if it's an OpenAI-style tool definition
+   572→			if toolType, ok := tMap["type"].(string); ok && toolType == "function" {
+   573→				if function, ok := tMap["function"].(map[string]interface{}); ok {
+   574→					anthropicTool := map[string]interface{}{
+   575→						"name":         function["name"],
+   576→						"description":  function["description"],
+   577→						"input_schema": function["parameters"],
+   578→					}
+   579→					anthropicTools = append(anthropicTools, anthropicTool)
+   580→					continue
+   581→				}
+   582→			}
+   583→		}
+   584→		// If not in OpenAI format or already converted, pass through
+   585→		anthropicTools = append(anthropicTools, t)
+   586→	}
+   587→	return anthropicTools
+   588→}
+   589→
+   590→func (p *AnthropicProvider) Close() error {
+   591→	return nil
+   592→}
+   593→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

@@ -1,0 +1,90 @@
+     1→import { test, expect } from './fixtures/test-fixtures';
+     2→
+     3→test.describe('Navigation', () => {
+     4→  test('should load the dashboard on root route', async ({ page }) => {
+     5→    await page.goto('/');
+     6→    await expect(page).toHaveURL('/');
+     7→    // Dashboard should be visible
+     8→    await expect(page.locator('body')).toBeVisible();
+     9→  });
+    10→
+    11→  test('should navigate to settings page', async ({ page }) => {
+    12→    await page.goto('/');
+    13→    await page.click('text=Settings');
+    14→    await expect(page).toHaveURL('/settings');
+    15→  });
+    16→
+    17→  test('should navigate to skills page', async ({ page }) => {
+    18→    await page.goto('/');
+    19→    await page.click('text=Skills');
+    20→    await expect(page).toHaveURL('/skills');
+    21→  });
+    22→
+    23→  test('should navigate to triggers page', async ({ page }) => {
+    24→    await page.goto('/');
+    25→    await page.click('text=Triggers');
+    26→    await expect(page).toHaveURL('/triggers');
+    27→  });
+    28→
+    29→  test('should navigate to usage page', async ({ page }) => {
+    30→    await page.goto('/');
+    31→    await page.click('text=Usage');
+    32→    await expect(page).toHaveURL('/usage');
+    33→  });
+    34→
+    35→  test('should open command bar with Cmd+K', async ({ page }) => {
+    36→    await page.goto('/');
+    37→    await page.keyboard.press('Meta+k');
+    38→    // Command bar/search should be visible
+    39→    await expect(page.getByPlaceholder(/search|command/i)).toBeVisible();
+    40→  });
+    41→
+    42→  test('should close command bar with Escape', async ({ page }) => {
+    43→    await page.goto('/');
+    44→    await page.keyboard.press('Meta+k');
+    45→    await expect(page.getByPlaceholder(/search|command/i)).toBeVisible();
+    46→    await page.keyboard.press('Escape');
+    47→    await expect(page.getByPlaceholder(/search|command/i)).not.toBeVisible();
+    48→  });
+    49→
+    50→  test('should toggle sidebar with keyboard shortcut', async ({ page }) => {
+    51→    await page.goto('/');
+    52→    const sidebar = page.locator('[data-testid="sidebar"]');
+    53→    // Note: The actual implementation may vary
+    54→    await page.keyboard.press('Meta+b');
+    55→    // Check if sidebar state changed (collapsed/expanded)
+    56→  });
+    57→
+    58→  test('should navigate back to dashboard from other pages', async ({ page }) => {
+    59→    await page.goto('/settings');
+    60→    await page.click('text=Dashboard');
+    61→    await expect(page).toHaveURL('/');
+    62→  });
+    63→});
+    64→
+    65→test.describe('URL Routing', () => {
+    66→  test('should load settings page directly', async ({ page }) => {
+    67→    await page.goto('/settings');
+    68→    await expect(page.locator('text=Provider Configuration')).toBeVisible();
+    69→  });
+    70→
+    71→  test('should load skills page directly', async ({ page }) => {
+    72→    await page.goto('/skills');
+    73→    await expect(page.locator('text=skills')).toBeVisible();
+    74→  });
+    75→
+    76→  test('should load triggers page directly', async ({ page }) => {
+    77→    await page.goto('/triggers');
+    78→    await expect(page.locator('text=triggers')).toBeVisible();
+    79→  });
+    80→
+    81→  test('should load usage page directly', async ({ page }) => {
+    82→    await page.goto('/usage');
+    83→    await expect(page.locator('text=Resource Usage')).toBeVisible();
+    84→  });
+    85→});
+    86→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

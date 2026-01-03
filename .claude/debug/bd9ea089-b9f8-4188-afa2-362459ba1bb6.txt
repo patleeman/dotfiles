@@ -1,0 +1,161 @@
+2026-01-03T03:26:52.529Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (18.3ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T03:26:52.547Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (16.7ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T03:26:52.560Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude, /Users/patrick/.claude...
+2026-01-03T03:26:52.586Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T03:26:52.586Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T03:26:52.586Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T03:26:52.587Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'userSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T03:26:52.587Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'projectSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T03:26:52.588Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T03:26:52.589Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T03:26:52.589Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-03T03:26:52.596Z [DEBUG] Stats cache is up to date
+2026-01-03T03:26:52.599Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T03:26:52.599Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T03:26:52.668Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (67.1ms): ps aux | grep -E "Visual Studio Code|Code Helper|Cursor Helper|Windsurf Helper|IntelliJ IDEA|PyCharm
+2026-01-03T03:26:52.668Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T03:26:52.679Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T03:26:52.679Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T03:26:52.679Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T03:26:52.680Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767410812679-8xbwa9.sh
+2026-01-03T03:26:52.680Z [DEBUG] Shell binary exists: true
+2026-01-03T03:26:52.680Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T03:26:52.681Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/bd9ea089-b9f8-4188-afa2-362459ba1bb6-agent-bd9ea089-b9f8-4188-afa2-362459ba1bb6.json.tmp.73834.1767410812681
+2026-01-03T03:26:52.687Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.4ms)
+2026-01-03T03:26:52.687Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T03:26:52.687Z [DEBUG] Renaming /Users/patrick/.claude/todos/bd9ea089-b9f8-4188-afa2-362459ba1bb6-agent-bd9ea089-b9f8-4188-afa2-362459ba1bb6.json.tmp.73834.1767410812681 to /Users/patrick/.claude/todos/bd9ea089-b9f8-4188-afa2-362459ba1bb6-agent-bd9ea089-b9f8-4188-afa2-362459ba1bb6.json
+2026-01-03T03:26:52.687Z [DEBUG] File /Users/patrick/.claude/todos/bd9ea089-b9f8-4188-afa2-362459ba1bb6-agent-bd9ea089-b9f8-4188-afa2-362459ba1bb6.json written atomically
+2026-01-03T03:26:52.691Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-01-03T03:26:52.691Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T03:26:52.691Z [DEBUG] Total plugin commands loaded: 0
+2026-01-03T03:26:52.691Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-03T03:26:52.695Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T03:26:52.740Z [DEBUG] Git remote URL: null
+2026-01-03T03:26:52.740Z [DEBUG] No git remote URL found
+2026-01-03T03:26:52.740Z [DEBUG] Not in a GitHub repository, skipping path mapping update
+2026-01-03T03:26:52.748Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2026-01-03T03:26:52.754Z [DEBUG] Loaded 1 unique skills (managed: 0, user: 0, project: 0, legacy commands: 1)
+2026-01-03T03:26:52.754Z [DEBUG] getSkills returning: 1 skill dir commands, 0 plugin skills
+2026-01-03T03:26:52.809Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410812809
+2026-01-03T03:26:52.809Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:52.815Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.8ms)
+2026-01-03T03:26:52.815Z [DEBUG] Temp file written successfully, size: 59588 bytes
+2026-01-03T03:26:52.815Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:52.815Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410812809 to /Users/patrick/.claude.json
+2026-01-03T03:26:52.815Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:26:52.944Z [DEBUG] Shell snapshot created successfully (42864 bytes)
+2026-01-03T03:26:53.221Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.8ms)
+2026-01-03T03:26:53.221Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T03:26:53.221Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-03T03:26:56.152Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T03:26:56.166Z [DEBUG] Initialized versioned plugins system with 1 plugins
+2026-01-03T03:26:56.170Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410816170
+2026-01-03T03:26:56.170Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:56.177Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.5ms)
+2026-01-03T03:26:56.177Z [DEBUG] Temp file written successfully, size: 59588 bytes
+2026-01-03T03:26:56.177Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:56.177Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410816170 to /Users/patrick/.claude.json
+2026-01-03T03:26:56.177Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:26:56.182Z [DEBUG] Skipping SessionStart:startup hook execution - workspace trust not accepted
+2026-01-03T03:26:56.185Z [DEBUG] Skills and commands included in Skill tool: commit-and-push
+2026-01-03T03:26:56.212Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410816212
+2026-01-03T03:26:56.212Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:56.217Z [DEBUG] Temp file written successfully, size: 59515 bytes
+2026-01-03T03:26:56.217Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:56.217Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410816212 to /Users/patrick/.claude.json
+2026-01-03T03:26:56.217Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:26:56.220Z [DEBUG] Official marketplace auto-install skipped: already_attempted
+2026-01-03T03:26:56.220Z [DEBUG] performStartupChecks called
+2026-01-03T03:26:56.220Z [DEBUG] Trust not accepted for current directory - skipping plugin installations
+2026-01-03T03:26:56.232Z [DEBUG] AutoUpdaterWrapper: Installation type: npm-global
+2026-01-03T03:26:56.234Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410816234
+2026-01-03T03:26:56.234Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:56.240Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.1ms)
+2026-01-03T03:26:56.240Z [DEBUG] Temp file written successfully, size: 59588 bytes
+2026-01-03T03:26:56.240Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:56.240Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410816234 to /Users/patrick/.claude.json
+2026-01-03T03:26:56.240Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:26:56.241Z [DEBUG] Loaded plugins - Enabled: 0, Disabled: 0, Commands: 0, Agents: 0, Errors: 0
+2026-01-03T03:26:56.243Z [DEBUG] Skipping SubagentStart:Explore hook execution - workspace trust not accepted
+2026-01-03T03:26:56.246Z [DEBUG] Skipping SubagentStart:Plan hook execution - workspace trust not accepted
+2026-01-03T03:26:56.254Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T03:26:56.254Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T03:26:56.254Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T03:26:56.254Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T03:26:56.267Z [DEBUG] Skipping UserPromptSubmit hook execution - workspace trust not accepted
+2026-01-03T03:26:56.269Z [DEBUG] Total plugin output styles loaded: 0
+2026-01-03T03:26:56.275Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.2ms)
+2026-01-03T03:26:56.277Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410816277
+2026-01-03T03:26:56.277Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:56.282Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.1ms)
+2026-01-03T03:26:56.282Z [DEBUG] Temp file written successfully, size: 59588 bytes
+2026-01-03T03:26:56.282Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:56.282Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410816277 to /Users/patrick/.claude.json
+2026-01-03T03:26:56.282Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:26:56.284Z [DEBUG] FileHistory: Added snapshot for 94612055-436a-4a9a-b562-0055c11d682f, tracking 0 files
+2026-01-03T03:26:56.315Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.7ms)
+2026-01-03T03:26:56.495Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTF1XekXh78Z8Ckrxw"}
+2026-01-03T03:26:56.499Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTEzHd1yD9BGcHDp4B"}
+2026-01-03T03:26:56.503Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTF2Gjy5VXrGHrREsM"}
+2026-01-03T03:26:56.639Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTFcFCa8vLt1pg8Vjw"}
+2026-01-03T03:26:56.640Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTFcFCa8vLt1pg8Vjw"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11261)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2026-01-03T03:26:56.660Z [DEBUG] Skipping SubagentStop hook execution - workspace trust not accepted
+2026-01-03T03:26:56.692Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTFgDMFfqbud4HLVcF"}
+2026-01-03T03:26:56.692Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTFgDMFfqbud4HLVcF"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11261)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2026-01-03T03:26:56.705Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410816705
+2026-01-03T03:26:56.705Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:56.711Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.0ms)
+2026-01-03T03:26:56.711Z [DEBUG] Temp file written successfully, size: 59588 bytes
+2026-01-03T03:26:56.711Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:56.711Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410816705 to /Users/patrick/.claude.json
+2026-01-03T03:26:56.711Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:26:56.712Z [DEBUG] Skipping Stop hook execution - workspace trust not accepted
+2026-01-03T03:26:56.730Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410816730
+2026-01-03T03:26:56.730Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:56.734Z [DEBUG] Temp file written successfully, size: 59589 bytes
+2026-01-03T03:26:56.734Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:56.734Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410816730 to /Users/patrick/.claude.json
+2026-01-03T03:26:56.734Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:26:56.740Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTFa1ffZz6JsY9Xsbn"}
+2026-01-03T03:26:56.740Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjjTFa1ffZz6JsY9Xsbn"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11261)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2026-01-03T03:26:56.753Z [DEBUG] Skipping SubagentStop hook execution - workspace trust not accepted
+2026-01-03T03:26:58.743Z [DEBUG] AutoUpdaterWrapper: Installation type: npm-global
+2026-01-03T03:26:58.757Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.73834.1767410818757
+2026-01-03T03:26:58.757Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:26:58.763Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.5ms)
+2026-01-03T03:26:58.763Z [DEBUG] Temp file written successfully, size: 59590 bytes
+2026-01-03T03:26:58.764Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:26:58.764Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.73834.1767410818757 to /Users/patrick/.claude.json
+2026-01-03T03:26:58.764Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:27:00.321Z [DEBUG] AutoUpdaterWrapper: Installation type: npm-global
+2026-01-03T03:27:02.175Z [DEBUG] Skipping SessionEnd:prompt_input_exit hook execution - workspace trust not accepted

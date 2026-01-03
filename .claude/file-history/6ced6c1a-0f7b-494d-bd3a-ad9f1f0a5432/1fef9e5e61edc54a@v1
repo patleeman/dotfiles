@@ -1,0 +1,48 @@
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { InlineScopeProposal } from './InlineScopeProposal';
+
+describe('InlineScopeProposal', () => {
+  const mockProposal = {
+    id: 'scope-1',
+    agent_id: 'agent-1',
+    version: 1,
+    content: '# Initial Plan',
+    frontmatter: {
+        agent_id: 'agent-1',
+        version: 1,
+        permissions: { tools: ['*'], skills: ['*'] },
+        resource_limits: { max_loops: 10 }
+    },
+    created_at: '2023-01-01T00:00:00Z',
+  };
+
+  const defaultProps = {
+    proposal: mockProposal,
+    onUpdate: vi.fn(),
+  };
+
+  it('renders plan update title', () => {
+    render(<InlineScopeProposal {...defaultProps} />);
+    expect(screen.getByText(/Plan Update/)).toBeInTheDocument();
+  });
+
+  it('expands and collapses the plan content', () => {
+    render(<InlineScopeProposal {...defaultProps} />);
+    // First expand the collapsed component
+    fireEvent.click(screen.getByText(/Plan Update/));
+    // Content should be visible
+    expect(screen.getByText('# Initial Plan')).toBeInTheDocument();
+    // Collapse again
+    fireEvent.click(screen.getByText(/Plan Update/));
+  });
+});
+
+
+
+
+
+
+
+
+

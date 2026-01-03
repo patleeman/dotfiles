@@ -1,0 +1,4 @@
+<tool_use_error>Found 2 matches of the string to replace, but replace_all is false. To replace all occurrences, set replace_all to true. To replace only one occurrence, please provide more context to uniquely identify the instance.
+String:                         <td colSpan={5} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+                          [ NO_DATA_AVAILABLE ]
+                        </td></tool_use_error>

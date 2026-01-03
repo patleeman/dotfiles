@@ -1,0 +1,329 @@
+import { globalWS } from './websocket';
+
+export interface Attachment {
+  id: string;
+  type: 'image' | 'file';
+  name: string;
+  mimeType: string;
+  data: string;
+  size: number;
+  previewUrl?: string;
+  path?: string;
+}
+
+export interface ScopeDocument {
+  id: string;
+  agent_id: string;
+  version: number;
+  frontmatter: {
+    agent_id: string;
+    version: number;
+    permissions: {
+      tools: string[];
+      skills: string[];
+    };
+    resource_limits: {
+      max_loops: number;
+    };
+  };
+  content: string;
+  created_at: string;
+  approved_at?: string;
+}
+
+export interface AgentTask {
+  id: string;
+  parent_agent_id: string;
+  target_agent_id?: string;
+  trigger_at?: string;
+  recurrence: string;
+  task_prompt: string;
+  is_self: boolean;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  created_at: string;
+  last_run_at?: string;
+  last_result?: string;
+  run_count: number;
+  next_run_at?: string;
+}
+
+export interface Agent {
+  id: string;
+  parent_id?: string;
+  type: 'standard';
+  name: string;
+  state: 'idle' | 'running' | 'waiting' | 'error' | 'completed' | 'awaiting_approval' | 'paused' | 'awaiting_secret';
+  current_scope_id: string;
+  current_scope?: ScopeDocument;
+  initial_prompt?: string;
+  plan_enabled: boolean;
+  sub_agents_enabled: boolean;
+  is_internal?: boolean;
+  error_detail?: {
+    category: string;
+    message: string;
+    tool_name?: string;
+    recoverable: boolean;
+  };
+  model_config: {
+    provider: string;
+    model: string;
+    temperature?: number;
+    max_tokens?: number;
+  };
+  context_tokens: number;
+  max_context_tokens: number;
+  is_compacting: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Skill {
+  name: string;
+  description: string;
+  path: string;
+  license?: string;
+  compatibility?: string;
+  metadata?: Record<string, unknown>;
+  allowed_tools: string[];
+  source?: string;
+  enabled?: boolean;
+}
+
+export interface TriggerSubscription {
+  id: string;
+  agent_id: string;
+  trigger_name: string;
+  prompt_template: string;
+  enabled: boolean;
+}
+
+export interface SkillsResponse {
+  skills: Skill[];
+  total: number;
+}
+
+export interface SkillFile {
+  name: string;
+  path: string;
+  content?: string;
+}
+
+export interface SkillDetail extends Skill {
+  content: string;
+  files: SkillFile[];
+}
+
+export interface UsageSummaryItem {
+  provider: string;
+  model: string;
+  total_requests: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_tokens: number;
+  total_cost: number | null;
+}
+
+export interface UsageAgentSummaryItem {
+  agent_id: string;
+  agent_name: string;
+  total_requests: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_tokens: number;
+  total_cost: number | null;
+}
+
+export interface UsageToolSummaryItem {
+  tool: string;
+  total_calls: number;
+  total_volume_tk: number;
+}
+
+export interface UsageSkillSummaryItem {
+  skill: string;
+  total_calls: number;
+  total_volume_tk: number;
+}
+
+export interface UsageTotals {
+  total_requests: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_tokens: number;
+  total_cost: number | null;
+}
+
+export interface DailyUsage {
+  date: string;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  cost: number | null;
+  requests: number;
+}
+
+export interface UsageResponse {
+  totals: UsageTotals;
+  by_model: UsageSummaryItem[];
+  by_agent: UsageAgentSummaryItem[];
+  by_tool: UsageToolSummaryItem[];
+  by_skill: UsageSkillSummaryItem[];
+  daily: DailyUsage[];
+}
+
+export interface ProcessedMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: string;
+  created_at: string;
+  segments?: any[];
+  tool_calls?: any[];
+  timestamp?: number;
+  attachments?: any[];
+}
+
+export interface Config {
+  ui?: {
+    theme?: string;
+    show_resources?: boolean;
+    hotkeys?: Record<string, string>;
+  };
+  inference?: {
+    chat?: {
+      provider: string;
+      model: string;
+    };
+  };
+  sub_agent?: {
+    enabled: boolean;
+  };
+  agent?: {
+    auto_compaction_enabled: boolean;
+  };
+  custom_providers?: Record<string, { base_url: string }>;
+  available_models?: Record<string, Record<string, string[]>>;
+  model_pricing?: Record<string, Record<string, Record<string, { prompt: number; completion: number }>>>;
+  [key: string]: any;
+}
+
+export interface SystemStatus {
+  status: 'ok' | 'degraded' | 'error';
+  components: Record<string, string>;
+  auth?: Record<string, string>;
+  browser?: {
+    available_engines: string[];
+  };
+}
+
+export interface VaultSecret {
+  name: string;
+  created_at: string;
+}
+
+export interface Trigger {
+  id: string;
+  type: string;
+  description?: string;
+  enabled?: boolean;
+}
+
+export interface TriggersResponse {
+  triggers: string[];
+}
+
+export const api = {
+  // Agents
+  listAgents: (): Promise<Agent[]> => globalWS.send({ type: 'list_agents' }),
+  getAgent: (id: string): Promise<Agent> => globalWS.send({ type: 'get_agent', payload: { agent_id: id } }),
+  createAgent: (config: { provider: string; model: string; temperature?: number; max_tokens?: number }, prompt?: string): Promise<Agent> =>
+    globalWS.send({ type: 'create_agent', payload: { model_config: config, initial_prompt: prompt } }),
+  updateAgentState: (id: string, action: string) =>
+    globalWS.send({ type: 'update_agent_state', payload: { agent_id: id, action } }),
+  openWorkspace: (agentId: string) =>
+    globalWS.send({ type: 'open_workspace', payload: { agent_id: agentId } }),
+  openFolder: (name: string) =>
+    globalWS.send({ type: 'open_folder', payload: { name } }),
+  openPath: (path: string) =>
+    globalWS.send({ type: 'open_path', payload: { path } }),
+  approveScope: (agentId: string, scopeId: string) =>
+    globalWS.send({ type: 'approve_scope', payload: { agent_id: agentId, scope_id: scopeId } }),
+  renameAgent: (id: string, name: string) =>
+    globalWS.send({ type: 'rename_agent', payload: { agent_id: id, name } }),
+  approveTool: (agentId: string, toolCallId: string, decision: 'allow' | 'reject' | 'always_allow', toolName?: string, pattern?: string) =>
+    globalWS.send({ type: 'approve_tool', payload: { agent_id: agentId, tool_call_id: toolCallId, decision, tool_name: toolName, pattern } }),
+
+  // Skills
+  getSkills: (): Promise<SkillsResponse> => globalWS.send({ type: 'list_skills' }),
+  getAllSkills: (): Promise<SkillsResponse> => globalWS.send({ type: 'list_skills', payload: { all: true } }),
+  getSkillDetail: (name: string): Promise<SkillDetail> => globalWS.send({ type: 'get_skill_detail', payload: { name } }),
+  syncSkills: () => globalWS.send({ type: 'sync_skills' }),
+  toggleSkill: (name: string) => globalWS.send({ type: 'toggle_skill', payload: { name } }),
+  deleteSkill: (name: string) => globalWS.send({ type: 'delete_skill', payload: { name } }),
+  renameSkill: (name: string, newName: string) => globalWS.send({ type: 'rename_skill', payload: { name, new_name: newName } }),
+
+  // Triggers
+  listTriggers: (): Promise<TriggersResponse> => globalWS.send({ type: 'list_triggers' }),
+  listAgentSubscriptions: (agentId: string): Promise<{ subscriptions: TriggerSubscription[] }> => globalWS.send({ type: 'list_agent_subscriptions', payload: { agent_id: agentId } }),
+  saveTriggerSubscription: (subscription: Partial<TriggerSubscription>): Promise<{ status: string, id: string }> => globalWS.send({ type: 'save_trigger_subscription', payload: { subscription } }),
+  deleteTriggerSubscription: (id: string): Promise<{ status: string }> => globalWS.send({ type: 'delete_trigger_subscription', payload: { id } }),
+  deleteTrigger: (id: string) => globalWS.send({ type: 'delete_trigger', payload: { id } }),
+  renameTrigger: (id: string, newName: string) => globalWS.send({ type: 'rename_trigger', payload: { id, new_name: newName } }),
+
+  // Status
+  getStatus: (): Promise<SystemStatus> => globalWS.send({ type: 'get_status' }),
+  getVersion: (): Promise<{ version: string }> => globalWS.send({ type: 'get_version' }),
+  health: (): Promise<boolean> => globalWS.send({ type: 'get_status' }).then(() => true).catch(() => false),
+  listWorkspace: (): Promise<{ path: string }> => globalWS.send({ type: 'list_workspace' }),
+  installCLI: (cli: string): Promise<any> => globalWS.send({ type: 'install_cli', payload: { cli } }),
+  loginCLI: (cli: string): Promise<any> => globalWS.send({ type: 'login_cli', payload: { cli } }),
+
+  // Tool Approvals
+  listToolApprovals: (): Promise<{ id: string, tool_name: string, pattern: string, created_at: string }[]> => globalWS.send({ type: 'list_tool_approvals' }),
+  deleteToolApproval: (id: string) => globalWS.send({ type: 'delete_tool_approval', payload: { id } }),
+
+  // Tasks
+  listTasks: (): Promise<AgentTask[]> => globalWS.send({ type: 'list_tasks' }),
+  deleteTask: (id: string) => globalWS.send({ type: 'delete_task', payload: { id } }),
+
+  // Vault
+  listVaultSecrets: (): Promise<VaultSecret[]> => globalWS.send({ type: 'list_vault_secrets' }),
+  setVaultSecret: (name: string, value: string) => globalWS.send({ type: 'set_vault_secret', payload: { name, value } }),
+  removeVaultSecret: (name: string) => globalWS.send({ type: 'remove_vault_secret', payload: { name } }),
+
+  // Config
+  getConfig: (): Promise<Config> => globalWS.send({ type: 'get_config' }),
+  updateConfig: (updates: Record<string, unknown>) => globalWS.send({ type: 'update_config', payload: { updates } }),
+  getApiKeys: (): Promise<{ provider: string, configured: boolean, enabled: boolean }[]> => globalWS.send({ type: 'get_api_keys' }),
+  setApiKey: (provider: string, key: string) => globalWS.send({ type: 'set_api_key', payload: { provider, key } }),
+  removeApiKey: (provider: string) => globalWS.send({ type: 'remove_api_key', payload: { provider } }),
+
+  // Claude Code OAuth
+  connectClaudeCode: () => globalWS.send({ type: 'connect_claude_code' }),
+  disconnectClaudeCode: () => globalWS.send({ type: 'disconnect_claude_code' }),
+  getClaudeCodeStatus: (): Promise<{ connected: boolean }> => globalWS.send({ type: 'get_claude_code_status' }),
+  getClaudeCodeUsage: (): Promise<{
+    five_hour: { utilization: number; resets_at: string | null };
+    seven_day: { utilization: number; resets_at: string | null };
+    seven_day_opus: { utilization: number; resets_at: string | null };
+  }> => globalWS.send({ type: 'get_claude_code_usage' }),
+
+  // Usage
+  getUsage: (days: number = 30): Promise<UsageResponse> => globalWS.send({ type: 'get_usage', payload: { days } }),
+  clearUsage: () => globalWS.send({ type: 'clear_usage' }),
+  getProcessedHistory: (agentId: string): Promise<{ messages: ProcessedMessage[] }> => globalWS.send({ type: 'get_processed_history', payload: { agent_id: agentId } }),
+
+  // Feedback
+  submitFeedbackManual: (agentId: string, message: string) => globalWS.send({ type: 'submit_feedback_manual', payload: { agent_id: agentId, message } }),
+
+  // Onboarding
+  restartOnboarding: () => globalWS.send({ type: 'restart_onboarding' }),
+
+  // Defaults
+  restoreDefaultSkills: () => globalWS.send({ type: 'restore_default_skills' }),
+  restoreDefaultTriggers: () => globalWS.send({ type: 'restore_default_triggers' }),
+
+  // Model Discovery
+  fetchModels: (provider: string): Promise<{ models: string[] }> =>
+    globalWS.send({ type: 'fetch_models', payload: { provider } }),
+};

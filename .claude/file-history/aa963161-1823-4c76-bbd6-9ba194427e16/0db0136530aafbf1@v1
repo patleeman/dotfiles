@@ -1,0 +1,42 @@
+import React from 'react';
+
+interface InputProps {
+  value: string | number;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  mono?: boolean;
+  width?: string;
+  disabled?: boolean;
+}
+
+export const Input: React.FC<InputProps> = ({
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  mono = false,
+  width = '100%',
+  disabled = false
+}) => (
+  <input
+    type={type}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    disabled={disabled}
+    style={{
+      width,
+      padding: '5px 8px',
+      backgroundColor: '#0f1117',
+      border: '1px solid #334155',
+      borderRadius: '3px',
+      color: '#e2e8f0',
+      fontSize: '12px',
+      fontFamily: mono ? 'monospace' : 'inherit',
+      outline: 'none',
+      opacity: disabled ? 0.5 : 1,
+      cursor: disabled ? 'not-allowed' : 'text',
+    }}
+  />
+);

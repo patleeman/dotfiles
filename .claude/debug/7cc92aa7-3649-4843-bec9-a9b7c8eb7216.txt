@@ -1,0 +1,114 @@
+2025-12-30T13:55:15.999Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (15.5ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-30T13:55:16.021Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-30T13:55:16.021Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-30T13:55:16.021Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-30T13:55:16.023Z [DEBUG] LSP server manager initialized successfully
+2025-12-30T13:55:16.023Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-30T13:55:16.024Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-30T13:55:16.031Z [DEBUG] Stats cache is up to date
+2025-12-30T13:55:16.034Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-30T13:55:16.172Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (135.7ms): cursor --version
+2025-12-30T13:55:16.172Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-30T13:55:16.187Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-30T13:55:16.187Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-30T13:55:16.187Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-30T13:55:16.188Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767102916187-j0ig4f.sh
+2025-12-30T13:55:16.188Z [DEBUG] Shell binary exists: true
+2025-12-30T13:55:16.188Z [DEBUG] Execution timeout: 10000ms
+2025-12-30T13:55:16.189Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/7cc92aa7-3649-4843-bec9-a9b7c8eb7216-agent-7cc92aa7-3649-4843-bec9-a9b7c8eb7216.json.tmp.65281.1767102916189
+2025-12-30T13:55:16.194Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-30T13:55:16.194Z [DEBUG] Renaming /Users/patrick/.claude/todos/7cc92aa7-3649-4843-bec9-a9b7c8eb7216-agent-7cc92aa7-3649-4843-bec9-a9b7c8eb7216.json.tmp.65281.1767102916189 to /Users/patrick/.claude/todos/7cc92aa7-3649-4843-bec9-a9b7c8eb7216-agent-7cc92aa7-3649-4843-bec9-a9b7c8eb7216.json
+2025-12-30T13:55:16.194Z [DEBUG] File /Users/patrick/.claude/todos/7cc92aa7-3649-4843-bec9-a9b7c8eb7216-agent-7cc92aa7-3649-4843-bec9-a9b7c8eb7216.json written atomically
+2025-12-30T13:55:16.261Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-30T13:55:16.261Z [DEBUG] Total plugin skills loaded: 0
+2025-12-30T13:55:16.261Z [DEBUG] Total plugin commands loaded: 0
+2025-12-30T13:55:16.261Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-30T13:55:16.264Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-30T13:55:16.265Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-30T13:55:16.277Z [DEBUG] Git remote URL: git@github.com:patleeman/personal-agent.git
+2025-12-30T13:55:16.277Z [DEBUG] Parsed repository: patleeman/personal-agent from git@github.com:patleeman/personal-agent.git
+2025-12-30T13:55:16.277Z [DEBUG] Parsed repository: patleeman/personal-agent from URL: git@github.com:patleeman/personal-agent.git
+2025-12-30T13:55:16.277Z [DEBUG] Path /Users/patrick/workingdir/personal-agent already tracked for repo patleeman/personal-agent
+2025-12-30T13:55:16.286Z [DEBUG] Total plugin agents loaded: 0
+2025-12-30T13:55:16.291Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2025-12-30T13:55:16.292Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2025-12-30T13:55:16.292Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T13:55:16.292Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2025-12-30T13:55:16.300Z [DEBUG] Total plugin output styles loaded: 0
+2025-12-30T13:55:16.304Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-30T13:55:16.306Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2025-12-30T13:55:16.306Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T13:55:16.306Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2025-12-30T13:55:16.306Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2025-12-30T13:55:16.306Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T13:55:16.306Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2025-12-30T13:55:16.314Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-30T13:55:16.314Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-30T13:55:16.314Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-30T13:55:16.314Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-30T13:55:16.316Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2025-12-30T13:55:16.316Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T13:55:16.316Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T13:55:16.321Z [DEBUG] Skills and commands included in Skill tool:
+2025-12-30T13:55:16.447Z [DEBUG] Shell snapshot created successfully (43335 bytes)
+2025-12-30T13:55:21.012Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.65281.1767102921012
+2025-12-30T13:55:21.012Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T13:55:21.020Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (8.2ms)
+2025-12-30T13:55:21.020Z [DEBUG] Temp file written successfully, size: 53172 bytes
+2025-12-30T13:55:21.020Z [DEBUG] Applied original permissions to temp file
+2025-12-30T13:55:21.020Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.65281.1767102921012 to /Users/patrick/.claude.json
+2025-12-30T13:55:21.021Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T13:55:21.023Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.65281.1767102921023
+2025-12-30T13:55:21.023Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T13:55:21.029Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.8ms)
+2025-12-30T13:55:21.029Z [DEBUG] Temp file written successfully, size: 53172 bytes
+2025-12-30T13:55:21.029Z [DEBUG] Applied original permissions to temp file
+2025-12-30T13:55:21.029Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.65281.1767102921023 to /Users/patrick/.claude.json
+2025-12-30T13:55:21.029Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T13:55:21.174Z [DEBUG] Remote settings: Retry 1/5 after 601.5473923910656ms
+2025-12-30T13:55:21.524Z [ERROR] Error: Error: 1P event logging: 24 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-30T13:55:21.916Z [ERROR] Error: Error: Connection error.
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:4542)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:4211
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2262
+    at async gT3 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1006:16947)
+    at async bmB (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2195)
+    at async RyA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:52)
+    at async _yA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:261)
+    at async py2 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2171:530)
+2025-12-30T13:55:22.029Z [DEBUG] Remote settings: Retry 2/5 after 1073.0631152831852ms
+2025-12-30T13:55:23.360Z [DEBUG] Remote settings: Retry 3/5 after 2357.6628043156256ms
+2025-12-30T13:55:25.978Z [DEBUG] Remote settings: Retry 4/5 after 4840.627899322729ms
+2025-12-30T13:55:26.000Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.65281.1767102926000
+2025-12-30T13:55:26.000Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T13:55:26.009Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (9.6ms)
+2025-12-30T13:55:26.009Z [DEBUG] Temp file written successfully, size: 53172 bytes
+2025-12-30T13:55:26.009Z [DEBUG] Applied original permissions to temp file
+2025-12-30T13:55:26.009Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.65281.1767102926000 to /Users/patrick/.claude.json
+2025-12-30T13:55:26.010Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T13:55:26.044Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.65281.1767102926044
+2025-12-30T13:55:26.044Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T13:55:26.049Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.2ms)
+2025-12-30T13:55:26.049Z [DEBUG] Temp file written successfully, size: 53173 bytes
+2025-12-30T13:55:26.049Z [DEBUG] Applied original permissions to temp file
+2025-12-30T13:55:26.049Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.65281.1767102926044 to /Users/patrick/.claude.json
+2025-12-30T13:55:26.049Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T13:55:26.323Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-30T13:55:26.327Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-30T13:55:26.333Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-30T13:55:28.178Z [ERROR] Error: Error: 1P event logging: 42 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-30T13:55:31.074Z [DEBUG] Remote settings: Retry 5/5 after 8497.014571677231ms
+2025-12-30T13:55:33.698Z [ERROR] Error: Error: 1P event logging: 18 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-30T13:55:38.022Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2025-12-30T13:55:38.022Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T13:55:38.022Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

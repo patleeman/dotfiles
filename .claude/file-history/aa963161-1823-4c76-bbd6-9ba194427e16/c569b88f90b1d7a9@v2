@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: rgb(var(--background));
+  --color-surface: rgb(var(--surface));
+  --color-surface-hover: rgb(var(--surface-hover));
+  --color-border: rgb(var(--border));
+  --color-accent: rgb(var(--accent));
+  --color-accent-hover: rgb(var(--accent-hover));
+  --color-text-primary: rgb(var(--text-primary));
+  --color-text-secondary: rgb(var(--text-secondary));
+  --color-text-tertiary: rgb(var(--text-tertiary));
+
+  --color-status-success: rgb(var(--status-success));
+  --color-status-warning: rgb(var(--status-warning));
+  --color-status-error: rgb(var(--status-error));
+}
+
+@layer base {
+  :root {
+    --background: 15 17 23;
+    --surface: 10 11 15;
+    --surface-hover: 30 41 59;
+    --border: 30 41 59;
+    --text-primary: 226 232 240;
+    --text-secondary: 148 163 184;
+    --text-tertiary: 100 116 139;
+    --accent: 99 102 241;
+    --accent-hover: 139 92 246;
+
+    --status-success: 34 197 94;
+    --status-warning: 245 158 11;
+    --status-error: 239 68 68;
+  }
+
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--text-primary));
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .modal-overlay {
+    background-color: rgb(var(--background) / 0.95);
+  }
+
+  button {
+    transition: transform 0.1s ease, translate 0.1s ease, scale 0.1s ease;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  button:active:not(:disabled) {
+    translate: 0 1px;
+    scale: 0.98;
+  }
+}
+
+@layer utilities {
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes bounce {
+
+    0%,
+    100% {
+      transform: translateY(-25%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+
+    50% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  .animate-bounce {
+    animation: bounce 0.6s infinite;
+  }
+}
+
+@layer components {
+  .power-border {
+    border: 1px solid rgb(var(--border));
+  }
+
+  .power-surface {
+    background-color: rgb(var(--surface));
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #334155;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #475569;
+  }
+
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+}

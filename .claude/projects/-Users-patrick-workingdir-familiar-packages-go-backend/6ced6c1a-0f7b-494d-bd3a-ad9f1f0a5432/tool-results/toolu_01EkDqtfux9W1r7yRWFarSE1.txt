@@ -1,0 +1,12 @@
+The file /Users/patrick/workingdir/familiar/packages/go-backend/cmd/server/agents.go has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   869→
+   870→	return agentID, nil
+   871→}
+   872→
+   873→func (s *Server) handleAgentScopeSetup(agentID string) {
+   874→	_, cancel := context.WithCancel(context.Background())
+   875→	if _, loaded := s.proposing.LoadOrStore(agentID, cancel); loaded {
+   876→		slog.Debug("Scope setup already in progress", "agent_id", agentID)
+   877→		cancel()
+   878→		return
+   879→	}

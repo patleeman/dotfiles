@@ -1,0 +1,11 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Unibar.test.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   117→
+   118→    const input = screen.getByPlaceholderText('Search agents or commands...');
+   119→    fireEvent.change(input, { target: { value: 'settings' } });
+   120→    
+   121→    await waitFor(() => {
+   122→      expect(screen.getByText('Settings')).toBeInTheDocument();
+   123→    });
+   124→  });
+   125→});
+   126→

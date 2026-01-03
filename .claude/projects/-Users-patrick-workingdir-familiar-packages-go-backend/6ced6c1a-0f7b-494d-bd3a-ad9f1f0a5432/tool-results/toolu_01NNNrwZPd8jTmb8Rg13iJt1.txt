@@ -1,0 +1,1 @@
+packages/go-backend/internal/tools/agent.go:17:func NewSpawnSubAgentTool(spawner func(parentID string, name string, prompt string, objective string, workingDir string) (string, error)) *SpawnSubAgentTool {

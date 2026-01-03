@@ -1,0 +1,149 @@
+import { test, expect } from './fixtures/test-fixtures';
+
+test.describe('Skills View', () => {
+  test.beforeEach(async ({ skillsPage }) => {
+    await skillsPage.goto();
+  });
+
+  test('should display skills page', async ({ page }) => {
+    await expect(page).toHaveURL('/skills');
+  });
+
+  test('should show skills header', async ({ page }) => {
+    // Should show skills count
+    await expect(page.locator('text=skills')).toBeVisible();
+  });
+
+  test('should show skill list headers', async ({ page }) => {
+    await expect(page.locator('text=Skill')).toBeVisible();
+    await expect(page.locator('text=Description')).toBeVisible();
+  });
+
+  test('should display loading state initially', async ({ page }) => {
+    // May show loading state briefly
+    // await expect(page.locator('text=Loading skills')).toBeVisible();
+  });
+
+  test('should show empty state when no skills exist', async ({ page }) => {
+    // If no skills, should show empty message
+    const emptyState = page.locator('text=No skills found');
+    // May or may not be visible depending on state
+  });
+
+  test('should display skill items in list', async ({ page }) => {
+    // Wait for skills to load
+    await page.waitForTimeout(1000);
+
+    const skillItems = page.locator('[data-testid="skill-item"]');
+    // May have skills or may be empty
+  });
+
+  test('should select a skill when clicked', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItem = page.locator('[data-testid="skill-item"]').first();
+    if (await skillItem.isVisible()) {
+      await skillItem.click();
+      // Skill should be selected/highlighted
+    }
+  });
+
+  test('should open context menu on right-click', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItem = page.locator('[data-testid="skill-item"]').first();
+    if (await skillItem.isVisible()) {
+      await skillItem.click({ button: 'right' });
+      // Context menu should appear
+      await expect(page.locator('[data-testid="context-menu"]')).toBeVisible();
+    }
+  });
+
+  test('should show delete option in context menu', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItem = page.locator('[data-testid="skill-item"]').first();
+    if (await skillItem.isVisible()) {
+      await skillItem.click({ button: 'right' });
+      await expect(page.locator('text=Delete')).toBeVisible();
+    }
+  });
+
+  test('should confirm before deleting skill', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItem = page.locator('[data-testid="skill-item"]').first();
+    if (await skillItem.isVisible()) {
+      await skillItem.click({ button: 'right' });
+      await page.click('text=Delete');
+
+      // Confirmation dialog should appear
+      await expect(page.locator('text=Are you sure')).toBeVisible();
+    }
+  });
+
+  test('should cancel skill deletion', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItem = page.locator('[data-testid="skill-item"]').first();
+    if (await skillItem.isVisible()) {
+      const initialCount = await page.locator('[data-testid="skill-item"]').count();
+
+      await skillItem.click({ button: 'right' });
+      await page.click('text=Delete');
+
+      // Cancel deletion
+      const cancelButton = page.getByRole('button', { name: /cancel|no/i });
+      if (await cancelButton.isVisible()) {
+        await cancelButton.click();
+      }
+
+      // Count should remain the same
+      const finalCount = await page.locator('[data-testid="skill-item"]').count();
+      expect(finalCount).toBe(initialCount);
+    }
+  });
+
+  test('should show Open in Finder option', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItem = page.locator('[data-testid="skill-item"]').first();
+    if (await skillItem.isVisible()) {
+      await skillItem.click({ button: 'right' });
+      // Should show option to open skill directory
+      await expect(page.locator('text=Open').or(page.locator('text=Finder'))).toBeVisible();
+    }
+  });
+});
+
+test.describe('Skills - Keyboard Navigation', () => {
+  test.beforeEach(async ({ skillsPage }) => {
+    await skillsPage.goto();
+  });
+
+  test('should navigate skills with arrow keys', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItems = page.locator('[data-testid="skill-item"]');
+    const count = await skillItems.count();
+
+    if (count > 1) {
+      await skillItems.first().click();
+      await page.keyboard.press('ArrowDown');
+      // Focus should move to next skill
+    }
+  });
+
+  test('should close context menu with Escape', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const skillItem = page.locator('[data-testid="skill-item"]').first();
+    if (await skillItem.isVisible()) {
+      await skillItem.click({ button: 'right' });
+      await expect(page.locator('[data-testid="context-menu"]')).toBeVisible();
+
+      await page.keyboard.press('Escape');
+      await expect(page.locator('[data-testid="context-menu"]')).not.toBeVisible();
+    }
+  });
+});

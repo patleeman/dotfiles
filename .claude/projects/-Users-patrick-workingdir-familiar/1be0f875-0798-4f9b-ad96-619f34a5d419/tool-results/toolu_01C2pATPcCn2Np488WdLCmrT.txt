@@ -1,0 +1,12 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   172→            </section>
+   173→
+   174→            {/* Unified Usage Table */}
+   175→            <section className="space-y-2">
+   176→              <div className="text-[10px] font-black text-accent uppercase tracking-widest px-1">
+   177→                Model Utilization
+   178→              </div>
+   179→              <div className="border border-border/20 bg-surface/5">
+   180→                <table className="w-full text-left border-collapse table-fixed">
+   181→                  <thead>
+   182→                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">

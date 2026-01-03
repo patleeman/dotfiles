@@ -1,0 +1,40 @@
+import React from 'react';
+
+interface LoadBarProps {
+  value: number;
+  width?: number;
+}
+
+export const LoadBar: React.FC<LoadBarProps> = ({ value, width = 40 }) => {
+  const getColor = () => {
+    if (value > 80) return '#ef4444';
+    if (value > 50) return '#f59e0b';
+    return '#22c55e';
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <div style={{
+        width: `${width}px`,
+        height: '3px',
+        backgroundColor: '#1e293b',
+        borderRadius: '1px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: `${Math.min(100, value)}%`,
+          height: '100%',
+          backgroundColor: getColor(),
+        }} />
+      </div>
+      <span style={{
+        fontSize: '11px',
+        fontFamily: 'monospace',
+        color: '#94a3b8',
+        minWidth: '28px'
+      }}>
+        {value}%
+      </span>
+    </div>
+  );
+};

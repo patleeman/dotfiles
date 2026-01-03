@@ -1,0 +1,2 @@
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/global-teardown.ts
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/global-setup.ts

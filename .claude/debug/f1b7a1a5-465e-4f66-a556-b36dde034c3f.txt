@@ -1,0 +1,111 @@
+2026-01-03T04:19:37.274Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (17.9ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T04:19:37.292Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (18.1ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T04:19:37.305Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude, /Users/patrick/workingdir/familiar/.claude, /Users/patrick/workingdir/familiar/.claude...
+2026-01-03T04:19:37.315Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T04:19:37.315Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T04:19:37.315Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T04:19:37.316Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'userSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T04:19:37.316Z [DEBUG] Applying permission update: Adding 12 allow rule(s) to destination 'localSettings': ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)"]
+2026-01-03T04:19:37.317Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T04:19:37.317Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T04:19:37.318Z [DEBUG] Loading plugin ralph-wiggum from source: "./plugins/ralph-wiggum"
+2026-01-03T04:19:37.336Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-03T04:19:37.336Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-03T04:19:37.336Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-03T04:19:37.336Z [DEBUG] Path /Users/patrick/workingdir/familiar already tracked for repo patleeman/familiar
+2026-01-03T04:19:37.336Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T04:19:37.336Z [DEBUG] Plugin ralph-wiggum@claude-plugins-official version 6d3752c000e2 already cached at /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T04:19:37.336Z [DEBUG] Copied local plugin ralph-wiggum to versioned cache: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T04:19:37.337Z [DEBUG] Loaded hooks from standard location for plugin ralph-wiggum: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/hooks/hooks.json
+2026-01-03T04:19:37.337Z [DEBUG] Found 1 plugins (1 enabled, 0 disabled)
+2026-01-03T04:19:37.342Z [DEBUG] Stats cache is up to date
+2026-01-03T04:19:37.344Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T04:19:37.344Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T04:19:37.346Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T04:19:37.357Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T04:19:37.357Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T04:19:37.357Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T04:19:37.357Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767413977357-yhvwm6.sh
+2026-01-03T04:19:37.357Z [DEBUG] Shell binary exists: true
+2026-01-03T04:19:37.357Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T04:19:37.359Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/f1b7a1a5-465e-4f66-a556-b36dde034c3f-agent-f1b7a1a5-465e-4f66-a556-b36dde034c3f.json.tmp.96540.1767413977359
+2026-01-03T04:19:37.359Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T04:19:37.359Z [DEBUG] Renaming /Users/patrick/.claude/todos/f1b7a1a5-465e-4f66-a556-b36dde034c3f-agent-f1b7a1a5-465e-4f66-a556-b36dde034c3f.json.tmp.96540.1767413977359 to /Users/patrick/.claude/todos/f1b7a1a5-465e-4f66-a556-b36dde034c3f-agent-f1b7a1a5-465e-4f66-a556-b36dde034c3f.json
+2026-01-03T04:19:37.359Z [DEBUG] File /Users/patrick/.claude/todos/f1b7a1a5-465e-4f66-a556-b36dde034c3f-agent-f1b7a1a5-465e-4f66-a556-b36dde034c3f.json written atomically
+2026-01-03T04:19:37.363Z [DEBUG] getPluginSkills: Processing 1 enabled plugins
+2026-01-03T04:19:37.363Z [DEBUG] Checking plugin ralph-wiggum: skillsPath=none, skillsPaths=0 paths
+2026-01-03T04:19:37.363Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T04:19:37.363Z [DEBUG] Loading hooks from plugin: ralph-wiggum
+2026-01-03T04:19:37.363Z [DEBUG] Registered 1 hooks from 1 plugins
+2026-01-03T04:19:37.365Z [DEBUG] Loaded 3 commands from plugin ralph-wiggum default directory
+2026-01-03T04:19:37.365Z [DEBUG] Total plugin commands loaded: 3
+2026-01-03T04:19:37.366Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T04:19:37.367Z [DEBUG] Protecting locked version from cleanup: 2.0.67
+2026-01-03T04:19:37.367Z [ERROR] Error: Error: NON-FATAL: Lock acquisition failed for /Users/patrick/.local/share/claude/versions/2.0.76 (expected in multi-process scenarios)
+    at XZR (/$bunfs/root/claude:2430:2165)
+    at fUA (/$bunfs/root/claude:2430:1885)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:19:37.403Z [DEBUG] Loaded 1 unique skills (managed: 0, user: 0, project: 0, legacy commands: 1)
+2026-01-03T04:19:37.403Z [DEBUG] getSkills returning: 1 skill dir commands, 0 plugin skills
+2026-01-03T04:19:37.404Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T04:19:37.409Z [DEBUG] All plugins already exist, skipping migration
+2026-01-03T04:19:37.409Z [DEBUG] Initialized versioned plugins system with 1 plugins
+2026-01-03T04:19:37.417Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.96540.1767413977417
+2026-01-03T04:19:37.417Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T04:19:37.417Z [DEBUG] Temp file written successfully, size: 58950 bytes
+2026-01-03T04:19:37.417Z [DEBUG] Applied original permissions to temp file
+2026-01-03T04:19:37.417Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.96540.1767413977417 to /Users/patrick/.claude.json
+2026-01-03T04:19:37.418Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T04:19:37.427Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-03T04:19:37.427Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:19:37.427Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-03T04:19:37.427Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-03T04:19:37.427Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:19:37.427Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-03T04:19:37.593Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUG7FbiwC7Sybm1XDM"}
+2026-01-03T04:19:37.605Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-03T04:19:37.605Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:19:37.605Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-03T04:19:37.608Z [DEBUG] Total plugin output styles loaded: 0
+2026-01-03T04:19:37.609Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T04:19:37.609Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T04:19:37.609Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T04:19:37.609Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T04:19:37.610Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T04:19:37.610Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:19:37.610Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T04:19:37.612Z [DEBUG] Skills and commands included in Skill tool: commit-and-push, ralph-wiggum:help, ralph-wiggum:cancel-ralph, ralph-wiggum:ralph-loop
+2026-01-03T04:19:37.625Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUG7znMtxVHKYxSZPU"}
+2026-01-03T04:19:37.665Z [DEBUG] Shell snapshot created successfully (42983 bytes)
+2026-01-03T04:19:37.697Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUGjCsMRXCxyuEMQo1"}
+2026-01-03T04:19:37.698Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUGjCsMRXCxyuEMQo1"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:19:37.720Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T04:19:37.720Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:19:37.720Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T04:19:37.760Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUGt933XpBJ1JhQ7kg"}
+2026-01-03T04:19:37.760Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUGt933XpBJ1JhQ7kg"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:19:37.774Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T04:19:37.774Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:19:37.774Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T04:19:37.884Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T04:19:37.884Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-03T04:19:37.898Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T04:19:37.944Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/Users/patrick/.local/share/claude/versions/2.0.76)
+2026-01-03T04:19:38.054Z [ERROR] Error streaming, falling back to non-streaming mode: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUGwrkazWr8zGf4kbW"}
+2026-01-03T04:19:38.207Z [ERROR] Error in non-streaming fallback: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUJnUswp8fyhMfboBn"}
+2026-01-03T04:19:38.207Z [ERROR] Error: Error: 429 {"type":"error","error":{"type":"rate_limit_error","message":"This request would exceed your account's rate limit. Please try again later."},"request_id":"req_011CWjoUJnUswp8fyhMfboBn"}
+    at generate (/$bunfs/root/claude:454:11308)
+    at makeRequest (/$bunfs/root/claude:801:5435)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T04:19:38.228Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T04:19:38.228Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T04:19:38.228Z [DEBUG] Matched 1 unique hooks for query "no match query" (1 before deduplication)
+2026-01-03T04:19:38.241Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2026-01-03T04:19:38.241Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T04:19:38.241Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

@@ -1,0 +1,36 @@
+import React from 'react';
+
+interface ToggleProps {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+  disabled?: boolean;
+}
+
+export const Toggle: React.FC<ToggleProps> = ({ enabled, onChange, disabled = false }) => (
+  <button
+    onClick={() => !disabled && onChange(!enabled)}
+    disabled={disabled}
+    style={{
+      width: '32px',
+      height: '16px',
+      borderRadius: '8px',
+      border: 'none',
+      backgroundColor: enabled ? '#6366f1' : '#334155',
+      position: 'relative',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      transition: 'background-color 0.15s ease',
+      opacity: disabled ? 0.5 : 1,
+    }}
+  >
+    <span style={{
+      position: 'absolute',
+      top: '2px',
+      left: enabled ? '16px' : '2px',
+      width: '12px',
+      height: '12px',
+      borderRadius: '50%',
+      backgroundColor: '#fff',
+      transition: 'left 0.15s ease',
+    }} />
+  </button>
+);

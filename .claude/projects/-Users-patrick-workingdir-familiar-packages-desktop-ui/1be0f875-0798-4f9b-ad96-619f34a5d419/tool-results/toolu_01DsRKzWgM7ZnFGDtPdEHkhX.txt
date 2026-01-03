@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   138→                      <th className="px-4 py-1.5 text-right w-[20%]">Total Cost</th>
+   139→                    </tr>
+   140→                  </thead>
+   141→                  <tbody className="text-[11px]">
+   142→                    {providers.length === 0 ? (
+   143→                      <tr>
+   144→                        <td colSpan={5} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+   145→                          No data available
+   146→                        </td>
+   147→                      </tr>
+   148→                    ) : (
+   149→                      providers.map((p, i) => (
+   150→                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+   151→                          <td className="px-4 py-1 truncate font-black text-text-primary uppercase">

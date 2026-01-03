@@ -1,0 +1,826 @@
+     1→import React, { useState } from 'react';
+     2→import { ChevronRight, ClipboardList, File, Zap, Trash2, X } from 'lucide-react';
+     3→import { clsx } from 'clsx';
+     4→import ReactMarkdown from 'react-markdown';
+     5→import { type Agent, type ScopeDocument, type Attachment } from '../../lib/api';
+     6→import { type AgentLogEntry } from '../../context/AgentStore';
+     7→import { InlineScopeProposal } from './InlineScopeProposal';
+     8→import { ToolApproval } from './ToolApproval';
+     9→import { SecretRequest } from './SecretRequest';
+    10→import { useAgents } from '../../context/AgentContext';
+    11→
+    12→interface LogViewerProps {
+    13→  logs: AgentLogEntry[];
+    14→  agents: Record<string, Agent>;
+    15→  activeAgentId: string;
+    16→  onUpdateScope: (content: string, frontmatter?: any) => Promise<void>;
+    17→  onUpdateAgentState: (agentId: string, action: 'resume' | 'repair') => Promise<void>;
+    18→  openInFinder: (path: string) => Promise<void>;
+    19→}
+    20→
+    21→const LogEntry: React.FC<{
+    22→  log: AgentLogEntry;
+    23→  resultLog?: AgentLogEntry;
+    24→  nickname: string;
+    25→  nickColor: string;
+    26→  agents: Record<string, Agent>;
+    27→  activeAgentId: string;
+    28→  previousContent: string;
+    29→  onUpdateScope: (content: string, frontmatter?: any) => Promise<void>;
+    30→  onUpdateAgentState: (agentId: string, action: 'resume' | 'repair') => Promise<void>;
+    31→  openInFinder: (path: string) => Promise<void>;
+    32→  onDismiss: (id: string) => void;
+    33→  hideNickname?: boolean;
+    34→}> = React.memo(({
+    35→  log,
+    36→  resultLog,
+    37→  nickname,
+    38→  nickColor,
+    39→  agents,
+    40→  activeAgentId,
+    41→  previousContent,
+    42→  onUpdateScope,
+    43→  onUpdateAgentState,
+    44→  openInFinder,
+    45→  onDismiss,
+    46→  hideNickname,
+    47→}) => {
+    48→  const [isExpanded, setIsExpanded] = useState(false);
+    49→  const isInteraction = log.event_type === 'user_interaction' || log.event_type === 'model_responded' || log.event_type === 'agent_error';
+    50→  const isTool = log.event_type === 'tool_call' || log.event_type === 'tool_output' || log.event_type === 'tool_error';
+    51→  const isCLI = log.event_type === 'cli_output' || log.event_type === 'shell_output';
+    52→  const isToolApproval = log.event_type === 'tool_approval_requested' || log.event_type === 'tool_approval_resolved';
+    53→  const isSecretRequest = log.event_type === 'secret_request' || ((log.event_type === 'tool_call' || log.event_type === 'tool_output') && (log.payload as any).tool === 'vault_save');
+    54→  if (log.event_type === 'secret_request' || (log.payload as any).tool === 'vault_save') {
+    55→    console.log('[DEBUG] Secret-related log:', log.event_type, log.payload);
+    56→  }
+    57→  const isStatusChange = log.event_type === 'compaction_requested' || log.event_type === 'scope_approved' || log.event_type === 'scope_rejected' || log.event_type === 'agent_paused' || log.event_type === 'agent_resumed';
+    58→  const isPaused = log.event_type === 'agent_paused';
+    59→
+    60→  const payload = log.payload as any;
+    61→  const resultPayload = resultLog?.payload as any;
+    62→  const { approveTool } = useAgents();
+    63→  const timestamp = new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    64→
+    65→  if (isToolApproval) {
+    66→    const isResolved = log.event_type === 'tool_approval_resolved';
+    67→    return (
+    68→      <div key={log.id} className="flex flex-row items-baseline gap-1.5 py-1">
+    69→        <span className={clsx(
+    70→          "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+    71→          hideNickname ? "opacity-0" : "opacity-100"
+    72→        )}>[{timestamp}]</span>
+    73→        <span className="min-w-[110px] w-[110px] shrink-0" />
+    74→        <div className="flex-1 min-w-0 pl-4 border-l border-border/10">
+    75→          <ToolApproval
+    76→            agentId={log.agent_id}
+    77→            toolCallId={payload.tool_call_id || payload.id}
+    78→            toolName={payload.tool}
+    79→            args={payload.args}
+    80→            translation={payload.translation}
+    81→            onApprove={(decision, pattern) => approveTool(log.agent_id, payload.tool_call_id || payload.id, decision, payload.tool, pattern)}
+    82→            isProcessed={isResolved}
+    83→            decision={payload.decision}
+    84→          />
+    85→        </div>
+    86→      </div>
+    87→    );
+    88→  }
+    89→
+    90→  if (isSecretRequest) {
+    91→    const isResolved = log.event_type === 'tool_output';
+    92→    let keys = payload.keys;
+    93→    let key = payload.key;
+    94→    if (!keys && !key && isResolved && payload.content) {
+    95→      // Try to extract multiple keys or single key from tool output content
+    96→      const multipleMatch = payload.content.match(/secrets: \[([^\]]+)\]/);
+    97→      if (multipleMatch) {
+    98→        keys = multipleMatch[1].split(' ').map((s: string) => s.trim());
+    99→      } else {
+   100→        const singleMatch = payload.content.match(/'([^']+)'/);
+   101→        if (singleMatch) key = singleMatch[1];
+   102→      }
+   103→    }
+   104→
+   105→    return (
+   106→      <div key={log.id} className="flex flex-row items-baseline gap-1.5 py-1">
+   107→        <span className={clsx(
+   108→          "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   109→          hideNickname ? "opacity-0" : "opacity-100"
+   110→        )}>[{timestamp}]</span>
+   111→        <span className="min-w-[110px] w-[110px] shrink-0" />
+   112→        <div className="flex-1 min-w-0 pl-4 border-l border-border/10">
+   113→          <SecretRequest
+   114→            agentId={log.agent_id}
+   115→            toolCallId={payload.tool_call_id || payload.id}
+   116→            secretKeys={keys}
+   117→            secretKey={key}
+   118→            args={payload.args}
+   119→            isProcessed={isResolved}
+   120→          />
+   121→        </div>
+   122→      </div>
+   123→    );
+   124→  }
+   125→
+   126→  if (isCLI) {
+   127→    const hasContent = payload.content && payload.content.trim().length > 0;
+   128→    return (
+   129→      <div key={log.id} className={clsx(
+   130→        "flex flex-row items-baseline gap-1.5 py-0 font-mono text-[10.5px] leading-tight group hover:bg-surface-hover/30",
+   131→        hideNickname && "pt-0 pb-0"
+   132→      )}>
+   133→        <span className={clsx(
+   134→          "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   135→          hideNickname ? "opacity-0" : "opacity-100"
+   136→        )}>[{timestamp}]</span>
+   137→        <span className="text-text-tertiary shrink-0 min-w-[110px] w-[110px] opacity-20">$</span>
+   138→        <div className="flex-1 text-text-secondary/80 min-w-0 border-l border-border/10">
+   139→          <button
+   140→            onClick={() => hasContent && setIsExpanded(!isExpanded)}
+   141→            disabled={!hasContent}
+   142→            className={clsx(
+   143→              "flex items-center gap-1.5 text-left w-full group/cli pl-4",
+   144→              hasContent ? "hover:text-accent transition-colors cursor-pointer" : "cursor-default"
+   145→            )}
+   146→          >
+   147→            {hasContent ? (
+   148→              <ChevronRight size={11} className={clsx("shrink-0 transition-transform text-text-tertiary/40 group-hover/cli:text-accent pointer-events-none", isExpanded && "rotate-90")} />
+   149→            ) : (
+   150→              <div className="w-[10px] shrink-0" />
+   151→            )}
+   152→            <span className="truncate opacity-50 italic">
+   153→              {payload.content.split('\n')[0].slice(0, 60) || 'CLI output'}
+   154→              {(payload.content.length > 60 || payload.content.includes('\n')) ? '...' : ''}
+   155→            </span>
+   156→          </button>
+   157→          {isExpanded && hasContent && (
+   158→            <div className="mt-1 ml-4 p-1.5 bg-black/20 rounded border border-white/5 whitespace-pre-wrap break-all animate-in fade-in slide-in-from-top-1 duration-200">
+   159→              {payload.content}
+   160→            </div>
+   161→          )}
+   162→        </div>
+   163→      </div>
+   164→    );
+   165→  }
+   166→
+   167→  if (isStatusChange) {
+   168→    const isCompactionRequested = log.event_type === 'compaction_requested';
+   169→    const isScopeApproved = log.event_type === 'scope_approved';
+   170→
+   171→    if (isCompactionRequested) {
+   172→      const source = payload.requested_by === 'user_request' ? "User" :
+   173→        payload.requested_by === 'agent_tool' ? "Agent" : "System";
+   174→      return (
+   175→        <div key={log.id} className="my-1.5 py-1.5 px-2 border-l-2 border-accent/30 bg-surface/5 flex items-center gap-1.5 group animate-in fade-in slide-in-from-left-1 duration-200 relative">
+   176→          <button
+   177→            onClick={() => onDismiss(log.id)}
+   178→            className="absolute top-1.5 right-1.5 p-1 opacity-0 group-hover:opacity-100 hover:bg-surface-hover rounded-md transition-all text-text-tertiary hover:text-text-primary active:scale-90"
+   179→            title="Dismiss notification"
+   180→          >
+   181→            <X size={10} />
+   182→          </button>
+   183→          <span className={clsx(
+   184→            "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap",
+   185→            hideNickname ? "opacity-0" : "opacity-100"
+   186→          )}>[{timestamp}]</span>
+   187→          <div className="flex-1 text-[9px] font-mono flex items-center gap-2 pl-[126px]">
+   188→            <Zap size={11} className="text-accent animate-pulse shrink-0" fill="currentColor" />
+   189→            <span className="font-black text-accent uppercase tracking-widest">
+   190→              {source} requested history compaction
+   191→            </span>
+   192→          </div>
+   193→        </div>
+   194→      );
+   195→    }
+   196→
+   197→    if (isScopeApproved) {
+   198→      return (
+   199→        <div key={log.id} className={clsx(
+   200→          "flex flex-row items-baseline gap-1.5 py-0.5 opacity-70 group hover:opacity-100 transition-opacity",
+   201→          hideNickname && "pt-0 pb-0"
+   202→        )}>
+   203→          <span className={clsx(
+   204→            "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   205→            hideNickname ? "opacity-0" : "opacity-100"
+   206→          )}>[{timestamp}]</span>
+   207→          <span className="text-text-tertiary shrink-0 min-w-[110px] w-[110px] opacity-20 font-mono text-[10.5px]"></span>
+   208→          <div className="flex-1 text-[11px] pl-4 border-l border-border/10">
+   209→            <span className="font-bold text-status-success">
+   210→              {payload.message || "Plan accepted."}
+   211→            </span>
+   212→          </div>
+   213→        </div>
+   214→      );
+   215→    }
+   216→
+   217→    if (log.event_type === 'scope_rejected') {
+   218→      return (
+   219→        <div key={log.id} className={clsx(
+   220→          "flex flex-row items-baseline gap-1.5 py-0.5 opacity-70 group hover:opacity-100 transition-opacity",
+   221→          hideNickname && "pt-0 pb-0"
+   222→        )}>
+   223→          <span className={clsx(
+   224→            "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   225→            hideNickname ? "opacity-0" : "opacity-100"
+   226→          )}>[{timestamp}]</span>
+   227→          <span className="text-text-tertiary shrink-0 min-w-[110px] w-[110px] opacity-20 font-mono text-[10.5px]"></span>
+   228→          <div className="flex-1 text-[11px] pl-4 border-l border-border/10">
+   229→            <span className="font-bold text-status-error">
+   230→              Plan rejected{payload.feedback ? `: ${payload.feedback}` : '.'}
+   231→            </span>
+   232→          </div>
+   233→        </div>
+   234→      );
+   235→    }
+   236→
+   237→    let statusText = isPaused ? "Agent paused" : "Agent resumed";
+   238→    return (
+   239→      <div key={log.id} className={clsx(
+   240→        "flex flex-row items-baseline gap-1.5 py-0.5 opacity-70 group hover:opacity-100 transition-opacity",
+   241→        hideNickname && "pt-0 pb-0"
+   242→      )}>
+   243→        <span className={clsx(
+   244→          "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   245→          hideNickname ? "opacity-0" : "opacity-100"
+   246→        )}>[{timestamp}]</span>
+   247→        <span className="text-text-tertiary shrink-0 min-w-[110px] w-[110px] opacity-20 font-mono text-[10.5px]"></span>
+   248→        <div className="flex-1 text-[11px] pl-4 border-l border-border/10">
+   249→          <span className={clsx("font-bold", isPaused ? "text-status-warning" : "text-status-success")}>
+   250→            {statusText}
+   251→          </span>
+   252→        </div>
+   253→      </div>
+   254→    );
+   255→  }
+   256→
+   257→  if (isTool) {
+   258→    const isCall = log.event_type === 'tool_call';
+   259→    const isOutput = log.event_type === 'tool_output';
+   260→    const isError = log.event_type === 'tool_error';
+   261→
+   262→    if ((payload.tool === 'vault_save' || payload.tool === 'agent_plan') && (isCall || isOutput)) return null;
+   263→
+   264→    const hasArguments = isCall && payload.args;
+   265→    const hasOutput = (isOutput && payload.content) || (resultLog?.event_type === 'tool_output' && resultPayload?.content);
+   266→    const hasError = (isError && (payload.message || payload.category)) || (resultLog?.event_type === 'tool_error' && (resultPayload?.message || resultPayload?.category));
+   267→    const canExpand = hasArguments || hasOutput || hasError;
+   268→
+   269→    return (
+   270→      <div key={log.id} className={clsx(
+   271→        "flex flex-row items-baseline gap-1.5 py-0.5 opacity-60 group hover:opacity-100 transition-opacity",
+   272→        hideNickname && "pt-0 pb-0"
+   273→      )}>
+   274→        <span className={clsx(
+   275→          "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   276→          hideNickname ? "opacity-0" : "opacity-100"
+   277→        )}>[{timestamp}]</span>
+   278→        <span className="min-w-[110px] w-[110px] shrink-0" />
+   279→        <div className="flex-1 text-[11px] min-w-0 break-words border-l border-border/10 pl-4">
+   280→          <button
+   281→            onClick={() => canExpand && setIsExpanded(!isExpanded)}
+   282→            disabled={!canExpand}
+   283→            className={clsx(
+   284→              "flex items-center gap-1.5 text-left w-full group/tool",
+   285→              canExpand ? "hover:text-accent transition-colors cursor-pointer" : "cursor-default"
+   286→            )}
+   287→          >
+   288→            {canExpand ? (
+   289→              <ChevronRight size={11} className={clsx("shrink-0 transition-transform text-text-tertiary/40 group-hover/tool:text-accent pointer-events-none", isExpanded && "rotate-90")} />
+   290→            ) : (
+   291→              <div className="w-[10px] shrink-0" />
+   292→            )}
+   293→            <span className="font-mono text-[10.5px] truncate">
+   294→              {isCall ? (
+   295→                <>
+   296→                  Tool <span className="text-blue-400 font-bold">{payload.tool}</span> called
+   297→                  {resultLog && (
+   298→                    <span className={clsx(
+   299→                      "ml-2 opacity-50 italic",
+   300→                      resultLog.event_type === 'tool_error' && "text-status-error opacity-100"
+   301→                    )}>
+   302→                      {resultLog.event_type === 'tool_output' ? '(Success)' : '(Error)'}
+   303→                    </span>
+   304→                  )}
+   305→                </>
+   306→              ) : isOutput ? (
+   307→                <>Output <span className="text-green-400/80 font-bold">{payload.tool}</span></>
+   308→              ) : (
+   309→                <>Error <span className="text-status-error font-bold">{payload.tool}</span></>
+   310→              )}
+   311→            </span>
+   312→          </button>
+   313→
+   314→          {isExpanded && (
+   315→            <div className="mt-1 ml-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+   316→              {isCall && (
+   317→                <div className="p-1.5 bg-black/20 rounded border border-white/5 font-mono text-[10.5px] text-text-secondary">
+   318→                  <div className="text-[8px] font-black uppercase tracking-tighter opacity-30 mb-1">Arguments</div>
+   319→                  <div className="italic break-words">{payload.args}</div>
+   320→                </div>
+   321→              )}
+   322→
+   323→              {(isOutput || resultLog?.event_type === 'tool_output') && (
+   324→                <div className="p-1.5 bg-black/20 rounded border border-white/5 font-mono text-[10.5px] text-text-secondary">
+   325→                  <div className="text-[8px] font-black uppercase tracking-tighter opacity-30 mb-1">Output</div>
+   326→                  <div className="whitespace-pre-wrap break-all">
+   327→                    {isOutput ? payload.content : resultPayload.content}
+   328→                  </div>
+   329→                </div>
+   330→              )}
+   331→
+   332→              {(isError || resultLog?.event_type === 'tool_error') && (
+   333→                <div className="p-1.5 bg-black/20 rounded border border-white/5 font-mono text-[10.5px] text-text-secondary">
+   334→                  <div className="text-[8px] font-black uppercase tracking-tighter opacity-30 mb-1 text-status-error">Error</div>
+   335→                  <div className="text-status-error italic font-bold">
+   336→                    {isError ? (payload.message || 'Unknown tool error') : (resultPayload.message || 'Unknown tool error')}
+   337→                  </div>
+   338→                </div>
+   339→              )}
+   340→            </div>
+   341→          )}
+   342→        </div>
+   343→      </div>
+   344→    );
+   345→  }
+   346→
+   347→  if (log.event_type === 'scope_updated' || log.event_type === 'scope_proposal') {
+   348→    const scope = payload.scope as ScopeDocument;
+   349→
+   350→    return (
+   351→      <div key={log.id} className={clsx(
+   352→        "group flex flex-col w-full",
+   353→        hideNickname && "pt-0 pb-0"
+   354→      )}>
+   355→        <div className="flex flex-row items-baseline gap-1.5">
+   356→          <span className={clsx(
+   357→            "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   358→            hideNickname ? "opacity-0" : "opacity-100"
+   359→          )}>[{timestamp}]</span>
+   360→          <span
+   361→            className={clsx(
+   362→              "text-[10.5px] font-bold uppercase tracking-wider truncate min-w-[110px] w-[110px] shrink-0 transition-opacity duration-500",
+   363→              hideNickname ? "opacity-0" : "opacity-100"
+   364→            )}
+   365→            style={{ color: nickColor }}
+   366→            title={nickname}
+   367→          >
+   368→            {nickname}
+   369→          </span>
+   370→          <div className="flex-1 min-w-0">
+   371→            <InlineScopeProposal
+   372→              proposal={scope}
+   373→              previousContent={previousContent}
+   374→              onUpdate={onUpdateScope}
+   375→            />
+   376→          </div>
+   377→        </div>
+   378→      </div>
+   379→    );
+   380→  }
+   381→
+   382→  if (log.event_type === 'agent_message' || log.event_type === 'sub_agent_report' || log.event_type === 'sub_agent_error') {
+   383→    const isError = log.event_type === 'sub_agent_error';
+   384→
+   385→    // Unify content fields
+   386→    const content = payload.content || payload.findings || payload.message;
+   387→    const suggestions = payload.suggestions;
+   388→
+   389→    return (
+   390→      <div key={log.id} className={clsx(
+   391→        "group flex flex-col w-full py-0.5 hover:bg-surface-hover/30 transition-colors",
+   392→        isError && "py-1.5 my-1.5 border-l-2 bg-white/[0.02] border-status-error/30",
+   393→        hideNickname && "pt-0 pb-0 mt-0 mb-0"
+   394→      )}>
+   395→        <div className="flex flex-row items-baseline gap-1.5">
+   396→          <span className={clsx(
+   397→            "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   398→            hideNickname ? "opacity-0" : "opacity-100"
+   399→          )}>[{timestamp}]</span>
+   400→          <span
+   401→            className={clsx(
+   402→              "text-[10.5px] font-bold uppercase tracking-wider truncate min-w-[110px] w-[110px] shrink-0 transition-opacity duration-500",
+   403→              hideNickname ? "opacity-0" : "opacity-100"
+   404→            )}
+   405→            style={{ color: isError ? 'rgb(var(--status-error))' : nickColor }}
+   406→            title={nickname}
+   407→          >
+   408→            {nickname}
+   409→          </span>
+   410→          <div className="flex-1 text-[10.5px] leading-relaxed font-mono break-words min-w-0 space-y-1.5 pr-2">
+   411→            {isError ? (
+   412→              <div className="space-y-1.5">
+   413→                <div className="text-[9px] font-black text-status-error uppercase tracking-widest">Sub Agent Error</div>
+   414→                <div className="text-status-error italic pl-3 border-l border-status-error/20">{content}</div>
+   415→                {(payload as any).cli_result?.result && (
+   416→                  <div className="bg-black/20 p-1.5 rounded border border-status-error/20 ml-3">
+   417→                    <div className="text-[8px] font-black text-status-error uppercase tracking-tighter opacity-70 mb-1">CLI Output</div>
+   418→                    <div className="text-text-primary text-[9.5px] font-mono whitespace-pre-wrap">{(payload as any).cli_result.result}</div>
+   419→                  </div>
+   420→                )}
+   421→              </div>
+   422→            ) : (
+   423→              <>
+   424→                <div className="text-emerald-400 whitespace-pre-wrap">{content}</div>
+   425→                {suggestions && (
+   426→                  <div className="mt-1.5">
+   427→                    <div className="text-[9px] font-black text-emerald-500 uppercase tracking-widest opacity-70 mb-0.5">Suggestions</div>
+   428→                    <div className="text-emerald-400/70 whitespace-pre-wrap pl-3 border-l border-emerald-500/20 italic">{suggestions}</div>
+   429→                  </div>
+   430→                )}
+   431→              </>
+   432→            )}
+   433→          </div>
+   434→        </div>
+   435→      </div>
+   436→    );
+   437→  }
+   438→
+   439→  if (log.event_type === 'history_compacted' || log.event_type === 'conversation_cleared') {
+   440→    const isClear = log.event_type === 'conversation_cleared';
+   441→    return (
+   442→      <div key={log.id} className={clsx(
+   443→        "my-2 border-l border-border/10 p-3 animate-in fade-in slide-in-from-left-1 duration-200 group relative bg-surface/5 font-mono",
+   444→        isClear ? "border-status-error/30" : "border-accent/30"
+   445→      )}>
+   446→        <button
+   447→          onClick={() => onDismiss(log.id)}
+   448→          className="absolute top-1.5 right-1.5 p-1 opacity-0 group-hover:opacity-100 hover:bg-surface-hover rounded-md transition-all text-text-tertiary hover:text-text-primary active:scale-90"
+   449→          title="Dismiss notification"
+   450→        >
+   451→          <X size={11} />
+   452→        </button>
+   453→        <div className="flex items-center gap-1.5 mb-2">
+   454→          <span className={clsx(
+   455→            "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap",
+   456→            hideNickname ? "opacity-0" : "opacity-100"
+   457→          )}>[{timestamp}]</span>
+   458→          <div className="flex-1 flex items-center gap-2 pl-[126px]">
+   459→            <span className={clsx(
+   460→              "text-[10px] font-black uppercase tracking-[0.2em]",
+   461→              isClear ? "text-status-error" : "text-accent/80"
+   462→            )}>
+   463→              {isClear ? "/CONVERSATION_CLEARED" : "/CONVERSATION_SUMMARY"}
+   464→            </span>
+   465→            {!isClear && (
+   466→              <span className="text-[8px] text-text-tertiary/40 ml-auto font-black uppercase">SAVED:{payload.tokens_saved?.toLocaleString()}tk</span>
+   467→            )}
+   468→          </div>
+   469→        </div>
+   470→        <div className={clsx(
+   471→          "text-[10.5px] font-mono leading-relaxed mb-3 pl-[138px] border-l border-border/5 uppercase font-black",
+   472→          isClear ? "text-text-primary/60" : "text-text-secondary/60"
+   473→        )}>
+   474→          {payload.summary ? (
+   475→            <ReactMarkdown>{payload.summary as string}</ReactMarkdown>
+   476→          ) : (
+   477→            payload.message || (isClear ? "History cleared and archived." : "Messages summarized to free context.")
+   478→          )}
+   479→        </div>
+   480→        {(payload.archive_path || payload.history_path || payload.archive_dir) && (
+   481→          <div className="flex flex-wrap items-center gap-4 text-[9px] font-black pl-[138px] uppercase">
+   482→            {payload.archive_path && (
+   483→              <div className="flex items-center gap-2">
+   484→                <span className="text-text-tertiary/40">ARCHIVE:</span>
+   485→                <button
+   486→                  onClick={() => payload.archive_path && openInFinder(payload.archive_path as string)}
+   487→                  className={clsx(
+   488→                    "text-accent/60 hover:text-accent transition-all cursor-pointer",
+   489→                    isClear && "text-status-error/60 hover:text-status-error"
+   490→                  )}
+   491→                >
+   492→                  [ {payload.archive_file as string || 'HISTORY_ARCHIVE.MD'} ]
+   493→                </button>
+   494→              </div>
+   495→            )}
+   496→            {payload.history_path && (
+   497→              <div className="flex items-center gap-2">
+   498→                <span className="text-text-tertiary/40">RAW_LOG:</span>
+   499→                <button
+   500→                  onClick={() => payload.history_path && openInFinder(payload.history_path as string)}
+   501→                  className={clsx(
+   502→                    "text-accent/60 hover:text-accent transition-all cursor-pointer",
+   503→                    isClear && "text-status-error/60 hover:text-status-error"
+   504→                  )}
+   505→                >
+   506→                  [ {payload.full_history as string || 'FULL_HISTORY.JSONL'} ]
+   507→                </button>
+   508→              </div>
+   509→            )}
+   510→          </div>
+   511→        )}
+   512→      </div>
+   513→    );
+   514→  }
+   515→
+   516→  const isModelOrUser = log.event_type === 'model_responded' || log.event_type === 'user_interaction';
+   517→
+   518→  return (
+   519→    <div key={log.id} className={clsx(
+   520→      "group flex flex-col w-full py-0.5 hover:bg-surface-hover/30 transition-colors",
+   521→      hideNickname && "pt-0 pb-0"
+   522→    )}>
+   523→      <div className="flex flex-row items-baseline gap-1.5">
+   524→        <span className={clsx(
+   525→          "text-[9px] text-text-secondary/40 shrink-0 min-w-[65px] w-[65px] font-mono whitespace-nowrap transition-opacity duration-500",
+   526→          hideNickname ? "opacity-0" : "opacity-100"
+   527→        )}>[{timestamp}]</span>
+   528→        <span
+   529→          className={clsx(
+   530→            "text-[10.5px] font-bold uppercase tracking-wider truncate min-w-[110px] w-[110px] shrink-0 transition-opacity duration-500",
+   531→            hideNickname ? "opacity-0" : "opacity-100"
+   532→          )}
+   533→          style={{ color: nickColor }}
+   534→          title={nickname}
+   535→        >
+   536→          {nickname}
+   537→        </span>
+   538→        <div className="flex-1 text-[11.5px] leading-relaxed break-words min-w-0 text-text-primary pl-4 border-l border-border/10">
+   539→          {log.event_type === 'agent_error' ? (
+   540→            <div className="flex flex-col gap-1.5 my-1.5 border-l border-status-error/30 bg-status-error/5 p-3 animate-in fade-in slide-in-from-left-1 duration-200 group/error relative">
+   541→              <button
+   542→                onClick={() => onDismiss(log.id)}
+   543→                className="absolute top-1.5 right-1.5 p-1 opacity-0 group-hover/error:opacity-100 hover:bg-status-error/10 rounded-md transition-all text-status-error hover:text-text-primary active:scale-90"
+   544→                title="Dismiss error notification"
+   545→              >
+   546→                <X size={11} />
+   547→              </button>
+   548→              <div className="flex items-center gap-2 text-status-error font-black uppercase text-[10px] tracking-[0.2em]">
+   549→                <span>/AGENT_ERROR</span>
+   550→              </div>
+   551→              <span className="text-status-error/80 italic font-mono text-[10.5px] pl-3 border-l border-status-error/10 uppercase font-black">
+   552→                {payload.message || (payload.category ? `${payload.category}${payload.tool ? `: ${payload.tool}` : ''}` : 'UNKNOWN_ERROR')}
+   553→              </span>
+   554→              <div className="flex flex-wrap gap-4 mt-2 pl-3">
+   555→                <button
+   556→                  onClick={() => onUpdateAgentState(activeAgentId, 'resume')}
+   557→                  className="text-status-success hover:text-text-primary transition-all uppercase font-black text-[9px] tracking-widest active:scale-95"
+   558→                >
+   559→                  [ RETRY_RESUME ]
+   560→                </button>
+   561→              </div>
+   562→            </div>
+   563→          ) : isModelOrUser ? (
+   564→            <>
+   565→              {payload.reasoning && (
+   566→                <div className="mb-2">
+   567→                  <button
+   568→                    onClick={() => setIsExpanded(!isExpanded)}
+   569→                    className="flex items-center gap-1.5 hover:text-accent transition-colors text-left w-full group/thought mb-1 cursor-pointer"
+   570→                  >
+   571→                    <ChevronRight size={11} className={clsx("shrink-0 transition-transform text-text-tertiary/40 group-hover/thought:text-accent pointer-events-none", isExpanded && "rotate-90")} />
+   572→                    <span className="font-bold uppercase tracking-widest opacity-50 text-[9px]">Thought</span>
+   573→                  </button>
+   574→                  {isExpanded && (
+   575→                    <div className="p-2 bg-surface-hover/30 rounded border-l-2 border-accent/30 text-[10px] text-text-tertiary italic whitespace-pre-wrap animate-in fade-in slide-in-from-top-1 duration-200">
+   576→                      {payload.reasoning}
+   577→                    </div>
+   578→                  )}
+   579→                </div>
+   580→              )}
+   581→              <ReactMarkdown
+   582→                components={{
+   583→                  h1: ({ children }) => <h1 className="text-accent font-bold uppercase tracking-widest mt-2 mb-1 border-b border-border/30 pb-0.5 text-[10px]">{children}</h1>,
+   584→                  h2: ({ children }) => <h2 className="text-accent font-bold uppercase tracking-widest mt-1.5 mb-1 text-[10px]">{children}</h2>,
+   585→                  h3: ({ children }) => <h3 className="text-accent font-bold uppercase tracking-widest mt-1 mb-1 text-[10px]">{children}</h3>,
+   586→                  p: ({ children }) => <p className="mb-2 last:mb-0 whitespace-pre-wrap">{children}</p>,
+   587→                  ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-0.5 text-text-secondary">{children}</ul>,
+   588→                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-0.5 text-text-secondary">{children}</ol>,
+   589→                  li: ({ children }) => <li className="pl-0.5">{children}</li>,
+   590→                  code: ({ children }) => <code className="bg-black/30 px-1 rounded text-accent-hover font-mono">{children}</code>,
+   591→                  blockquote: ({ children }) => <blockquote className="border-l-2 border-accent pl-2 italic my-1 text-text-secondary/80">{children}</blockquote>,
+   592→                }}
+   593→              >
+   594→                {payload.content || payload.message || (payload.reasoning ? '' : '')}
+   595→              </ReactMarkdown>
+   596→            </>
+   597→          ) : (
+   598→            <span className="whitespace-pre-wrap">{payload.content || payload.message}</span>
+   599→          )}
+   600→
+   601→          {/* Attachments */}
+   602→          {isInteraction && payload.attachments && payload.attachments.length > 0 && (
+   603→            <div className="mt-1 flex flex-wrap gap-1">
+   604→              {payload.attachments.map((att: Attachment) => {
+   605→                const imageSrc = att.type === 'image'
+   606→                  ? (att.data ? `data:${att.mimeType};base64,${att.data}` : att.previewUrl)
+   607→                  : '';
+   608→                return (
+   609→                  <div key={att.id} className="relative">
+   610→                    {att.type === 'image' && imageSrc ? (
+   611→                      <img
+   612→                        src={imageSrc}
+   613→                        alt={att.name}
+   614→                        className="max-w-[80px] max-h-[60px] object-cover rounded border border-border/30"
+   615→                      />
+   616→                    ) : (
+   617→                      <div className="flex items-center gap-1 px-1 py-0.5 bg-black/20 rounded border border-white/5 text-[8.5px] text-text-secondary">
+   618→                        <File size={9} />
+   619→                        <span className="truncate max-w-[70px]">{att.name}</span>
+   620→                      </div>
+   621→                    )}
+   622→                  </div>
+   623→                );
+   624→              })}
+   625→            </div>
+   626→          )}
+   627→        </div>
+   628→      </div>
+   629→    </div>
+   630→  );
+   631→});
+   632→
+   633→export const LogViewer: React.FC<LogViewerProps> = React.memo(({
+   634→  logs,
+   635→  agents,
+   636→  activeAgentId,
+   637→  onUpdateScope,
+   638→  onUpdateAgentState,
+   639→  openInFinder,
+   640→}) => {
+   641→  const [dismissedLogIds, setDismissedLogIds] = useState<Set<string>>(new Set());
+   642→
+   643→  const handleDismiss = React.useCallback((id: string) => {
+   644→    setDismissedLogIds(prev => {
+   645→      const next = new Set(prev);
+   646→      next.add(id);
+   647→      return next;
+   648→    });
+   649→  }, []);
+   650→
+   651→  // Pre-calculate previous contents for scope proposals to avoid O(N^2) search in the map loop
+   652→  const scopePreviousContentMap = React.useMemo(() => {
+   653→    const map: Record<string, string> = {};
+   654→    let lastContent = '';
+   655→    for (const log of logs) {
+   656→      if (dismissedLogIds.has(log.id)) continue;
+   657→      if (log.event_type === 'scope_proposal' || log.event_type === 'scope_updated') {
+   658→        const payload = log.payload as any;
+   659→        if (payload.scope) {
+   660→          map[log.id] = lastContent;
+   661→          lastContent = payload.scope.content;
+   662→        }
+   663→      }
+   664→    }
+   665→    return map;
+   666→  }, [logs, dismissedLogIds]);
+   667→
+   668→  let lastNickname = '';
+   669→
+   670→  const displayLogs = React.useMemo(() => {
+   671→    const filtered = logs.filter(log => {
+   672→      // Debug: log any secret_request events
+   673→      if (log.event_type === 'secret_request') {
+   674→        console.log('[DEBUG] secret_request event in filter:', log);
+   675→      }
+   676→
+   677→      if (dismissedLogIds.has(log.id)) return false;
+   678→
+   679→      // Filter out thinking messages (we show a status indicator instead)
+   680→      if (log.event_type === 'model_thinking') return false;
+   681→
+   682→      // Filter out empty model responses (only tool calls)
+   683→      if (log.event_type === 'model_responded') {
+   684→        const p = log.payload as any;
+   685→        if (!p.content && !p.message && !p.reasoning) return false;
+   686→      }
+   687→
+   688→      // Filter out empty or automated agent messages
+   689→      if (log.event_type === 'agent_message' || log.event_type === 'sub_agent_report' || log.event_type === 'sub_agent_completed') {
+   690→        const p = log.payload as any;
+   691→        const content = p.content || p.findings || p.message;
+   692→        if (!content || content === 'Task completed successfully.') return false;
+   693→      }
+   694→
+   695→      // Filter out internal tool events that have custom UI treatments
+   696→      if (log.event_type === 'tool_call' || log.event_type === 'tool_output') {
+   697→        const p = log.payload as any;
+   698→        if (p.tool === 'agent_plan' || p.tool === 'vault_save') return false;
+   699→      }
+   700→
+   701→      return true;
+   702→    });
+   703→
+   704→    // Deduplicate scope_updated logs by scope ID and version
+   705→    const seenScopes = new Set<string>();
+   706→    const deduplicated = filtered.filter(log => {
+   707→      if (log.event_type === 'scope_updated' || log.event_type === 'scope_proposal') {
+   708→        const p = log.payload as any;
+   709→        if (p.scope) {
+   710→          const scopeKey = `${p.scope.id}-${p.scope.version || 0}`;
+   711→          if (seenScopes.has(scopeKey)) {
+   712→            return false; // Skip duplicate
+   713→          }
+   714→          seenScopes.add(scopeKey);
+   715→        }
+   716→      }
+   717→      return true;
+   718→    });
+   719→
+   720→    const result: { log: AgentLogEntry; resultLog?: AgentLogEntry }[] = [];
+   721→    const toolCallIdToIdx = new Map<string, number>();
+   722→
+   723→    for (const log of deduplicated) {
+   724→      const payload = log.payload as any;
+   725→      const toolCallId = payload.tool_call_id || payload.id;
+   726→
+   727→      if (log.event_type === 'tool_call' && toolCallId) {
+   728→        toolCallIdToIdx.set(toolCallId, result.length);
+   729→        result.push({ log });
+   730→      } else if ((log.event_type === 'tool_output' || log.event_type === 'tool_error') && toolCallId) {
+   731→        const idx = toolCallIdToIdx.get(toolCallId);
+   732→        if (idx !== undefined) {
+   733→          result[idx].resultLog = log;
+   734→        } else {
+   735→          result.push({ log });
+   736→        }
+   737→      } else {
+   738→        result.push({ log });
+   739→      }
+   740→    }
+   741→    return result;
+   742→  }, [logs, dismissedLogIds]);
+   743→
+   744→  return (
+   745→    <>
+   746→      {displayLogs.map(({ log, resultLog }) => {
+   747→        let nickname = 'System';
+   748→        let nickColor = 'rgb(var(--text-tertiary))';
+   749→
+   750→        const payload = log.payload as any;
+   751→        const isTool = log.event_type === 'tool_call' || log.event_type === 'tool_output' || log.event_type === 'tool_error';
+   752→        const isStatusChange = log.event_type === 'compaction_requested' || log.event_type === 'scope_approved' || log.event_type === 'scope_rejected';
+   753→        const isCLI = log.event_type === 'cli_output' || log.event_type === 'shell_output';
+   754→
+   755→        const logAgent = agents[log.agent_id];
+   756→        const agentName = logAgent ? (logAgent.name || 'Agent') : 'Agent';
+   757→
+   758→        if (log.event_type === 'user_interaction') {
+   759→          if (payload.parent_id) {
+   760→            const parent = agents[payload.parent_id];
+   761→            nickname = parent ? (parent.name || 'Parent') : 'Parent';
+   762→            // Parent agent message to a sub-agent should still look like an "Agent" (Blue)
+   763→            nickColor = 'rgb(var(--accent))';
+   764→          } else {
+   765→            nickname = 'User';
+   766→            // Actual human user interaction should be distinct (Yellow/Orange)
+   767→            nickColor = 'rgb(var(--cobalt-yellow, var(--status-warning)))';
+   768→          }
+   769→        } else if (log.event_type === 'model_responded' || log.event_type === 'scope_updated' || log.event_type === 'scope_proposal' || isCLI) {
+   770→          nickname = agentName;
+   771→          nickColor = 'rgb(var(--accent))';
+   772→        } else if (log.event_type.startsWith('sub_agent_') || log.event_type === 'agent_message') {
+   773→          const senderId = payload.sender_id || payload.sub_agent_id;
+   774→          const sender = agents[senderId];
+   775→          nickname = sender ? (sender.name || 'Agent') : 'Agent';
+   776→          nickColor = 'rgb(var(--cobalt-green, var(--status-success)))';
+   777→        } else if (isTool) {
+   778→          nickname = agentName; // Use agent name for grouping
+   779→          nickColor = 'rgb(var(--cobalt-blue, var(--accent)))';
+   780→        } else if (log.event_type === 'agent_error') {
+   781→          nickname = agentName; // Use agent name for grouping
+   782→          nickColor = 'rgb(var(--status-error))';
+   783→        }
+   784→
+   785→        const displaysNickname = [
+   786→          'user_interaction',
+   787→          'model_responded',
+   788→          'scope_updated',
+   789→          'scope_proposal',
+   790→          'agent_message',
+   791→          'sub_agent_report',
+   792→          'sub_agent_error',
+   793→          'agent_error'
+   794→        ].includes(log.event_type);
+   795→
+   796→        const hideNickname = displaysNickname && nickname === lastNickname;
+   797→        if (displaysNickname) {
+   798→          lastNickname = nickname;
+   799→        }
+   800→
+   801→        return (
+   802→          <LogEntry
+   803→            key={log.id}
+   804→            log={log}
+   805→            resultLog={resultLog}
+   806→            nickname={nickname}
+   807→            nickColor={nickColor}
+   808→            agents={agents}
+   809→            activeAgentId={activeAgentId}
+   810→            previousContent={scopePreviousContentMap[log.id] || ''}
+   811→            onUpdateScope={onUpdateScope}
+   812→            onUpdateAgentState={onUpdateAgentState}
+   813→            openInFinder={openInFinder}
+   814→            onDismiss={handleDismiss}
+   815→            hideNickname={hideNickname}
+   816→          />
+   817→        );
+   818→      })}
+   819→    </>
+   820→  );
+   821→});
+   822→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

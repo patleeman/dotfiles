@@ -1,0 +1,7 @@
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/navigation.spec.ts
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/agent.spec.ts
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/skills.spec.ts
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/triggers.spec.ts
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/usage.spec.ts
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/chat.spec.ts
+/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/settings.spec.ts

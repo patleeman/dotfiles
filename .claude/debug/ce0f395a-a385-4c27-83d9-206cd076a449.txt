@@ -1,0 +1,100 @@
+2025-12-29T00:30:54.856Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (40.2ms): security find-generic-password -a $USER -w -s "Claude Code"
+2025-12-29T00:30:54.899Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (41.1ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-29T00:30:54.982Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-29T00:30:54.982Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-29T00:30:54.982Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-29T00:30:55.009Z [DEBUG] LSP server manager initialized successfully
+2025-12-29T00:30:55.010Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-29T00:30:55.011Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-29T00:30:55.038Z [DEBUG] Stats cache is up to date
+2025-12-29T00:30:55.055Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-29T00:30:55.387Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (324.7ms): cursor --version
+2025-12-29T00:30:55.388Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-29T00:30:55.415Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-29T00:30:55.416Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-29T00:30:55.416Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-29T00:30:55.416Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1766968255416-xs6f2w.sh
+2025-12-29T00:30:55.416Z [DEBUG] Shell binary exists: true
+2025-12-29T00:30:55.416Z [DEBUG] Execution timeout: 10000ms
+2025-12-29T00:30:55.418Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/ce0f395a-a385-4c27-83d9-206cd076a449-agent-ce0f395a-a385-4c27-83d9-206cd076a449.json.tmp.18701.1766968255418
+2025-12-29T00:30:55.424Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.5ms)
+2025-12-29T00:30:55.424Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-29T00:30:55.424Z [DEBUG] Renaming /Users/patrick/.claude/todos/ce0f395a-a385-4c27-83d9-206cd076a449-agent-ce0f395a-a385-4c27-83d9-206cd076a449.json.tmp.18701.1766968255418 to /Users/patrick/.claude/todos/ce0f395a-a385-4c27-83d9-206cd076a449-agent-ce0f395a-a385-4c27-83d9-206cd076a449.json
+2025-12-29T00:30:55.425Z [DEBUG] File /Users/patrick/.claude/todos/ce0f395a-a385-4c27-83d9-206cd076a449-agent-ce0f395a-a385-4c27-83d9-206cd076a449.json written atomically
+2025-12-29T00:30:55.427Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-29T00:30:55.427Z [DEBUG] Total plugin skills loaded: 0
+2025-12-29T00:30:55.427Z [DEBUG] Total plugin commands loaded: 0
+2025-12-29T00:30:55.427Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-29T00:30:55.432Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-29T00:30:55.433Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-29T00:30:55.446Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.18701.1766968255446
+2025-12-29T00:30:55.446Z [DEBUG] Preserving file permissions: 100600
+2025-12-29T00:30:55.450Z [DEBUG] Temp file written successfully, size: 52572 bytes
+2025-12-29T00:30:55.450Z [DEBUG] Applied original permissions to temp file
+2025-12-29T00:30:55.450Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.18701.1766968255446 to /Users/patrick/.claude.json
+2025-12-29T00:30:55.451Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-29T00:30:55.453Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.18701.1766968255453
+2025-12-29T00:30:55.453Z [DEBUG] Preserving file permissions: 100600
+2025-12-29T00:30:55.457Z [DEBUG] Temp file written successfully, size: 52572 bytes
+2025-12-29T00:30:55.457Z [DEBUG] Applied original permissions to temp file
+2025-12-29T00:30:55.457Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.18701.1766968255453 to /Users/patrick/.claude.json
+2025-12-29T00:30:55.458Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-29T00:30:55.459Z [DEBUG] Git remote URL: null
+2025-12-29T00:30:55.459Z [DEBUG] No git remote URL found
+2025-12-29T00:30:55.459Z [DEBUG] Not in a GitHub repository, skipping path mapping update
+2025-12-29T00:30:55.476Z [DEBUG] Total plugin agents loaded: 0
+2025-12-29T00:30:55.488Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2025-12-29T00:30:55.492Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2025-12-29T00:30:55.492Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.492Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2025-12-29T00:30:55.499Z [DEBUG] Total plugin output styles loaded: 0
+2025-12-29T00:30:55.510Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2025-12-29T00:30:55.510Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.510Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2025-12-29T00:30:55.512Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2025-12-29T00:30:55.512Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.512Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2025-12-29T00:30:55.514Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-29T00:30:55.514Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-29T00:30:55.515Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-29T00:30:55.515Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-29T00:30:55.516Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2025-12-29T00:30:55.516Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.516Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-29T00:30:55.517Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-29T00:30:55.521Z [DEBUG] Skills and commands included in Skill tool:
+2025-12-29T00:30:55.524Z [ERROR] "Error: Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted\n    at OT.validateHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:1008)\n    at OT.buildHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:8502)\n    at async OT.buildRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:7560)\n    at async OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:3388)\n    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:4211\n    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2262\n    at async gT3 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1006:16947)\n    at async bmB (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2195)\n    at async RyA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:52)\n    at async _yA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:261)"
+2025-12-29T00:30:55.590Z [DEBUG] Shell snapshot created successfully (42969 bytes)
+2025-12-29T00:30:55.600Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.18701.1766968255600
+2025-12-29T00:30:55.600Z [DEBUG] Preserving file permissions: 100600
+2025-12-29T00:30:55.605Z [DEBUG] Temp file written successfully, size: 52572 bytes
+2025-12-29T00:30:55.605Z [DEBUG] Applied original permissions to temp file
+2025-12-29T00:30:55.605Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.18701.1766968255600 to /Users/patrick/.claude.json
+2025-12-29T00:30:55.605Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-29T00:30:55.627Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.18701.1766968255627
+2025-12-29T00:30:55.627Z [DEBUG] Preserving file permissions: 100600
+2025-12-29T00:30:55.631Z [DEBUG] Temp file written successfully, size: 52573 bytes
+2025-12-29T00:30:55.631Z [DEBUG] Applied original permissions to temp file
+2025-12-29T00:30:55.631Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.18701.1766968255627 to /Users/patrick/.claude.json
+2025-12-29T00:30:55.632Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-29T00:30:55.645Z [ERROR] Error streaming, falling back to non-streaming mode: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+2025-12-29T00:30:55.645Z [ERROR] Error streaming, falling back to non-streaming mode: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+2025-12-29T00:30:55.646Z [ERROR] Error streaming, falling back to non-streaming mode: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+2025-12-29T00:30:55.651Z [ERROR] Error in non-streaming fallback: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+2025-12-29T00:30:55.651Z [ERROR] "Error: Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted\n    at OT.validateHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:1008)\n    at OT.buildHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:8502)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async OT.buildRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:7560)\n    at async OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:3388)\n    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)\n    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)\n    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)\n    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799\n    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)"
+2025-12-29T00:30:55.652Z [ERROR] Error in non-streaming fallback: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+2025-12-29T00:30:55.652Z [ERROR] "Error: Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted\n    at OT.validateHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:1008)\n    at OT.buildHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:8502)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async OT.buildRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:7560)\n    at async OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:3388)\n    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)\n    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)\n    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)\n    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799\n    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)"
+2025-12-29T00:30:55.652Z [ERROR] Error in non-streaming fallback: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+2025-12-29T00:30:55.652Z [ERROR] "Error: Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted\n    at OT.validateHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:1008)\n    at OT.buildHeaders (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:8502)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async OT.buildRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:7560)\n    at async OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:3388)\n    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)\n    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)\n    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)\n    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799\n    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)"
+2025-12-29T00:30:55.675Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-29T00:30:55.675Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.675Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-29T00:30:55.677Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-29T00:30:55.677Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.677Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-29T00:30:55.678Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2025-12-29T00:30:55.678Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.678Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-29T00:30:55.679Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2025-12-29T00:30:55.679Z [DEBUG] Found 0 hook matchers in settings
+2025-12-29T00:30:55.679Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

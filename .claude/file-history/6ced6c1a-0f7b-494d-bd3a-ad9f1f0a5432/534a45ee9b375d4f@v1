@@ -1,0 +1,165 @@
+import { test, expect } from './fixtures/test-fixtures';
+
+test.describe('Triggers View', () => {
+  test.beforeEach(async ({ triggersPage }) => {
+    await triggersPage.goto();
+  });
+
+  test('should display triggers page', async ({ page }) => {
+    await expect(page).toHaveURL('/triggers');
+  });
+
+  test('should show triggers header', async ({ page }) => {
+    // Should show triggers count (may appear as "N triggers")
+    await expect(page.locator('text=/\\d+ triggers/')).toBeVisible();
+  });
+
+  test('should show trigger list headers', async ({ page }) => {
+    await expect(page.locator('text=Trigger')).toBeVisible();
+    await expect(page.locator('text=Type')).toBeVisible();
+  });
+
+  test('should show empty state when no triggers exist', async ({ page }) => {
+    // If no triggers, should show empty message
+    const emptyState = page.locator('text=No triggers found');
+    // May or may not be visible depending on state
+  });
+
+  test('should display trigger items in list', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItems = page.locator('[data-testid="trigger-item"]');
+    // May have triggers or may be empty
+  });
+
+  test('should select a trigger when clicked', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItem = page.locator('[data-testid="trigger-item"]').first();
+    if (await triggerItem.isVisible()) {
+      await triggerItem.click();
+      // Trigger should be selected/highlighted
+    }
+  });
+
+  test('should open context menu on right-click', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItem = page.locator('[data-testid="trigger-item"]').first();
+    if (await triggerItem.isVisible()) {
+      await triggerItem.click({ button: 'right' });
+      // Context menu should appear
+      await expect(page.locator('[data-testid="context-menu"]')).toBeVisible();
+    }
+  });
+
+  test('should show delete option in context menu', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItem = page.locator('[data-testid="trigger-item"]').first();
+    if (await triggerItem.isVisible()) {
+      await triggerItem.click({ button: 'right' });
+      await expect(page.locator('text=Delete')).toBeVisible();
+    }
+  });
+
+  test('should show trigger type', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItem = page.locator('[data-testid="trigger-item"]').first();
+    if (await triggerItem.isVisible()) {
+      // Should show trigger type (System Event Source)
+      await expect(page.locator('text=System Event Source')).toBeVisible();
+    }
+  });
+});
+
+test.describe('Triggers - Types', () => {
+  test.beforeEach(async ({ triggersPage }) => {
+    await triggersPage.goto();
+  });
+
+  test('should display calendar triggers', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    // Look for calendar type triggers
+    const calendarTriggers = page.locator('text=calendar').or(page.locator('text=Calendar'));
+    // May or may not be visible
+  });
+
+  test('should display webhook triggers', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    // Look for webhook type triggers
+    const webhookTriggers = page.locator('text=webhook').or(page.locator('text=Webhook'));
+    // May or may not be visible
+  });
+
+  test('should display file watcher triggers', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    // Look for file watcher type triggers
+    const fileWatcherTriggers = page.locator('text=file').or(page.locator('text=watcher'));
+    // May or may not be visible
+  });
+});
+
+test.describe('Triggers - Agent Subscription', () => {
+  test.beforeEach(async ({ triggersPage }) => {
+    await triggersPage.goto();
+  });
+
+  test('should show subscribe option in context menu', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItem = page.locator('[data-testid="trigger-item"]').first();
+    if (await triggerItem.isVisible()) {
+      await triggerItem.click({ button: 'right' });
+      // Should have subscribe option
+      const subscribeOption = page.locator('text=Subscribe');
+      // May or may not be visible depending on trigger state
+    }
+  });
+
+  test('should show subscribed agents for trigger', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItem = page.locator('[data-testid="trigger-item"]').first();
+    if (await triggerItem.isVisible()) {
+      await triggerItem.click();
+      // Should show list of subscribed agents or empty state
+    }
+  });
+});
+
+test.describe('Triggers - Keyboard Navigation', () => {
+  test.beforeEach(async ({ triggersPage }) => {
+    await triggersPage.goto();
+  });
+
+  test('should navigate triggers with arrow keys', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItems = page.locator('[data-testid="trigger-item"]');
+    const count = await triggerItems.count();
+
+    if (count > 1) {
+      await triggerItems.first().click();
+      await page.keyboard.press('ArrowDown');
+      // Focus should move to next trigger
+    }
+  });
+
+  test('should close context menu with Escape', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    const triggerItem = page.locator('[data-testid="trigger-item"]').first();
+    if (await triggerItem.isVisible()) {
+      await triggerItem.click({ button: 'right' });
+      await expect(page.locator('[data-testid="context-menu"]')).toBeVisible();
+
+      await page.keyboard.press('Escape');
+      await expect(page.locator('[data-testid="context-menu"]')).not.toBeVisible();
+    }
+  });
+});

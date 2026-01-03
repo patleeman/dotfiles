@@ -1,0 +1,214 @@
+import React, { useState, useEffect } from 'react';
+import { clsx } from 'clsx';
+import { useAgents } from '../../context/AgentContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../../lib/api';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from '../ui';
+
+export const TriggersView: React.FC = () => {
+    const { listTriggers, deleteTrigger, renameTrigger, isExplorerCollapsed, agents, createAgent, selectAgent, setSidebarCollapsed } = useAgents();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, triggerId: string } | null>(null);
+    const [isCreating, setIsCreating] = useState<string | null>(null);
+
+    useEffect(() => {
+        const handleClick = () => setContextMenu(null);
+        window.addEventListener('click', handleClick);
+        return () => window.removeEventListener('click', handleClick);
+    }, []);
+
+    const handleContextMenu = (e: React.MouseEvent, triggerId: string) => {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY, triggerId });
+    };
+
+    const { data: config } = useQuery({
+        queryKey: ['config'],
+        queryFn: () => api.getConfig(),
+    });
+
+    const { data: triggersData, isLoading: triggersLoading } = useQuery({
+        queryKey: ['triggers'],
+        queryFn: async () => {
+            const resp = await listTriggers();
+            return Array.isArray(resp?.triggers) ? resp.triggers : [];
+        }
+    });
+
+    const handleTriggerClick = async (triggerId: string) => {
+        // Find if there's an existing Trigger Architect agent for this trigger
+        const architect = Object.values(agents).find(a =>
+            a.name === `Trigger Architect: ${triggerId}` &&
+            !a.is_internal
+        );
+
+        if (architect) {
+            selectAgent(architect.id);
+            navigate(`/agent/${architect.id}`);
+            return;
+        }
+
+        setIsCreating(triggerId);
+        try {
+            const response = await createAgent(
+                { provider: config?.inference?.chat?.provider, model: config?.inference?.chat?.model },
+                "",
+                { is_trigger_architect: true, trigger_id: triggerId }
+            );
+            if (response && response.id) {
+                setSidebarCollapsed(true);
+                selectAgent(response.id);
+                navigate(`/agent/${response.id}`);
+            }
+        } catch (err) {
+            console.error('Failed to create trigger architect:', err);
+        } finally {
+            setIsCreating(null);
+        }
+    };
+
+    const handleAction = async (triggerId: string, action: 'edit' | 'open' | 'rename' | 'delete') => {
+        switch (action) {
+            case 'edit':
+                handleTriggerClick(triggerId);
+                break;
+            case 'open':
+                try {
+                    const workspacePath = await api.listWorkspace();
+                    // Triggers are in configDir/triggers/triggerId
+                    // Let's try to open the specific trigger folder, fallback to triggers root.
+                    try {
+                        await api.openPath(`${workspacePath.path}/triggers/${triggerId}`);
+                    } catch {
+                        await api.openPath(`${workspacePath.path}/triggers`);
+                    }
+                } catch (err) {
+                    console.error('Failed to open triggers directory:', err);
+                }
+                break;
+            case 'rename':
+                const newName = window.prompt(`Enter new name for trigger "${triggerId}":`, triggerId);
+                if (newName && newName !== triggerId) {
+                    await renameTrigger(triggerId, newName);
+                    queryClient.invalidateQueries({ queryKey: ['triggers'] });
+                }
+                break;
+            case 'delete':
+                const confirmed = await ask(`Are you sure you want to delete the trigger "${triggerId}"? This will permanently remove the trigger files. This cannot be undone.`, {
+                    title: 'Delete Trigger',
+                    kind: 'warning',
+                });
+                if (confirmed) {
+                    await deleteTrigger(triggerId);
+                    queryClient.invalidateQueries({ queryKey: ['triggers'] });
+                }
+                break;
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-background font-mono text-[12px] relative overflow-hidden select-none">
+            {/* Triggers Header */}
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border/20 bg-surface/5 shrink-0 font-mono">
+                <div className="flex items-center gap-3">
+                    <h1 className="text-[11px] font-black text-accent uppercase tracking-[0.25em]">
+                        {isExplorerCollapsed ? 'Triggers ' : null}
+                        <span className={clsx("text-text-tertiary opacity-30 font-black", isExplorerCollapsed ? "ml-1" : "ml-0")}>
+                            {triggersData?.length || 0} triggers
+                        </span>
+                    </h1>
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-auto p-1 custom-scrollbar">
+                <div className="w-full font-mono">
+                    <div className="sticky top-0 z-10 grid grid-cols-[200px_1fr] gap-2 px-4 py-1.5 bg-background border-b border-border/40 text-[9px] font-black text-text-tertiary uppercase tracking-widest shadow-sm">
+                        <div>Trigger</div>
+                        <div>Type</div>
+                    </div>
+
+                    <div className="flex flex-col">
+                        {triggersLoading ? (
+                            <div className="px-4 py-12 text-center">
+                                <div className="flex flex-col items-center gap-2 text-text-tertiary/20">
+                                    <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    <span className="uppercase tracking-[0.2em] text-[9px] font-black">Loading triggers...</span>
+                                </div>
+                            </div>
+                        ) : (triggersData?.length || 0) === 0 ? (
+                            <div className="px-4 py-12 text-center text-text-tertiary/30 uppercase tracking-[0.2em] text-[9px] font-black">
+                                No triggers found
+                            </div>
+                        ) : (
+                            [...(triggersData || [])]
+                                .sort((a, b) => a.localeCompare(b))
+                                .map((triggerId: string) => (
+                                    <div
+                                        key={triggerId}
+                                        data-testid="trigger-item"
+                                        onClick={() => handleTriggerClick(triggerId)}
+                                        onContextMenu={(e) => handleContextMenu(e, triggerId)}
+                                        className={clsx(
+                                            "grid grid-cols-[200px_1fr] gap-2 px-4 py-1 border-b border-border/5 hover:bg-surface/30 transition-all items-start group cursor-pointer",
+                                            isCreating === triggerId && "opacity-50 pointer-events-none"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-2 text-text-primary font-black uppercase tracking-tighter text-[10px]">
+                                            {isCreating === triggerId && (
+                                                <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+                                            )}
+                                            {triggerId}
+                                        </div>
+                                        <div className="text-text-secondary opacity-50 text-[10px] leading-relaxed uppercase tracking-tight font-black">
+                                            System Event Source
+                                        </div>
+                                    </div>
+                                ))
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <DropdownMenu
+                data-testid="context-menu"
+                isOpen={!!contextMenu}
+                onClose={() => setContextMenu(null)}
+                position={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : { x: 0, y: 0 }}
+                title={contextMenu?.triggerId}
+            >
+                <DropdownMenuItem
+                    onClick={() => {
+                        if (contextMenu) handleAction(contextMenu.triggerId, 'edit');
+                        setContextMenu(null);
+                    }}
+                >
+                    Edit
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                    onClick={() => {
+                        if (contextMenu) handleAction(contextMenu.triggerId, 'open');
+                        setContextMenu(null);
+                    }}
+                >
+                    Open in Finder
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                    variant="danger"
+                    onClick={() => {
+                        if (contextMenu) handleAction(contextMenu.triggerId, 'delete');
+                        setContextMenu(null);
+                    }}
+                >
+                    Delete
+                </DropdownMenuItem>
+            </DropdownMenu>
+        </div>
+    );
+};

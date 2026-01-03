@@ -1,0 +1,442 @@
+import React, { useState, useEffect, useLayoutEffect, useRef, type ChangeEvent, useMemo } from 'react';
+import { Send, Paperclip, X, File } from 'lucide-react';
+import { type Attachment, api } from '../../lib/api';
+import { readFile } from '@tauri-apps/plugin-fs';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { useQuery } from '@tanstack/react-query';
+import { isHotkey } from '../../lib/hotkeys';
+import { useAgents } from '../../context/AgentContext';
+
+interface ChatInputProps {
+    agentId: string;
+    onSendMessage: (content: string, attachments?: Attachment[]) => Promise<void>;
+    disabled?: boolean;
+}
+
+const AttachmentItem = React.memo(({ attachment, onRemove }: { attachment: Attachment, onRemove: (id: string) => void }) => {
+    return (
+        <div
+            className="relative group flex items-center gap-1.5 bg-background rounded border border-border px-1.5 py-1"
+        >
+            {attachment.type === 'image' && (attachment.previewUrl || attachment.data) ? (
+                <img
+                    src={attachment.previewUrl || `data:${attachment.mimeType};base64,${attachment.data}`}
+                    alt={attachment.name}
+                    className="w-8 h-8 object-cover rounded shadow-sm"
+                />
+            ) : (
+                <div className="w-8 h-8 flex items-center justify-center bg-surface rounded border border-border/30">
+                    <File size={16} className="text-text-secondary" />
+                </div>
+            )}
+            <div className="flex flex-col min-w-0 max-w-[80px]">
+                <span className="text-[10px] text-text-primary truncate">{attachment.name}</span>
+            </div>
+            <button
+                type="button"
+                onClick={() => onRemove(attachment.id)}
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-surface border border-border hover:border-status-error shadow-sm rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-status-error/20 transition-all z-10 active:scale-90"
+            >
+                <X size={10} strokeWidth={3} />
+            </button>
+        </div>
+    );
+});
+
+function generateId(): string {
+    return crypto.randomUUID();
+}
+
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+export const ChatInput: React.FC<ChatInputProps> = React.memo(({ agentId, onSendMessage, disabled: externalDisabled }) => {
+    const { agents, logs, updateAgentConfig } = useAgents();
+    const [chatMessage, setChatMessage] = useState('');
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isSubmittingManual, setIsSubmittingManual] = useState(false);
+    const isProcessingDropRef = useRef(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const chatInputRef = useRef<HTMLTextAreaElement>(null);
+
+    const agent = agents[agentId];
+    const agentLogs = logs[agentId] || [];
+    const isFeedbackCollector = agent?.name === 'Feedback Collector';
+
+    const isManualFeedbackMode = useMemo(() => {
+        if (!isFeedbackCollector) return false;
+        const lastAssistantMsg = [...agentLogs].reverse().find(l => l.event_type === 'model_responded');
+        const content = lastAssistantMsg?.payload?.content as string | undefined;
+        return content?.includes('send your feedback directly');
+    }, [isFeedbackCollector, agentLogs]);
+
+    const isChoiceMode = useMemo(() => {
+        if (!isFeedbackCollector) return false;
+        const lastAssistantMsg = [...agentLogs].reverse().find(l => l.event_type === 'model_responded');
+        const content = lastAssistantMsg?.payload?.content as string | undefined;
+        return content?.includes('uses your AI credits');
+    }, [isFeedbackCollector, agentLogs]);
+
+    const disabled = externalDisabled || isSubmittingManual;
+
+    // Reset submission state on agent change
+    useEffect(() => {
+        setIsSubmittingManual(false);
+    }, [agentId]);
+
+    // Load draft from localStorage on mount or agent change
+    useEffect(() => {
+        const draft = localStorage.getItem(`agent_draft_${agentId}`);
+        if (draft) {
+            setChatMessage(draft);
+        } else {
+            setChatMessage('');
+        }
+
+        // Auto-focus the input box when landing on the workspace or switching agents
+        if (!disabled) {
+            chatInputRef.current?.focus();
+        }
+    }, [agentId, disabled]);
+
+    // Save draft to localStorage as user types - DEBOUNCED
+    useEffect(() => {
+        if (!agentId || !chatMessage) {
+            if (agentId) localStorage.removeItem(`agent_draft_${agentId}`);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            localStorage.setItem(`agent_draft_${agentId}`, chatMessage);
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(timer);
+    }, [agentId, chatMessage]);
+
+    // Auto-resize chat input
+    useLayoutEffect(() => {
+        const textarea = chatInputRef.current;
+        if (textarea) {
+            // 1 line = 20px (leading-5) + 8px (py-1) = 28px
+            // 3 lines = 60px + 8px = 68px
+            const minHeight = 28;
+            const maxHeight = 68;
+
+            const oldHeight = textarea.style.height;
+
+            // Reset height to 'auto' to get the natural scrollHeight
+            textarea.style.height = 'auto';
+
+            const scrollHeight = textarea.scrollHeight;
+            // Ensure we are at least minHeight to prevent flickering/jumping
+            const targetHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
+            const newHeightStr = `${targetHeight}px`;
+
+            if (oldHeight !== newHeightStr) {
+                textarea.style.height = newHeightStr;
+            } else {
+                textarea.style.height = oldHeight;
+            }
+        }
+    }, [chatMessage]);
+
+    const { data: config } = useQuery({
+        queryKey: ['config'],
+        queryFn: () => api.getConfig(),
+    });
+
+    // Clean up blob URLs on unmount
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const focusHotkey = (config?.ui as any)?.hotkeys?.['focus_input'] || 'Cmd+L';
+            if (isHotkey(e, focusHotkey)) {
+                e.preventDefault();
+                chatInputRef.current?.focus();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            attachments.forEach(att => {
+                if (att.previewUrl) URL.revokeObjectURL(att.previewUrl);
+            });
+        };
+    }, [attachments, config]);
+
+    // Tauri Drag and Drop handling
+    useEffect(() => {
+        let unlisten: (() => void) | undefined;
+
+        const setupDragDrop = async () => {
+            // Skip drag-drop setup if Tauri is not available (e.g., in E2E tests or browser mode)
+            if (typeof window === 'undefined' || !(window as any).__TAURI__) {
+                return;
+            }
+
+            try {
+                const webview = getCurrentWebviewWindow();
+                unlisten = await webview.onDragDropEvent(async (event: any) => {
+                    if (event.payload.type === 'enter' || event.payload.type === 'over') {
+                        setIsDragging(true);
+                    } else if (event.payload.type === 'leave') {
+                        setIsDragging(false);
+                    } else if (event.payload.type === 'drop') {
+                        setIsDragging(false);
+
+                        if (isProcessingDropRef.current) return;
+
+                        const paths = event.payload.paths;
+                        if (paths && paths.length > 0) {
+                            isProcessingDropRef.current = true;
+                            try {
+                                const newAttachments: Attachment[] = [];
+                                for (const filePath of paths) {
+                                    try {
+                                        const contents = await readFile(filePath);
+                                        const fileName = filePath.split('/').pop() || 'file';
+                                        const ext = fileName.split('.').pop()?.toLowerCase() || '';
+
+                                        const mimeTypes: Record<string, string> = {
+                                            'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'gif': 'image/gif', 'webp': 'image/webp',
+                                            'pdf': 'application/pdf', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                            'csv': 'text/csv', 'txt': 'text/plain', 'html': 'text/html', 'htm': 'text/html',
+                                            'json': 'application/json', 'md': 'text/markdown'
+                                        };
+                                        const mimeType = mimeTypes[ext] || 'application/octet-stream';
+                                        const isImage = IMAGE_TYPES.includes(mimeType);
+
+                                        const base64 = await new Promise<string>((resolve) => {
+                                            const reader = new FileReader();
+                                            reader.onload = () => resolve((reader.result as string).split(',')[1]);
+                                            reader.readAsDataURL(new Blob([contents]));
+                                        });
+
+                                        const blob = new Blob([contents], { type: mimeType });
+                                        const previewUrl = isImage ? URL.createObjectURL(blob) : undefined;
+
+                                        newAttachments.push({
+                                            id: generateId(),
+                                            type: isImage ? 'image' : 'file',
+                                            name: fileName,
+                                            mimeType,
+                                            data: base64,
+                                            size: contents.length,
+                                            path: filePath,
+                                            previewUrl,
+                                        });
+                                    } catch (err) {
+                                        console.error('Failed to read file:', filePath, err);
+                                    }
+                                }
+                                if (newAttachments.length > 0) {
+                                    setAttachments(prev => [...prev, ...newAttachments]);
+                                }
+                            } finally {
+                                isProcessingDropRef.current = false;
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to setup Tauri drag-drop listener:', err);
+            }
+        };
+
+        setupDragDrop();
+        return () => { if (unlisten) unlisten(); };
+    }, []);
+
+    const processFile = async (file: File): Promise<Attachment | null> => {
+        if (file.size > MAX_FILE_SIZE) {
+            console.warn(`File ${file.name} is too large (max 10MB)`);
+            return null;
+        }
+
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const base64 = (reader.result as string).split(',')[1];
+                const isImage = IMAGE_TYPES.includes(file.type);
+
+                const attachment: Attachment = {
+                    id: generateId(),
+                    type: isImage ? 'image' : 'file',
+                    name: file.name,
+                    mimeType: file.type || 'application/octet-stream',
+                    data: base64,
+                    size: file.size,
+                    previewUrl: isImage ? URL.createObjectURL(file) : undefined,
+                };
+
+                resolve(attachment);
+            };
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const addFiles = async (files: FileList | File[]) => {
+        const fileArray = Array.from(files);
+        const newAttachments: Attachment[] = [];
+
+        for (const file of fileArray) {
+            const attachment = await processFile(file);
+            if (attachment) {
+                newAttachments.push(attachment);
+            }
+        }
+
+        if (newAttachments.length > 0) {
+            setAttachments(prev => [...prev, ...newAttachments]);
+        }
+    };
+
+    const removeAttachment = React.useCallback((id: string) => {
+        setAttachments(prev => {
+            const removed = prev.find(a => a.id === id);
+            if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+            return prev.filter(a => a.id !== id);
+        });
+    }, []);
+
+    const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            await addFiles(files);
+        }
+        e.target.value = '';
+    };
+
+    const openFileDialog = () => fileInputRef.current?.click();
+
+    const handleSendMessageInternal = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!chatMessage.trim() && attachments.length === 0) return;
+
+        const messageToSend = chatMessage;
+        const attachmentsToSend = attachments.length > 0 ? [...attachments] : undefined;
+
+        // Clear local state immediately for better UX
+        setChatMessage('');
+        setAttachments([]);
+        localStorage.removeItem(`agent_draft_${agentId}`);
+
+        // Revoke object URLs
+        attachmentsToSend?.forEach(att => {
+            if (att.previewUrl) URL.revokeObjectURL(att.previewUrl);
+        });
+
+        if (isManualFeedbackMode) {
+            setIsSubmittingManual(true);
+            try {
+                await api.submitFeedbackManual(agentId, messageToSend);
+            } catch (err) {
+                console.error('Failed to submit manual feedback:', err);
+            } finally {
+                setIsSubmittingManual(false);
+            }
+            return;
+        }
+
+        if (isChoiceMode && messageToSend.toLowerCase().trim() === 'yes') {
+            // Transition to real provider
+            try {
+                await updateAgentConfig(
+                    agentId,
+                    { provider: config?.inference?.chat?.provider || '', model: config?.inference?.chat?.model || '' }
+                );
+            } catch (err) {
+                console.error('Failed to transition feedback agent:', err);
+            }
+        }
+
+        await onSendMessage(messageToSend, attachmentsToSend);
+    };
+
+    return (
+        <div className="px-3 py-1 bg-transparent flex flex-col gap-2">
+            {isChoiceMode && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/5 border border-accent/10 rounded-md">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                    <p className="text-[10px] text-text-secondary italic">
+                        Notice: Choosing "Yes" will use a paid AI provider and consume your API credits.
+                    </p>
+                </div>
+            )}
+            {/* Attachment preview area */}
+            {attachments.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                    {attachments.map(attachment => (
+                        <AttachmentItem
+                            key={attachment.id}
+                            attachment={attachment}
+                            onRemove={removeAttachment}
+                        />
+                    ))}
+                </div>
+            )}
+
+            <form onSubmit={handleSendMessageInternal} className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-accent font-bold text-[11.5px]">&gt;</span>
+                </div>
+                <textarea
+                    ref={chatInputRef}
+                    rows={1}
+                    placeholder="Type message..."
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessageInternal(e);
+                        }
+                    }}
+                    disabled={disabled}
+                    className="flex-1 bg-transparent py-1 text-[11.5px] font-mono text-text-primary focus:outline-none outline-none min-w-0 placeholder:opacity-30 resize-none overflow-y-auto custom-scrollbar leading-5 disabled:opacity-50 min-h-[28px]"
+                />
+                <div className="flex items-center gap-1">
+                    <button
+                        type="button"
+                        onClick={openFileDialog}
+                        disabled={disabled}
+                        className="p-1.5 hover:text-text-primary text-text-tertiary transition-all disabled:opacity-30 hover:bg-surface-hover rounded-md active:scale-90"
+                        title="Attach File"
+                    >
+                        <Paperclip size={14} />
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={disabled || (!chatMessage.trim() && attachments.length === 0)}
+                        className="p-1.5 text-accent hover:text-text-primary hover:bg-accent transition-all disabled:opacity-30 rounded-md active:scale-90 shadow-sm hover:shadow-accent/20"
+                    >
+                        <Send size={14} />
+                    </button>
+                </div>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                />
+            </form>
+
+            {/* Full-window drag overlay - Moved here for containment, but could be higher up */}
+            {isDragging && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none animate-in fade-in duration-200">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-2 border-dashed border-accent">
+                            <Paperclip size={40} className="text-accent" />
+                        </div>
+                        <div className="text-xl font-medium text-text-primary">Drop files to attach</div>
+                        <div className="text-sm text-text-secondary">Release to add files to your message</div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+});
+

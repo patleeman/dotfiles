@@ -1,0 +1,73 @@
+     1→import { spawn, ChildProcess } from 'child_process';
+     2→import { resolve, dirname } from 'path';
+     3→import { fileURLToPath } from 'url';
+     4→
+     5→const __filename = fileURLToPath(import.meta.url);
+     6→const __dirname = dirname(__filename);
+     7→
+     8→let serverProcess: ChildProcess | null = null;
+     9→
+    10→async function waitForServer(url: string, timeout = 30000): Promise<void> {
+    11→  const start = Date.now();
+    12→  while (Date.now() - start < timeout) {
+    13→    try {
+    14→      const response = await fetch(url);
+    15→      if (response.ok) {
+    16→        return;
+    17→      }
+    18→    } catch {
+    19→      // Server not ready yet
+    20→    }
+    21→    await new Promise(resolve => setTimeout(resolve, 500));
+    22→  }
+    23→  throw new Error(`Server at ${url} did not start within ${timeout}ms`);
+    24→}
+    25→
+    26→export default async function globalSetup() {
+    27→  const backendPath = resolve(__dirname, '../../../go-backend/server');
+    28→  const backendUrl = 'http://localhost:9712/api/v1/ping';
+    29→
+    30→  // Check if server is already running
+    31→  try {
+    32→    const response = await fetch(backendUrl);
+    33→    if (response.ok) {
+    34→      console.log('Backend server already running');
+    35→      return;
+    36→    }
+    37→  } catch {
+    38→    // Server not running, we'll start it
+    39→  }
+    40→
+    41→  console.log('Starting backend server...');
+    42→
+    43→  serverProcess = spawn(backendPath, [], {
+    44→    stdio: 'pipe',
+    45→    env: {
+    46→      ...process.env,
+    47→      FAMILIAR_TEST_MODE: 'true',
+    48→    },
+    49→    detached: true,
+    50→  });
+    51→
+    52→  serverProcess.stdout?.on('data', (data) => {
+    53→    console.log(`[backend] ${data}`);
+    54→  });
+    55→
+    56→  serverProcess.stderr?.on('data', (data) => {
+    57→    console.error(`[backend] ${data}`);
+    58→  });
+    59→
+    60→  // Store the PID for teardown
+    61→  if (serverProcess.pid) {
+    62→    process.env.BACKEND_PID = String(serverProcess.pid);
+    63→  }
+    64→
+    65→  // Wait for server to be ready
+    66→  await waitForServer(backendUrl);
+    67→  console.log('Backend server ready');
+    68→}
+    69→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

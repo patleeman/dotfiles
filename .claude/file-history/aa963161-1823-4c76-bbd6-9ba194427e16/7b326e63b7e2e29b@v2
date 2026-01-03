@@ -1,0 +1,866 @@
+import React, { useContext, useCallback, useSyncExternalStore, useEffect, useState, useRef } from 'react';
+import { globalWS } from '../lib/websocket';
+import { api, type Agent, type ScopeDocument, type Attachment } from '../lib/api';
+import {
+  type AgentLogEntry,
+  type AgentStore,
+  type FleetFilterStatus,
+  type FleetGroupingMode,
+  type FleetViewMode,
+  type AgentTab,
+  type FocusedPane,
+  createAgentStore,
+  EMPTY_STATE,
+  updateState,
+  AgentStoreContext
+} from './AgentStore';
+
+function aggregateLogs(history: AgentLogEntry[]): AgentLogEntry[] {
+  const aggregatedHistory: AgentLogEntry[] = [];
+  const chunkMap = new Map<string, number>(); // entryId -> index in aggregatedHistory
+
+  history.forEach(log => {
+    if (log.event_type === 'model_responded_chunk' || log.event_type === 'model_thinking_chunk' || log.event_type === 'tool_call_chunk') {
+      const payload = log.payload as any;
+      const { id: streamId, content, args, index, tool } = payload;
+
+      let targetEventType: string;
+      let entryId: string;
+
+      if (log.event_type === 'tool_call_chunk') {
+        targetEventType = 'tool_call';
+        entryId = `${streamId}_tool_call_${index}`;
+      } else {
+        targetEventType = log.event_type === 'model_responded_chunk' ? 'model_responded' : 'model_thinking';
+        entryId = `${streamId}_${targetEventType}`;
+      }
+
+      const existingIdx = chunkMap.get(entryId);
+
+      if (existingIdx !== undefined) {
+        const entry = aggregatedHistory[existingIdx];
+        if (content !== undefined) {
+          entry.payload.content = (entry.payload.content as string || '') + content;
+        }
+        if (args !== undefined) {
+          entry.payload.args = (entry.payload.args || '') + args;
+        }
+        if (tool !== undefined && tool !== '') {
+          entry.payload.tool = tool;
+        }
+      } else {
+        const newEntry: AgentLogEntry = {
+          ...log,
+          id: entryId,
+          event_type: targetEventType,
+          payload: {
+            content: content || '',
+            args: args || '',
+            tool: tool || '',
+            streaming_id: streamId,
+            index: index
+          }
+        };
+        chunkMap.set(entryId, aggregatedHistory.length);
+        aggregatedHistory.push(newEntry);
+      }
+    } else {
+      const payload = log.payload as any;
+      const payloadId = payload?.id;
+      const streamingId = payload?.streaming_id;
+      const index = payload?.index;
+
+      let entryId: string | null = null;
+      if (log.event_type === 'tool_call' && streamingId !== undefined && index !== undefined) {
+        entryId = `${streamingId}_tool_call_${index}`;
+      } else if (log.event_type === 'tool_approval_requested' || log.event_type === 'tool_approval_resolved') {
+        const toolCallId = payload.tool_call_id || payload.id;
+        if (toolCallId) {
+          entryId = `${toolCallId}_tool_approval`;
+        }
+      } else if (payloadId) {
+        entryId = `${payloadId}_${log.event_type}`;
+      }
+
+      if (entryId) {
+        const existingIdx = chunkMap.get(entryId);
+        if (existingIdx !== undefined) {
+          const entry = aggregatedHistory[existingIdx];
+          // Update event type (requested -> resolved) and merge payload
+          entry.event_type = log.event_type;
+          entry.payload = { ...entry.payload, ...payload };
+          return;
+        }
+        chunkMap.set(entryId, aggregatedHistory.length);
+      }
+
+      aggregatedHistory.push({ ...log, id: entryId || log.id });
+    }
+  });
+
+  return aggregatedHistory;
+}
+
+/**
+ * Hook to access agents and agent management functions.
+ */
+export function useAgents() {
+  const store = useContext(AgentStoreContext);
+  if (!store) throw new Error('useAgents must be used within AgentProvider');
+
+  const subscribe = useCallback((callback: () => void) => {
+    store.listeners.add(callback);
+    return () => store.listeners.delete(callback);
+  }, [store]);
+
+  const state = useSyncExternalStore(subscribe, () => store.state, () => EMPTY_STATE);
+
+  const createAgent = useCallback(async (config: Partial<Agent['model_config']>, initialPrompt?: string, extras?: Record<string, any>) => {
+    return await globalWS.send({
+      type: 'create_agent',
+      payload: { model_config: config, initial_prompt: initialPrompt, ...extras }
+    });
+  }, []);
+
+  const approveTool = useCallback(async (agentId: string, toolCallId: string, decision: 'allow' | 'reject' | 'always_allow', toolName?: string, pattern?: string) => {
+    return await api.approveTool(agentId, toolCallId, decision, toolName, pattern);
+  }, []);
+
+  const updateAgentState = useCallback(async (agentId: string, action: 'pause' | 'pause_tree' | 'resume' | 'resume_tree' | 'cancel' | 'repair') => {
+    return await globalWS.send({
+      type: 'update_agent_state',
+      payload: { agent_id: agentId, action }
+    });
+  }, []);
+
+  const openWorkspace = useCallback(async (agentId: string) => {
+    return await api.openWorkspace(agentId);
+  }, []);
+
+  const sendMessage = useCallback(async (agentId: string, content: string, attachments?: Attachment[]) => {
+    // If the agent is awaiting tool approval, assume new user message is a rejection of that tool
+    const agent = store.state.agents[agentId];
+    if (agent && agent.state === 'awaiting_approval') {
+      const logs = store.state.logs[agentId] || [];
+      let pendingApproval = null;
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i].event_type === 'tool_approval_requested') {
+          pendingApproval = logs[i];
+          break;
+        }
+      }
+      if (pendingApproval && (pendingApproval.payload as any)?.id) {
+        await api.approveTool(agentId, (pendingApproval.payload as any).id, 'reject');
+      }
+    }
+
+    // Strip previewUrl before sending to backend to save space and avoid broken blob URLs on reload
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const cleanAttachments = attachments?.map(({ previewUrl, ...rest }) => ({
+      ...rest,
+      // Ensure data is present if it's an image
+      data: rest.data
+    }));
+
+    return await globalWS.send({
+      type: 'send_message',
+      payload: {
+        agent_id: agentId,
+        content,
+        attachments: cleanAttachments
+      }
+    });
+  }, [store]);
+
+  const updateScope = useCallback(async (agentId: string, content: string, frontmatter?: ScopeDocument['frontmatter']) => {
+    return await globalWS.send({
+      type: 'update_scope',
+      payload: { agent_id: agentId, content, frontmatter }
+    });
+  }, []);
+
+  const updateAgentConfig = useCallback(async (
+    agentId: string,
+    modelConfig: Partial<Agent['model_config']>,
+    planEnabled?: boolean,
+    subAgentsEnabled?: boolean,
+    claudeCodeEnabled?: boolean,
+    codexEnabled?: boolean
+  ) => {
+    return await globalWS.send({
+      type: 'update_agent_config',
+      payload: {
+        agent_id: agentId,
+        model_config: modelConfig,
+        plan_enabled: planEnabled,
+        sub_agents_enabled: subAgentsEnabled,
+        claude_code_enabled: claudeCodeEnabled,
+        codex_enabled: codexEnabled
+      }
+    });
+  }, []);
+
+  const deleteAgent = useCallback(async (agentId: string) => {
+    return await globalWS.send({
+      type: 'delete_agent',
+      payload: { agent_id: agentId }
+    });
+  }, []);
+
+  const deleteAgents = useCallback(async (agentIds: string[]) => {
+    const results = await Promise.allSettled(
+      agentIds.map(id => globalWS.send({
+        type: 'delete_agent',
+        payload: { agent_id: id }
+      }))
+    );
+    const errors = results.filter(r => r.status === 'rejected');
+    if (errors.length > 0) {
+      console.error('Some agents failed to delete:', errors);
+    }
+    return results;
+  }, []);
+
+  const clearConversation = useCallback(async (agentId: string) => {
+    const res = await globalWS.send({
+      type: 'clear_conversation',
+      payload: { agent_id: agentId }
+    });
+
+    // Optimistically clear current scope proposal
+    updateState(store, s => {
+      const newProposals = { ...s.scopeProposals };
+      delete newProposals[agentId];
+      return {
+        ...s,
+        scopeProposals: newProposals
+      };
+    });
+
+    return res;
+  }, [store]);
+
+  const updateAgentsModel = useCallback(async (agentIds: string[], modelConfig: Partial<Agent['model_config']>, planEnabled?: boolean) => {
+    const results = await Promise.allSettled(
+      agentIds.map(id => globalWS.send({
+        type: 'update_agent_config',
+        payload: { agent_id: id, model_config: modelConfig, plan_enabled: planEnabled }
+      }))
+    );
+    const errors = results.filter(r => r.status === 'rejected');
+    if (errors.length > 0) {
+      console.error('Some agents failed to update:', errors);
+    }
+    return results;
+  }, []);
+
+  const renameAgent = useCallback(async (id: string, name: string) => {
+    return await api.renameAgent(id, name);
+  }, []);
+
+  const selectAgent = useCallback(async (id: string | null) => {
+    if (store.state.activeAgentId === id && (id === null || store.state.logs[id])) return;
+
+    updateState(store, s => ({ ...s, activeAgentId: id }));
+    if (id) {
+      try {
+        const historyRaw: AgentLogEntry[] = await globalWS.send({
+          type: 'list_agent_logs',
+          payload: { agent_id: id }
+        });
+
+        const history = Array.isArray(historyRaw) ? historyRaw : [];
+        const aggregatedHistory = aggregateLogs(history);
+
+        updateState(store, s => ({
+          ...s,
+          logs: { ...s.logs, [id]: aggregatedHistory }
+        }));
+      } catch (err) {
+        console.error('Failed to fetch agent logs:', err);
+      }
+    }
+  }, [store]);
+
+  const listTools = useCallback(async () => {
+    return await globalWS.send({ type: 'list_tools' });
+  }, []);
+
+  const listSkills = useCallback(async () => {
+    return await globalWS.send({ type: 'list_skills' });
+  }, []);
+
+  const listTriggers = useCallback(async () => {
+    return await api.listTriggers();
+  }, []);
+
+  const listAgentSubscriptions = useCallback(async (agentId: string) => {
+    return await api.listAgentSubscriptions(agentId);
+  }, []);
+
+  const deleteTrigger = useCallback(async (id: string) => {
+    return await api.deleteTrigger(id);
+  }, []);
+
+  const saveTriggerSubscription = useCallback(async (subscription: any) => {
+    return await api.saveTriggerSubscription(subscription);
+  }, []);
+
+  const deleteTriggerSubscription = useCallback(async (id: string) => {
+    return await api.deleteTriggerSubscription(id);
+  }, []);
+
+  const renameTrigger = useCallback(async (id: string, newName: string) => {
+    return await api.renameTrigger(id, newName);
+  }, []);
+
+  const deleteSkill = useCallback(async (name: string) => {
+    return await api.deleteSkill(name);
+  }, []);
+
+  const renameSkill = useCallback(async (name: string, newName: string) => {
+    return await api.renameSkill(name, newName);
+  }, []);
+
+  const deleteTask = useCallback(async (id: string) => {
+    return await api.deleteTask(id);
+  }, []);
+
+  const resolveMissedTasks = useCallback(async (resolutions: Record<string, 'run_once' | 'skip'>) => {
+    await globalWS.send({
+      type: 'resolve_missed_tasks',
+      payload: { resolutions }
+    });
+    updateState(store, s => ({
+      ...s,
+      missedTasks: s.missedTasks.filter(t => !resolutions[t.id])
+    }));
+  }, [store]);
+
+  const toggleSidebar = useCallback(() => {
+    updateState(store, s => {
+      const newState = !s.isSidebarCollapsed;
+      localStorage.setItem('agent-sidebar-collapsed', newState.toString());
+      return { ...s, isSidebarCollapsed: newState };
+    });
+  }, [store]);
+
+  const setSidebarCollapsed = useCallback((collapsed: boolean) => {
+    updateState(store, s => {
+      localStorage.setItem('agent-sidebar-collapsed', collapsed.toString());
+      return { ...s, isSidebarCollapsed: collapsed };
+    });
+  }, [store]);
+
+  const toggleExplorer = useCallback(() => {
+    updateState(store, s => {
+      const newState = !s.isExplorerCollapsed;
+      localStorage.setItem('agent-explorer-collapsed', newState.toString());
+      return { ...s, isExplorerCollapsed: newState };
+    });
+  }, [store]);
+
+  const setExplorerCollapsed = useCallback((collapsed: boolean) => {
+    updateState(store, s => {
+      localStorage.setItem('agent-explorer-collapsed', collapsed.toString());
+      return { ...s, isExplorerCollapsed: collapsed };
+    });
+  }, [store]);
+
+  const setFleetFilter = useCallback((filter: FleetFilterStatus) => {
+    updateState(store, s => ({ ...s, fleetFilter: filter }));
+  }, [store]);
+
+  const setFleetGroup = useCallback((group: FleetGroupingMode) => {
+    updateState(store, s => ({ ...s, fleetGroup: group }));
+  }, [store]);
+
+  const setFleetSearch = useCallback((search: string) => {
+    updateState(store, s => ({ ...s, fleetSearch: search }));
+  }, [store]);
+
+  const setFleetView = useCallback((view: FleetViewMode) => {
+    localStorage.setItem('fleet-view-mode', view);
+    updateState(store, s => ({ ...s, fleetView: view }));
+  }, [store]);
+
+  const setActiveTab = useCallback((tabOrUpdater: AgentTab | ((prev: AgentTab) => AgentTab)) => {
+    updateState(store, s => ({
+      ...s,
+      activeTab: typeof tabOrUpdater === 'function' ? tabOrUpdater(s.activeTab) : tabOrUpdater
+    }));
+  }, [store]);
+
+  const setFocusedPane = useCallback((pane: FocusedPane) => {
+    updateState(store, s => ({ ...s, focusedPane: pane }));
+  }, [store]);
+
+  return React.useMemo(() => ({
+    ...state,
+    setActiveTab,
+    setFocusedPane,
+    createAgent,
+    approveTool,
+    sendMessage,
+    updateAgentState,
+    openWorkspace,
+    updateScope,
+    updateAgentConfig,
+    deleteAgent,
+    deleteAgents,
+    clearConversation,
+    updateAgentsModel,
+    renameAgent,
+    selectAgent,
+    listTools,
+    listSkills,
+    listTriggers,
+    listAgentSubscriptions,
+    saveTriggerSubscription,
+    deleteTriggerSubscription,
+    deleteTrigger,
+    renameTrigger,
+    toggleSidebar,
+    setSidebarCollapsed,
+    toggleExplorer,
+    setExplorerCollapsed,
+    resolveMissedTasks,
+    setFleetFilter,
+    setFleetGroup,
+    setFleetSearch,
+    setFleetView,
+    deleteSkill,
+    renameSkill,
+    deleteTask,
+  }), [
+    state,
+    setActiveTab,
+    setFocusedPane,
+    createAgent,
+    approveTool,
+    sendMessage,
+    updateAgentState,
+    openWorkspace,
+    updateScope,
+    updateAgentConfig,
+    deleteAgent,
+    deleteAgents,
+    clearConversation,
+    updateAgentsModel,
+    renameAgent,
+    selectAgent,
+    listTools,
+    listSkills,
+    listTriggers,
+    listAgentSubscriptions,
+    saveTriggerSubscription,
+    deleteTriggerSubscription,
+    deleteTrigger,
+    renameTrigger,
+    toggleSidebar,
+    setSidebarCollapsed,
+    toggleExplorer,
+    setExplorerCollapsed,
+    resolveMissedTasks,
+    setFleetFilter,
+    setFleetGroup,
+    setFleetSearch,
+    setFleetView,
+    deleteSkill,
+    renameSkill,
+    deleteTask,
+  ]);
+}
+
+/**
+ * Provider component that handles agent state and websocket communication.
+ */
+export function AgentProvider({ children }: { children: React.ReactNode }) {
+  const [store] = useState(createAgentStore);
+  const pendingChunksRef = useRef<Record<string, { agent_id: string, event_type: string, payload: any }>>({});
+
+  useEffect(() => {
+    const flushInterval = setInterval(() => {
+      const pending = pendingChunksRef.current;
+      if (Object.keys(pending).length === 0) return;
+
+      // Clear the ref before updating state to avoid missing any chunks that arrive during update
+      pendingChunksRef.current = {};
+
+      updateState(store, s => {
+        let nextLogs = { ...s.logs };
+        let modified = false;
+
+        Object.entries(pending).forEach(([entryId, data]) => {
+          const { agent_id, event_type, payload } = data;
+          const agentLogs = nextLogs[agent_id] || [];
+
+          const existingIdx = agentLogs.findIndex(l => l.id === entryId);
+          if (existingIdx !== -1) {
+            const updatedLogs = [...agentLogs];
+            const log = updatedLogs[existingIdx];
+
+            const updatedPayload = { ...log.payload };
+            if (payload.content !== undefined) {
+              updatedPayload.content = (updatedPayload.content || '') + payload.content;
+            }
+            if (payload.args !== undefined) {
+              updatedPayload.args = (updatedPayload.args || '') + payload.args;
+            }
+            if (payload.tool !== undefined && payload.tool !== '') {
+              updatedPayload.tool = payload.tool;
+            }
+
+            updatedLogs[existingIdx] = {
+              ...log,
+              payload: updatedPayload
+            };
+            nextLogs[agent_id] = updatedLogs;
+            modified = true;
+          } else {
+            // Create initial log entry for this chunk stream
+            let targetEventType: string;
+            if (event_type === 'tool_call_chunk') {
+              targetEventType = 'tool_call';
+            } else if (event_type === 'shell_output') {
+              targetEventType = 'shell_output';
+            } else if (event_type === 'cli_output') {
+              targetEventType = 'cli_output';
+            } else {
+              targetEventType = event_type === 'model_responded_chunk' ? 'model_responded' : 'model_thinking';
+            }
+
+            const newEntry = {
+              id: entryId,
+              agent_id,
+              event_type: targetEventType,
+              payload: {
+                content: payload.content || '',
+                args: payload.args || '',
+                tool: payload.tool || '',
+                streaming_id: payload.id,
+                index: payload.index
+              },
+              created_at: new Date().toISOString()
+            };
+            nextLogs[agent_id] = [...agentLogs, newEntry];
+            modified = true;
+          }
+        });
+
+        return modified ? { ...s, logs: nextLogs } : s;
+      });
+    }, 100); // Flush every 100ms
+
+    return () => clearInterval(flushInterval);
+  }, [store]);
+
+  useEffect(() => {
+    const fetchInitialData = async (retries = 3) => {
+      try {
+        const [initialAgents, initialTasks] = await Promise.all([
+          globalWS.send({ type: 'list_agents' }),
+          globalWS.send({ type: 'list_tasks' })
+        ]);
+
+        const agentsArr = Array.isArray(initialAgents) ? initialAgents : [];
+        const tasksArr = Array.isArray(initialTasks) ? initialTasks : [];
+
+        updateState(store, s => ({
+          ...s,
+          agents: agentsArr.reduce((acc: Record<string, Agent>, a: Agent) => {
+            acc[a.id] = a;
+            return acc;
+          }, {} as Record<string, Agent>),
+          tasks: tasksArr,
+          initialized: true
+        }));
+      } catch (err) {
+        console.error('Failed to fetch initial data:', err);
+        if (retries > 0) {
+          setTimeout(() => fetchInitialData(retries - 1), 1000);
+        }
+      }
+    };
+
+    fetchInitialData();
+
+    const unsubscribe = globalWS.addMessageListener((data) => {
+      if (data.type === 'agent_created' || data.type === 'create_agent' || data.type === 'agent_updated' || data.type === 'agent_config_updated') {
+        const agent = data.payload || data.agent;
+        if (data.type === 'agent_config_updated') {
+          const { agent_id, model_config } = data;
+          if (!agent_id) return;
+          updateState(store, s => {
+            const agent = s.agents[agent_id];
+            if (!agent) return s;
+            return {
+              ...s,
+              agents: {
+                ...s.agents,
+                [agent_id]: { ...agent, model_config }
+              }
+            };
+          });
+          return;
+        }
+
+        if (!agent || !agent.id) {
+          console.warn('Received agent without ID:', data);
+          return;
+        }
+        updateState(store, s => ({
+          ...s,
+          agents: { ...s.agents, [agent.id]: agent }
+        }));
+      } else if (data.type === 'conversation_cleared') {
+        const { agent_id } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const newProposals = { ...s.scopeProposals };
+          delete newProposals[agent_id];
+          return {
+            ...s,
+            scopeProposals: newProposals
+          };
+        });
+      } else if (data.type === 'tasks_updated') {
+        updateState(store, s => ({
+          ...s,
+          tasks: data.tasks || []
+        }));
+      } else if (data.type === 'task_completed') {
+        // Refresh tasks when one completes
+        globalWS.send({ type: 'list_tasks' }).then(tasks => {
+          updateState(store, s => ({ ...s, tasks: tasks || [] }));
+        });
+      } else if (data.type === 'agent_state_changed') {
+        const { agent_id, new_state, error_detail, agent: updatedAgent } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const agent = s.agents[agent_id];
+          if (!agent && !updatedAgent) return s;
+
+          const newAgentData = updatedAgent || {
+            ...agent,
+            state: new_state,
+            error_detail,
+            updated_at: new Date().toISOString()
+          };
+
+          return {
+            ...s,
+            agents: {
+              ...s.agents,
+              [agent_id]: newAgentData
+            }
+          };
+        });
+      } else if (data.type === 'agent_context_updated') {
+        const { agent_id, context_tokens, max_context_tokens } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const agent = s.agents[agent_id];
+          if (!agent) return s;
+          return {
+            ...s,
+            agents: {
+              ...s.agents,
+              [agent_id]: {
+                ...agent,
+                context_tokens,
+                max_context_tokens,
+                updated_at: new Date().toISOString()
+              }
+            }
+          };
+        });
+      } else if (data.type === 'agent_compacting_updated') {
+        const { agent_id, is_compacting } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const agent = s.agents[agent_id];
+          if (!agent) return s;
+          return {
+            ...s,
+            agents: {
+              ...s.agents,
+              [agent_id]: {
+                ...agent,
+                is_compacting,
+                updated_at: new Date().toISOString()
+              }
+            }
+          };
+        });
+      } else if (data.type === 'agent_renamed') {
+        const { agent_id, name } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const agent = s.agents[agent_id];
+          if (!agent) return s;
+          return {
+            ...s,
+            agents: {
+              ...s.agents,
+              [agent_id]: { ...agent, name }
+            }
+          };
+        });
+      } else if (data.type === 'scope_proposal' || data.type === 'scope_updated') {
+        const { agent_id, scope } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const agent = s.agents[agent_id];
+          const newProposals = { ...s.scopeProposals };
+          delete newProposals[agent_id];
+          return {
+            ...s,
+            scopeProposals: newProposals,
+            agents: agent ? {
+              ...s.agents,
+              [agent_id]: {
+                ...agent,
+                current_scope: scope,
+                current_scope_id: scope?.id || agent.current_scope_id,
+                updated_at: new Date().toISOString()
+              }
+            } : s.agents
+          };
+        });
+      } else if (data.type === 'scope_approved' || data.type === 'scope_rejected') {
+        const { agent_id } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const newProposals = { ...s.scopeProposals };
+          delete newProposals[agent_id];
+          return { ...s, scopeProposals: newProposals };
+        });
+      } else if (data.type === 'execution_log') {
+        const { agent_id, event_type, payload } = data;
+        if (!agent_id) return;
+
+        // Handle chunk events (streaming content) with throttling
+        if (event_type === 'model_responded_chunk' || event_type === 'model_thinking_chunk' || event_type === 'tool_call_chunk' || event_type === 'shell_output' || event_type === 'cli_output') {
+          const { id, index } = payload as { id: string; index?: number };
+
+          let entryId: string;
+          if (event_type === 'tool_call_chunk') {
+            entryId = `${id}_tool_call_${index}`;
+          } else if (event_type === 'shell_output') {
+            entryId = `${id}_shell_output`;
+          } else if (event_type === 'cli_output') {
+            entryId = `${id}_cli_output`;
+          } else {
+            const targetEventType = event_type === 'model_responded_chunk' ? 'model_responded' : 'model_thinking';
+            entryId = `${id}_${targetEventType}`;
+          }
+
+          // Accumulate in ref
+          const current = pendingChunksRef.current[entryId] || { agent_id, event_type, payload: { ...payload } };
+          if (pendingChunksRef.current[entryId]) {
+            if (payload.content !== undefined) {
+              current.payload.content = (current.payload.content || '') + payload.content;
+            }
+            if (payload.args !== undefined) {
+              current.payload.args = (current.payload.args || '') + payload.args;
+            }
+            if (payload.tool !== undefined && payload.tool !== '') {
+              current.payload.tool = payload.tool;
+            }
+          }
+          pendingChunksRef.current[entryId] = current;
+          return;
+        }
+
+        updateState(store, s => {
+          const agentLogs = s.logs[agent_id] || [];
+
+          const payloadData = payload as any;
+          const payloadId = payloadData?.id;
+          const streamingId = payloadData?.streaming_id;
+          const index = payloadData?.index;
+
+          let entryId: string | null = null;
+          if (event_type === 'tool_call' && streamingId !== undefined && index !== undefined) {
+            entryId = `${streamingId}_tool_call_${index}`;
+          } else if (event_type === 'tool_approval_requested' || event_type === 'tool_approval_resolved') {
+            const toolCallId = payloadData.tool_call_id || payloadData.id;
+            if (toolCallId) {
+              entryId = `${toolCallId}_tool_approval`;
+            }
+          } else if (payloadId) {
+            entryId = `${payloadId}_${event_type}`;
+          }
+
+          if (entryId) {
+            // Clear any pending chunks for this entry ID to avoid late-arrival duplication
+            delete pendingChunksRef.current[entryId];
+
+            const existingIdx = agentLogs.findIndex(l => l.id === entryId);
+            if (existingIdx !== -1) {
+              const updatedLogs = [...agentLogs];
+              const log = updatedLogs[existingIdx];
+              updatedLogs[existingIdx] = {
+                ...log,
+                event_type: event_type, // Update to the latest event type (e.g. requested -> resolved)
+                payload: { ...log.payload, ...payloadData }
+              };
+              return { ...s, logs: { ...s.logs, [agent_id]: updatedLogs } };
+            }
+          }
+
+          // Default: append new log entry
+          return {
+            ...s,
+            logs: {
+              ...s.logs,
+              [agent_id]: [...agentLogs, {
+                id: entryId || (payloadId ? `${payloadId}_${event_type}` : crypto.randomUUID()),
+                agent_id,
+                event_type,
+                payload,
+                created_at: new Date().toISOString()
+              }]
+            }
+          };
+        });
+      } else if (data.type === 'agent_deleted') {
+        const { agent_id } = data;
+        if (!agent_id) return;
+        updateState(store, s => {
+          const newAgents = { ...s.agents };
+          delete newAgents[agent_id];
+          return {
+            ...s,
+            agents: newAgents,
+            activeAgentId: s.activeAgentId === agent_id ? null : s.activeAgentId
+          };
+        });
+      } else if (data.type === 'logs_updated') {
+        const { agent_id, logs } = data;
+        if (!agent_id) return;
+        const aggregatedLogs = aggregateLogs(logs || []);
+        updateState(store, s => ({
+          ...s,
+          logs: { ...s.logs, [agent_id]: aggregatedLogs }
+        }));
+      } else if (data.type === 'missed_tasks') {
+        updateState(store, s => ({
+          ...s,
+          missedTasks: [...s.missedTasks, ...(data.tasks || [])]
+        }));
+      }
+    });
+
+    return () => { unsubscribe(); };
+  }, [store]);
+
+  return (
+    <AgentStoreContext.Provider value={store}>
+      {children}
+    </AgentStoreContext.Provider>
+  );
+}
+
+export type { AgentLogEntry };

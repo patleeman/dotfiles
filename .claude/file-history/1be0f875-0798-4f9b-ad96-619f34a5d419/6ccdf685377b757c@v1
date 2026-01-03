@@ -1,0 +1,162 @@
+import React, { useState } from 'react';
+import { clsx } from 'clsx';
+
+interface ToolApprovalProps {
+    agentId: string;
+    toolCallId: string;
+    toolName: string;
+    args: any;
+    translation: string;
+    onApprove: (decision: 'allow' | 'reject' | 'always_allow', pattern?: string) => Promise<void>;
+    isProcessed?: boolean;
+    decision?: 'allow' | 'reject' | 'always_allow';
+}
+
+export const ToolApproval: React.FC<ToolApprovalProps> = ({
+    toolName,
+    args,
+    translation,
+    onApprove,
+    isProcessed,
+    decision
+}) => {
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    // For system_shell and system_browser, suggest a pattern
+    const getSuggestedPattern = () => {
+        if (!args) return '';
+        if (toolName === 'system_shell') {
+            const cmd = args.command || args.input || '';
+            const words = cmd.trim().split(/\s+/);
+            return words[0] || '';
+        }
+        if (toolName === 'system_browser' && args.url) {
+            try {
+                const url = new URL(args.url);
+                return `${url.protocol}//${url.hostname}`;
+            } catch (e) {
+                return args.url;
+            }
+        }
+        return '';
+    };
+
+    const pattern = getSuggestedPattern();
+
+    const handleDecision = async (decision: 'allow' | 'reject' | 'always_allow') => {
+        setIsProcessing(true);
+        try {
+            await onApprove(decision, decision === 'always_allow' ? pattern : undefined);
+        } catch (err) {
+            console.error('Failed to submit tool approval:', err);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    if (isProcessed) {
+        const cmd = args?.command || args?.input || '';
+        const statusText = decision === 'allow' || decision === 'always_allow' ? 'GRANTED' : 'DENIED';
+        const statusColor = decision === 'allow' || decision === 'always_allow' ? 'text-status-success' : 'text-status-error';
+
+        return (
+            <div className="flex flex-row items-baseline gap-2 opacity-40 font-mono text-[10px] pl-2">
+                <span className={clsx(statusColor, "font-black")}>{decision === 'allow' || decision === 'always_allow' ? '[@]' : '[!]'}</span>
+                <span className="italic uppercase">Permission {statusText}:</span>
+                <span className="text-accent">{toolName}</span>
+                {cmd && <span className="truncate max-w-[400px] opacity-70">/ {cmd}</span>}
+            </div>
+        );
+    }
+
+    const parseTranslation = (): { description: string; danger: string; dangerLevel: 'Safe' | 'Caution' | 'Dangerous' | 'Unknown' } => {
+        const lines = translation.split('\n');
+        let description = '';
+        let danger = '';
+        let dangerLevel: 'Safe' | 'Caution' | 'Dangerous' | 'Unknown' = 'Safe';
+
+        lines.forEach(line => {
+            const upperLine = line.toUpperCase();
+            if (upperLine.startsWith('DESCRIPTION:')) {
+                description = line.substring(12).trim();
+            } else if (upperLine.startsWith('RISK:') || upperLine.startsWith('DANGER:')) {
+                danger = line.substring(line.indexOf(':') + 1).trim();
+                const upperDanger = danger.toUpperCase();
+                if (upperDanger.includes('DANGEROUS') || upperDanger.includes('HIGH')) dangerLevel = 'Dangerous';
+                else if (upperDanger.includes('CAUTION') || upperDanger.includes('MEDIUM')) dangerLevel = 'Caution';
+                else if (upperDanger.includes('SAFE') || upperDanger.includes('LOW')) dangerLevel = 'Safe';
+            }
+        });
+
+        if (!description && !danger) {
+            return { description: translation, danger: '', dangerLevel: 'Unknown' };
+        }
+
+        return { description, danger, dangerLevel };
+    };
+
+    const { description, danger, dangerLevel } = parseTranslation();
+    const rawCommand = args?.command || args?.input || (args ? JSON.stringify(args) : 'Unknown');
+
+    return (
+        <div className="flex flex-col gap-2 py-2 px-3 my-2 border-l border-border/10 bg-surface/5 font-mono text-[11px] animate-in fade-in slide-in-from-left-1 duration-200">
+            <div className="flex items-center gap-2 text-accent/80 font-black tracking-widest uppercase text-[10px]">
+                <span>Permission Required</span>
+                <span className="opacity-20">·</span>
+                <span className="text-text-primary/60">{toolName}</span>
+            </div>
+
+            <div className="flex flex-col gap-1 pl-4 opacity-90">
+                <div className="flex items-start gap-2">
+                    <span className="text-accent/40 shrink-0">{'>'}</span>
+                    <span className="text-accent break-all font-bold uppercase tracking-tight">{rawCommand}</span>
+                </div>
+
+                <div className="flex items-start gap-2 mt-1">
+                    <span className="text-text-tertiary/40 shrink-0 mt-0.5">#</span>
+                    <span className="text-text-secondary leading-normal italic">{description}</span>
+                </div>
+
+                {danger && (
+                    <div className={clsx(
+                        "flex items-start gap-2 mt-0.5 font-bold",
+                        dangerLevel === 'Dangerous' ? "text-status-error" :
+                            dangerLevel === 'Caution' ? "text-status-warning" :
+                                "text-status-success"
+                    )}>
+                        <span className="shrink-0 mt-0.5">[!]</span>
+                        <span className="tracking-tight uppercase text-[9px]">{danger}</span>
+                    </div>
+                )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 mt-2 pl-4">
+                <button
+                    onClick={() => handleDecision('allow')}
+                    disabled={isProcessing}
+                    className="text-accent hover:text-accent-hover transition-all uppercase font-black text-[10px] tracking-widest disabled:opacity-20 active:scale-95"
+                >
+                    [ ALLOW ]
+                </button>
+
+                {(toolName === 'system_shell' || toolName === 'system_browser') && pattern && (
+                    <button
+                        onClick={() => handleDecision('always_allow')}
+                        disabled={isProcessing}
+                        className="text-accent/60 hover:text-accent transition-all uppercase font-black text-[9px] tracking-widest disabled:opacity-20 active:scale-95"
+                    >
+                        [ ALWAYS_ALLOW:{pattern} ]
+                    </button>
+                )}
+
+                <button
+                    onClick={() => handleDecision('reject')}
+                    disabled={isProcessing}
+                    className="text-status-error/60 hover:text-status-error transition-all uppercase font-black text-[10px] tracking-widest disabled:opacity-20 ml-auto active:scale-95"
+                >
+                    [ REJECT ]
+                </button>
+            </div>
+        </div>
+    );
+};

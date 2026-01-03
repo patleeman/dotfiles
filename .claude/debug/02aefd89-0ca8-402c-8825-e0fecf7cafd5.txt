@@ -1,0 +1,160 @@
+2025-12-31T18:25:10.100Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (22.4ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-31T18:25:10.127Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-31T18:25:10.127Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-31T18:25:10.127Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-31T18:25:10.130Z [DEBUG] LSP server manager initialized successfully
+2025-12-31T18:25:10.130Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-31T18:25:10.130Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-31T18:25:10.145Z [DEBUG] Stats cache is up to date
+2025-12-31T18:25:10.149Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-31T18:25:10.299Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (146.8ms): cursor --version
+2025-12-31T18:25:10.300Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-31T18:25:10.317Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-31T18:25:10.317Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-31T18:25:10.317Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-31T18:25:10.317Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767205510317-ctnx2a.sh
+2025-12-31T18:25:10.317Z [DEBUG] Shell binary exists: true
+2025-12-31T18:25:10.317Z [DEBUG] Execution timeout: 10000ms
+2025-12-31T18:25:10.318Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/02aefd89-0ca8-402c-8825-e0fecf7cafd5-agent-02aefd89-0ca8-402c-8825-e0fecf7cafd5.json.tmp.53539.1767205510318
+2025-12-31T18:25:10.324Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.1ms)
+2025-12-31T18:25:10.324Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-31T18:25:10.324Z [DEBUG] Renaming /Users/patrick/.claude/todos/02aefd89-0ca8-402c-8825-e0fecf7cafd5-agent-02aefd89-0ca8-402c-8825-e0fecf7cafd5.json.tmp.53539.1767205510318 to /Users/patrick/.claude/todos/02aefd89-0ca8-402c-8825-e0fecf7cafd5-agent-02aefd89-0ca8-402c-8825-e0fecf7cafd5.json
+2025-12-31T18:25:10.324Z [DEBUG] File /Users/patrick/.claude/todos/02aefd89-0ca8-402c-8825-e0fecf7cafd5-agent-02aefd89-0ca8-402c-8825-e0fecf7cafd5.json written atomically
+2025-12-31T18:25:10.350Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-31T18:25:10.350Z [DEBUG] Total plugin skills loaded: 0
+2025-12-31T18:25:10.350Z [DEBUG] Total plugin commands loaded: 0
+2025-12-31T18:25:10.350Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-31T18:25:10.354Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-31T18:25:10.354Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-31T18:25:10.376Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2025-12-31T18:25:10.376Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2025-12-31T18:25:10.376Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2025-12-31T18:25:10.377Z [DEBUG] Path /Users/patrick/workingdir/personal-agent/packages/desktop/src-tauri already tracked for repo patleeman/familiar
+2025-12-31T18:25:10.391Z [DEBUG] Total plugin agents loaded: 0
+2025-12-31T18:25:10.397Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2025-12-31T18:25:10.399Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2025-12-31T18:25:10.399Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:10.399Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2025-12-31T18:25:10.405Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.8ms)
+2025-12-31T18:25:10.408Z [DEBUG] Total plugin output styles loaded: 0
+2025-12-31T18:25:10.412Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2025-12-31T18:25:10.412Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:10.412Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2025-12-31T18:25:10.415Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2025-12-31T18:25:10.415Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:10.415Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2025-12-31T18:25:10.418Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-31T18:25:10.418Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-31T18:25:10.418Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-31T18:25:10.418Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-31T18:25:10.420Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2025-12-31T18:25:10.420Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:10.420Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T18:25:10.421Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-31T18:25:10.426Z [DEBUG] Skills and commands included in Skill tool:
+2025-12-31T18:25:10.595Z [DEBUG] Shell snapshot created successfully (43571 bytes)
+2025-12-31T18:25:10.632Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.53539.1767205510632
+2025-12-31T18:25:10.632Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T18:25:10.637Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2025-12-31T18:25:10.637Z [DEBUG] Applied original permissions to temp file
+2025-12-31T18:25:10.637Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.53539.1767205510632 to /Users/patrick/.claude.json
+2025-12-31T18:25:10.637Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T18:25:10.638Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.53539.1767205510638
+2025-12-31T18:25:10.638Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T18:25:10.644Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.3ms)
+2025-12-31T18:25:10.644Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2025-12-31T18:25:10.644Z [DEBUG] Applied original permissions to temp file
+2025-12-31T18:25:10.644Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.53539.1767205510638 to /Users/patrick/.claude.json
+2025-12-31T18:25:10.644Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T18:25:10.645Z [DEBUG] Remote settings: Retry 1/5 after 559.6284578219152ms
+2025-12-31T18:25:11.335Z [ERROR] Error: Error: Connection error.
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:4542)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:4211
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2262
+    at async gT3 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1006:16947)
+    at async bmB (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2195)
+    at async RyA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:52)
+    at async _yA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:261)
+    at async py2 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2171:530)
+2025-12-31T18:25:11.464Z [DEBUG] Remote settings: Retry 2/5 after 1045.8584731242217ms
+2025-12-31T18:25:12.142Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.53539.1767205512142
+2025-12-31T18:25:12.142Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T18:25:12.149Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.2ms)
+2025-12-31T18:25:12.149Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2025-12-31T18:25:12.149Z [DEBUG] Applied original permissions to temp file
+2025-12-31T18:25:12.149Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.53539.1767205512142 to /Users/patrick/.claude.json
+2025-12-31T18:25:12.149Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T18:25:12.168Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.53539.1767205512168
+2025-12-31T18:25:12.168Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T18:25:12.174Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.4ms)
+2025-12-31T18:25:12.174Z [DEBUG] Temp file written successfully, size: 53334 bytes
+2025-12-31T18:25:12.174Z [DEBUG] Applied original permissions to temp file
+2025-12-31T18:25:12.174Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.53539.1767205512168 to /Users/patrick/.claude.json
+2025-12-31T18:25:12.174Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T18:25:12.444Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T18:25:12.452Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T18:25:12.459Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T18:25:12.767Z [DEBUG] Remote settings: Retry 3/5 after 2468.2772700740907ms
+2025-12-31T18:25:15.492Z [DEBUG] Remote settings: Retry 4/5 after 4520.840627445858ms
+2025-12-31T18:25:15.617Z [ERROR] Error: Error: 1P event logging: 73 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T18:25:20.272Z [DEBUG] Remote settings: Retry 5/5 after 9811.17737739805ms
+2025-12-31T18:25:22.273Z [ERROR] Error: Error: 1P event logging: 11 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T18:25:27.537Z [ERROR] Error: Error: 1P event logging: 7 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T18:25:49.229Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfEa7abhu8gYDjUugHJU"}
+2025-12-31T18:25:49.231Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfEa7abhu8gYDjUugHJU"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2025-12-31T18:25:49.270Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-31T18:25:49.270Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:49.270Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T18:25:49.726Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfEa9j5giQxgZRKy3AKN"}
+2025-12-31T18:25:49.726Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfEa9j5giQxgZRKy3AKN"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2025-12-31T18:25:49.742Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-31T18:25:49.742Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:49.742Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T18:25:51.416Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfEaGuBzLvNqSKB2hEgL"}
+2025-12-31T18:25:51.416Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfEaGuBzLvNqSKB2hEgL"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2025-12-31T18:25:51.436Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2025-12-31T18:25:51.436Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:51.436Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T18:25:51.436Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2025-12-31T18:25:51.436Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T18:25:51.436Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

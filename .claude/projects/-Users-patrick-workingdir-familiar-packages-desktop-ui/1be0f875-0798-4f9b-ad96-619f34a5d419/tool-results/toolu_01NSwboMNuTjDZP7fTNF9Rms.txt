@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/TriggersView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   153→                                            "grid grid-cols-[200px_1fr] gap-2 px-4 py-1 border-b border-border/5 hover:bg-surface/30 transition-all items-start group cursor-pointer",
+   154→                                            isCreating === triggerId && "opacity-50 pointer-events-none"
+   155→                                        )}
+   156→                                    >
+   157→                                        <div className="flex items-center gap-2 text-text-primary font-black uppercase tracking-tighter text-[10px]">
+   158→                                            {isCreating === triggerId && (
+   159→                                                <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+   160→                                            )}
+   161→                                            {triggerId}
+   162→                                        </div>
+   163→                                        <div className="text-text-secondary opacity-50 text-[10px] leading-relaxed uppercase tracking-tight font-black">
+   164→                                            System Event Source
+   165→                                        </div>
+   166→                                    </div>

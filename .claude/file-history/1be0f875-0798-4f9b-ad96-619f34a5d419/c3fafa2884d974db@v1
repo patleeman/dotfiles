@@ -1,0 +1,14 @@
+export default async function globalTeardown() {
+  const pid = process.env.BACKEND_PID;
+
+  if (pid) {
+    console.log(`Stopping backend server (PID: ${pid})...`);
+    try {
+      // Kill the process group to ensure all child processes are terminated
+      process.kill(-Number(pid), 'SIGTERM');
+    } catch (error) {
+      // Process might already be dead
+      console.log('Backend server already stopped or could not be stopped');
+    }
+  }
+}

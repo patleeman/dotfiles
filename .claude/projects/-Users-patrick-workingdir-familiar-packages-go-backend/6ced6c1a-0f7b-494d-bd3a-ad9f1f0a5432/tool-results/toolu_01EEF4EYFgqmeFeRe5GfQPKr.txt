@@ -1,0 +1,7 @@
+packages/go-backend/pkg/types/agent.go:103:type SubAgentResult struct {
+packages/go-backend/internal/agent/events.go:135:	case types.EventUserInteraction, types.EventTrigger, types.EventAgentMessage, types.EventSubAgentCompleted, types.EventSubAgentError:
+packages/go-backend/internal/tools/agent.go:12:type SpawnSubAgentTool struct {
+packages/go-backend/internal/tools/agent.go:163:type ListSubAgentsTool struct {
+packages/go-backend/internal/tools/agent.go:168:func NewListSubAgentsTool(lister func(agentID string) (parentID *string, children []types.Agent, err error)) *ListSubAgentsTool {
+packages/go-backend/internal/tools/agent.go:223:type DeleteSubAgentTool struct {
+packages/go-backend/internal/tools/agent.go:420:type ApproveSubAgentPlanTool struct {

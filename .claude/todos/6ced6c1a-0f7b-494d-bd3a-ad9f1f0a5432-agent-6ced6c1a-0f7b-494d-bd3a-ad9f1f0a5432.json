@@ -1,0 +1,27 @@
+[
+  {
+    "content": "Fix e2e test configuration (retries, timeouts)",
+    "status": "completed",
+    "activeForm": "Fixed e2e test configuration"
+  },
+  {
+    "content": "Add data-testid attributes to components",
+    "status": "completed",
+    "activeForm": "Added data-testid attributes"
+  },
+  {
+    "content": "Fix navigation.spec.ts test selectors",
+    "status": "completed",
+    "activeForm": "Fixed navigation test selectors"
+  },
+  {
+    "content": "Fix settings.spec.ts test selectors",
+    "status": "completed",
+    "activeForm": "Fixed settings test selectors"
+  },
+  {
+    "content": "Run e2e tests to verify fixes",
+    "status": "in_progress",
+    "activeForm": "Running e2e tests"
+  }
+]

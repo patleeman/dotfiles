@@ -1,0 +1,93 @@
+import React, { useState } from 'react';
+import { useAgents } from '../../context/AgentContext';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Plus, ArrowLeft } from 'lucide-react';
+import { Button } from '../ui';
+
+export const TriggersSidebar: React.FC = () => {
+    const { listTriggers, agents, selectAgent, createAgent, setSidebarCollapsed, activeAgentId } = useAgents();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [isCreatingAgent, setIsCreatingAgent] = useState(false);
+
+    const isMainTriggersPage = location.pathname === '/triggers';
+    const activeAgent = activeAgentId ? agents[activeAgentId] : null;
+    const isTriggerArchitect = activeAgent?.name?.toLowerCase().includes('trigger architect') || activeAgent?.initial_prompt?.includes('Trigger Architect');
+
+    const { data: config } = useQuery({
+        queryKey: ['config'],
+        queryFn: () => api.getConfig(),
+    });
+
+    const { data: triggersData } = useQuery({
+        queryKey: ['triggers'],
+        queryFn: async () => {
+            const resp = await listTriggers();
+            return Array.isArray(resp?.triggers) ? resp.triggers : [];
+        }
+    });
+
+    const handleCreateTriggerAgent = async () => {
+        const architect = Object.values(agents).find(a =>
+            a.name === 'Trigger Architect' &&
+            !a.is_internal
+        );
+
+        if (architect) {
+            setSidebarCollapsed(true);
+            selectAgent(architect.id);
+            navigate(`/agent/${architect.id}`);
+            return;
+        }
+
+        setIsCreatingAgent(true);
+        try {
+            const response = await createAgent(
+                { provider: config?.inference?.chat?.provider, model: config?.inference?.chat?.model },
+                "",
+                { is_trigger_architect: true }
+            );
+            if (response && response.id) {
+                setSidebarCollapsed(true);
+                selectAgent(response.id);
+                navigate(`/agent/${response.id}`);
+            }
+        } catch (err) {
+            console.error('Failed to create trigger architect:', err);
+        } finally {
+            setIsCreatingAgent(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-[#0f1117] select-none">
+            <div className="p-3 border-b border-[#1e293b]">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-[12px] font-medium text-[#e2e8f0]">Agent Triggers</span>
+                    <span className="text-[10px] font-mono text-[#64748b]">
+                        {triggersData?.length || 0}
+                    </span>
+                </div>
+                <p className="text-[11px] text-[#64748b] leading-tight mb-3">
+                    Manage events that can trigger your agent
+                </p>
+
+                {isMainTriggersPage ? (
+                    <Button variant="primary" onClick={handleCreateTriggerAgent} disabled={isCreatingAgent}>
+                        <Plus size={12} />
+                        {isCreatingAgent ? 'Creating...' : 'New Trigger'}
+                    </Button>
+                ) : isTriggerArchitect ? (
+                    <Button onClick={() => navigate('/triggers')}>
+                        <ArrowLeft size={12} />
+                        Back to Triggers
+                    </Button>
+                ) : null}
+            </div>
+
+            <div className="flex-1" />
+        </div>
+    );
+};

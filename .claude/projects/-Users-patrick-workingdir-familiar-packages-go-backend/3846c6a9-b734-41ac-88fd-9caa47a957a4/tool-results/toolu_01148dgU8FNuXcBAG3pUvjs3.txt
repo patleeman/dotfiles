@@ -1,0 +1,48 @@
+# Claude Max Integration: Technical Implementation Details
+
+## Authentication Architecture
+
+The article reveals Claude Code uses a **multi-layered authentication system** with three distinct methods:
+
+1. **API Key Authentication** - Traditional credit-based billing
+2. **OAuth 2.0 with PKCE** - Token-based web application authentication
+3. **Subscription Authentication** - Direct Claude Max plan usage
+
+## OAuth 2.0 PKCE Flow
+
+The implementation uses "OAuth 2.0 with PKCE (Proof Key for Code Exchange)" for enhanced security. The client ID identified in the article is:
+
+```
+9d1c250a-e61b-44d9-88ed-5944d1962f5e
+```
+
+**OAuth Scopes Required:**
+- `org:create_api_key` - API key creation permissions
+- `user:profile` - Profile access
+- `user:inference` - Claude inference/generation rights
+
+The callback server listens on `localhost:54545` for OAuth responses.
+
+## Critical Integration Finding
+
+The key insight: "By removing the `ANTHROPIC_API_KEY` environment variable, we force the CLI to fall back to subscription authentication" rather than API-credit validation.
+
+**Authentication Precedence Order:**
+1. `ANTHROPIC_API_KEY` environment variable (if set)
+2. OAuth token (if available)
+3. Subscription authentication (fallback)
+
+## Programmatic Max Subscription Access
+
+To use Claude Max subscriptions programmatically, the solution involves:
+
+```python
+env.pop("ANTHROPIC_API_KEY", None)
+env["CLAUDE_USE_SUBSCRIPTION"] = "true"
+```
+
+This forces the system to bypass API credit checks and utilize subscription limits instead.
+
+## Token Management
+
+Tokens are stored in `~/.claude/oauth_token.json` with automatic refresh capabilities. The system validates expiration with a 5-minute buffer before token refresh.

@@ -1,0 +1,53 @@
+
+export function isHotkey(e: KeyboardEvent | React.KeyboardEvent, hotkeyStr: string): boolean {
+  if (!hotkeyStr) return false;
+
+  // Handle cases where the hotkey is just "+" or ends with "++"
+  let targetKey: string;
+  let modifiers: string[];
+
+  if (hotkeyStr === '+') {
+    targetKey = '+';
+    modifiers = [];
+  } else if (hotkeyStr.endsWith('++')) {
+    targetKey = '+';
+    modifiers = hotkeyStr.slice(0, -2).split('+').filter(Boolean);
+  } else {
+    const parts = hotkeyStr.split('+');
+    targetKey = parts.pop()?.toUpperCase() || '';
+    modifiers = parts;
+  }
+
+  // Require a non-empty target key
+  if (!targetKey) return false;
+
+  const pressedKey = e.key === ' ' ? 'SPACE' : (e.key.length === 1 ? e.key.toUpperCase() : e.key.toUpperCase());
+
+  if (pressedKey !== targetKey && e.key.toUpperCase() !== targetKey) return false;
+
+  // Normalize modifiers to uppercase for case-insensitive matching
+  const normalizedModifiers = modifiers.map(m => m.toUpperCase());
+  const hasCmd = normalizedModifiers.includes('CMD');
+  const hasCtrl = normalizedModifiers.includes('CTRL');
+  const hasShift = normalizedModifiers.includes('SHIFT');
+  const hasAlt = normalizedModifiers.includes('ALT');
+
+  // Cmd matches metaKey on Mac, or ctrlKey on others.
+  // For simplicity in this app, we treat Cmd as metaKey || ctrlKey if metaKey is not present.
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const cmdPressed = isMac ? e.metaKey : e.ctrlKey;
+  
+  if (hasCmd && !cmdPressed) return false;
+  if (hasCtrl && !e.ctrlKey) return false;
+  if (hasShift && !e.shiftKey) return false;
+  if (hasAlt && !e.altKey) return false;
+
+  // Ensure no extra modifiers are pressed that aren't in the hotkey
+  if (!hasCmd && isMac && e.metaKey) return false;
+  if (!hasCtrl && !(!isMac && hasCmd) && e.ctrlKey) return false;
+  if (!hasShift && e.shiftKey) return false;
+  if (!hasAlt && e.altKey) return false;
+
+  return true;
+}
+

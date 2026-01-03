@@ -1,0 +1,13 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/SkillsView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   121→      </div>
+   122→
+   123→      <div className="flex-1 overflow-auto p-1 custom-scrollbar">
+   124→        <div className="w-full font-mono">
+   125→          <div className="sticky top-0 z-10 grid grid-cols-[200px_1fr] gap-2 px-4 py-1.5 bg-background border-b border-border/40 text-[9px] font-black text-text-tertiary uppercase tracking-widest shadow-sm">
+   126→            <div>Skill</div>
+   127→            <div>Description</div>
+   128→          </div>
+   129→
+   130→          <div className="flex flex-col">
+   131→            {skillsLoading ? (
+   132→              <div className="px-4 py-12 text-center">

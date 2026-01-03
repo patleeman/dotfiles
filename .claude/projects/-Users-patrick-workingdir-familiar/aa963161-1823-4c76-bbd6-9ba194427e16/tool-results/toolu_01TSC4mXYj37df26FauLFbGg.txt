@@ -1,0 +1,887 @@
+     1→import React, { useState, useEffect, useCallback } from 'react';
+     2→import { useAgents } from '../../context/AgentContext';
+     3→import { clsx } from 'clsx';
+     4→import { useQuery } from '@tanstack/react-query';
+     5→import { api, type Agent, isSubAgentManagedCLI } from '../../lib/api';
+     6→import { useNavigate } from 'react-router-dom';
+     7→import { ask } from '@tauri-apps/plugin-dialog';
+     8→import { isHotkey } from '../../lib/hotkeys';
+     9→
+    10→export const AgentDashboard: React.FC = () => {
+    11→  const {
+    12→    agents,
+    13→    tasks,
+    14→    createAgent,
+    15→    selectAgent,
+    16→    setSidebarCollapsed,
+    17→    isExplorerCollapsed,
+    18→    deleteAgent,
+    19→    deleteAgents,
+    20→    fleetFilter,
+    21→    fleetGroup,
+    22→    fleetSearch,
+    23→    fleetView,
+    24→    renameAgent,
+    25→    updateAgentState,
+    26→    updateAgentsModel,
+    27→    focusedPane
+    28→  } = useAgents();
+    29→  const navigate = useNavigate();
+    30→  const [activeIndex, setActiveIndex] = useState(-1);
+    31→  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+    32→  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, agentId: string } | null>(null);
+    33→  const [isSelectionMode, setIsSelectionMode] = useState(false);
+    34→  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+    35→  const [showBulkModelDialog, setShowBulkModelDialog] = useState(false);
+    36→  const listRef = React.useRef<HTMLDivElement>(null);
+    37→
+    38→  const { data: config } = useQuery({
+    39→    queryKey: ['config'],
+    40→    queryFn: () => api.getConfig(),
+    41→  });
+    42→
+    43→  const { data: apiKeys } = useQuery({
+    44→    queryKey: ['apiKeys'],
+    45→    queryFn: () => api.getApiKeys(),
+    46→  });
+    47→
+    48→  const [selectedProvider, setSelectedProvider] = useState('');
+    49→  const [selectedModel, setSelectedModel] = useState('');
+    50→  const [bulkProvider, setBulkProvider] = useState('');
+    51→  const [bulkModel, setBulkModel] = useState('');
+    52→
+    53→  useEffect(() => {
+    54→    const defaultProvider = config?.inference?.chat?.provider;
+    55→    const defaultModel = config?.inference?.chat?.model;
+    56→
+    57→    if (defaultProvider && defaultModel && apiKeys) {
+    58→      const providerData = apiKeys.find(k => k.provider === defaultProvider);
+    59→      const isValid = providerData?.enabled === true;
+    60→
+    61→      if (isValid) {
+    62→        setSelectedProvider(defaultProvider);
+    63→        setSelectedModel(defaultModel);
+    64→      } else {
+    65→        const firstValid = apiKeys.find(k => k.enabled === true);
+    66→        if (firstValid) {
+    67→          setSelectedProvider(firstValid.provider);
+    68→          const models = config?.available_models?.[firstValid.provider]?.chat || [];
+    69→          if (models.length > 0) setSelectedModel(models[0]);
+    70→        }
+    71→      }
+    72→    }
+    73→  }, [config, apiKeys]);
+    74→
+    75→  const handleCreateAgent = async () => {
+    76→    if (!selectedProvider || !selectedModel) {
+    77→      const confirmed = await ask("No LLM provider is enabled. You must enable at least one provider in Settings to create agents. Would you like to go to Settings now?", {
+    78→        title: 'No Providers Enabled',
+    79→        kind: 'warning',
+    80→      });
+    81→      if (confirmed) {
+    82→        navigate('/settings');
+    83→      }
+    84→      return;
+    85→    }
+    86→
+    87→    try {
+    88→      const response = await createAgent(
+    89→        { provider: selectedProvider, model: selectedModel },
+    90→        ""
+    91→      );
+    92→      if (response && response.id) {
+    93→        setSidebarCollapsed(true);
+    94→        selectAgent(response.id);
+    95→        navigate(`/agent/${response.id}`);
+    96→      }
+    97→    } catch (err) {
+    98→      console.error('Failed to create agent:', err);
+    99→    }
+   100→  };
+   101→
+   102→  const filteredAgents = React.useMemo(() => {
+   103→    let allArr = Object.values(agents);
+   104→    let all = allArr.filter(a => {
+   105→      if (a.is_internal) return false;
+   106→
+   107→      // Also filter out sub-agents of internal agents
+   108→      let curr = a;
+   109→      while (curr.parent_id) {
+   110→        const parent = agents[curr.parent_id];
+   111→        if (parent && parent.is_internal) return false;
+   112→
+   113→        // Fallback for sub-agents whose parent might be transient or not yet correctly flagged
+   114→        if (parent && (parent.name === 'Feedback Collector' || parent.name?.startsWith('Skill Architect') || parent.name?.startsWith('Trigger Architect'))) return false;
+   115→
+   116→        if (!parent) break;
+   117→        curr = parent;
+   118→      }
+   119→
+   120→      return true;
+   121→    });
+   122→
+   123→    if (fleetFilter !== 'all') {
+   124→      all = all.filter(a => {
+   125→        if (fleetFilter === 'running') return a.state === 'running';
+   126→        if (fleetFilter === 'failed') return a.state === 'error';
+   127→        if (fleetFilter === 'idle') return a.state === 'idle';
+   128→        if (fleetFilter === 'scheduled') {
+   129→          return tasks.some(t => t.parent_agent_id?.toLowerCase() === a.id.toLowerCase());
+   130→        }
+   131→        return true;
+   132→      });
+   133→    }
+   134→
+   135→    if (fleetSearch) {
+   136→      const query = fleetSearch.toLowerCase();
+   137→      all = all.filter(a =>
+   138→        a.name?.toLowerCase().includes(query) ||
+   139→        a.id.toLowerCase().includes(query) ||
+   140→        a.model_config.model.toLowerCase().includes(query) ||
+   141→        a.model_config.provider.toLowerCase().includes(query)
+   142→      );
+   143→    }
+   144→
+   145→    return all;
+   146→  }, [agents, tasks, fleetFilter, fleetSearch]);
+   147→
+   148→  const groupedAgents = React.useMemo(() => {
+   149→    const all = [...filteredAgents].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+   150→
+   151→    if (fleetView === 'tree') {
+   152→      const result: (Agent & { depth: number })[] = [];
+   153→      const visited = new Set<string>();
+   154→
+   155→      const addWithChildren = (parentId: string | null, depth: number) => {
+   156→        const children = all.filter(a => {
+   157→          if (parentId === null) return !a.parent_id;
+   158→          return a.parent_id === parentId;
+   159→        });
+   160→
+   161→        children.forEach(child => {
+   162→          if (visited.has(child.id)) return;
+   163→          visited.add(child.id);
+   164→          result.push({ ...child, depth });
+   165→          addWithChildren(child.id, depth + 1);
+   166→        });
+   167→      };
+   168→
+   169→      addWithChildren(null, 0);
+   170→
+   171→      // Add any remaining agents that might have been orphans due to filtering
+   172→      all.forEach(a => {
+   173→        if (!visited.has(a.id)) {
+   174→          visited.add(a.id);
+   175→          result.push({ ...a, depth: 0 });
+   176→          addWithChildren(a.id, 1);
+   177→        }
+   178→      });
+   179→      return [{ id: 'all', label: 'All Agents', agents: result }];
+   180→    }
+   181→
+   182→    if (fleetGroup === 'none') {
+   183→      return [{ id: 'all', label: 'All Agents', agents: all.map(a => ({ ...a, depth: 0 })) }];
+   184→    }
+   185→
+   186→    const groups: Record<string, (Agent & { depth: number })[]> = {};
+   187→    all.forEach(agent => {
+   188→      let key = 'unknown';
+   189→      if (fleetGroup === 'provider') key = agent.model_config.provider;
+   190→      else if (fleetGroup === 'model') key = agent.model_config.model.split('/').pop() || 'unknown';
+   191→      else if (fleetGroup === 'state') key = agent.state;
+   192→      else if (fleetGroup === 'schedule') {
+   193→        const agentTasks = (tasks || []).filter(t => t.parent_agent_id?.toLowerCase() === agent.id.toLowerCase() && t.next_run_at);
+   194→        if (agentTasks.length === 0) {
+   195→          key = 'not_scheduled';
+   196→        } else {
+   197→          const now = new Date();
+   198→          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+   199→          const threeDays = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+   200→          const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+   201→          const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+   202→
+   203→          const times = agentTasks
+   204→            .map(t => t.next_run_at ? new Date(t.next_run_at).getTime() : NaN)
+   205→            .filter(t => !isNaN(t));
+   206→
+   207→          if (times.length === 0) {
+   208→            key = 'not_scheduled';
+   209→          } else {
+   210→            const earliest = new Date(Math.min(...times));
+   211→
+   212→            if (earliest <= today) key = '1_today';
+   213→            else if (earliest <= threeDays) key = '2_next_three_days';
+   214→            else if (earliest <= nextWeek) key = '3_next_week';
+   215→            else if (earliest <= nextMonth) key = '4_next_month';
+   216→            else key = '5_later';
+   217→          }
+   218→        }
+   219→      }
+   220→
+   221→      if (!groups[key]) groups[key] = [];
+   222→      groups[key].push({ ...agent, depth: 0 });
+   223→    });
+   224→
+   225→    const scheduleLabels: Record<string, string> = {
+   226→      '1_today': 'TODAY',
+   227→      '2_next_three_days': 'NEXT THREE DAYS',
+   228→      '3_next_week': 'NEXT WEEK',
+   229→      '4_next_month': 'NEXT MONTH',
+   230→      '5_later': 'LATER',
+   231→      'not_scheduled': 'NOT SCHEDULED'
+   232→    };
+   233→
+   234→    return Object.entries(groups)
+   235→      .sort(([a], [b]) => a.localeCompare(b))
+   236→      .map(([key, agents]) => ({
+   237→        id: key,
+   238→        label: fleetGroup === 'schedule' ? (scheduleLabels[key] || key.toUpperCase()) : key.toUpperCase(),
+   239→        agents
+   240→      }));
+   241→  }, [filteredAgents, fleetGroup, fleetView, tasks]);
+   242→
+   243→  const sortedAgents = React.useMemo(() => {
+   244→    return groupedAgents.flatMap(g => g.agents);
+   245→  }, [groupedAgents]);
+   246→
+   247→  const toggleGroup = (groupId: string) => {
+   248→    setCollapsedGroups(prev => {
+   249→      const next = new Set(prev);
+   250→      if (next.has(groupId)) next.delete(groupId);
+   251→      else next.add(groupId);
+   252→      return next;
+   253→    });
+   254→  };
+   255→
+   256→  const handleContextMenu = (e: React.MouseEvent, agentId: string) => {
+   257→    e.preventDefault();
+   258→    setContextMenu({ x: e.clientX, y: e.clientY, agentId });
+   259→  };
+   260→
+   261→  useEffect(() => {
+   262→    const handleClick = () => setContextMenu(null);
+   263→    window.addEventListener('click', handleClick);
+   264→    return () => window.removeEventListener('click', handleClick);
+   265→  }, []);
+   266→
+   267→  const handleRename = async (id: string) => {
+   268→    const agent = agents[id];
+   269→    if (!agent) return;
+   270→
+   271→    const newName = window.prompt("Enter new name for agent:", agent.name || agent.id.slice(0, 8));
+   272→
+   273→    if (newName && newName !== agent.name) {
+   274→      await renameAgent(id, newName);
+   275→    }
+   276→  };
+   277→
+   278→  const handleAddSubagent = async (parentId: string) => {
+   279→    const parent = agents[parentId];
+   280→    if (!parent) return;
+   281→
+   282→    try {
+   283→      const response = await createAgent(
+   284→        parent.model_config,
+   285→        "",
+   286→        { parent_id: parentId }
+   287→      );
+   288→      if (response && response.id) {
+   289→        selectAgent(response.id);
+   290→        navigate(`/agent/${response.id}`);
+   291→      }
+   292→    } catch (err) {
+   293→      console.error('Failed to create subagent:', err);
+   294→    }
+   295→  };
+   296→
+   297→  const handleDeleteHighlightedAgent = useCallback(async () => {
+   298→    if (activeIndex < 0 || !sortedAgents[activeIndex]) return;
+   299→
+   300→    const agent = sortedAgents[activeIndex];
+   301→    const confirmed = await ask(`Are you sure you want to delete agent "${agent.name || agent.id.slice(0, 8)}"? This will also permanently delete all of its sub-agents. This action cannot be undone.`, {
+   302→      title: 'Delete Agent',
+   303→      kind: 'warning',
+   304→    });
+   305→
+   306→    if (!confirmed) return;
+   307→    await deleteAgent(agent.id);
+   308→    if (activeIndex >= sortedAgents.length - 1) {
+   309→      setActiveIndex(prev => Math.max(-1, prev - 1));
+   310→    }
+   311→  }, [activeIndex, sortedAgents, deleteAgent]);
+   312→
+   313→  useEffect(() => {
+   314→    const handleKeyDown = (e: KeyboardEvent) => {
+   315→      const activeElement = document.activeElement;
+   316→      const isInput = activeElement instanceof HTMLInputElement ||
+   317→        activeElement instanceof HTMLTextAreaElement ||
+   318→        (activeElement as HTMLElement)?.isContentEditable;
+   319→
+   320→      if (isInput) return;
+   321→
+   322→      if (focusedPane !== 'main') return;
+   323→
+   324→      const newAgentHotkey = (config?.ui as any)?.hotkeys?.['new_agent'] || 'Cmd+N';
+   325→      if (isHotkey(e, newAgentHotkey)) {
+   326→        e.preventDefault();
+   327→        handleCreateAgent();
+   328→        return;
+   329→      }
+   330→
+   331→      const deleteAgentHotkey = (config?.ui as any)?.hotkeys?.['delete_agent'] || 'Cmd+D';
+   332→      if (isHotkey(e, deleteAgentHotkey)) {
+   333→        e.preventDefault();
+   334→        handleDeleteHighlightedAgent();
+   335→        return;
+   336→      }
+   337→
+   338→      if (e.key === 'ArrowDown') {
+   339→        e.preventDefault();
+   340→        setActiveIndex(prev => Math.min(prev + 1, sortedAgents.length - 1));
+   341→      } else if (e.key === 'ArrowUp') {
+   342→        e.preventDefault();
+   343→        setActiveIndex(prev => Math.max(prev - 1, 0));
+   344→      } else if (e.key === 'Enter') {
+   345→        if (activeIndex >= 0 && sortedAgents[activeIndex]) {
+   346→          e.preventDefault();
+   347→          navigate(`/agent/${sortedAgents[activeIndex].id}`);
+   348→        }
+   349→      }
+   350→    };
+   351→
+   352→    window.addEventListener('keydown', handleKeyDown);
+   353→    return () => window.removeEventListener('keydown', handleKeyDown);
+   354→  }, [sortedAgents, activeIndex, handleCreateAgent, navigate, config, focusedPane]);
+   355→
+   356→  useEffect(() => {
+   357→    if (activeIndex >= 0 && listRef.current) {
+   358→      const element = listRef.current.querySelector(`[data-index="${activeIndex}"]`);
+   359→      if (element) {
+   360→        element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+   361→      }
+   362→    }
+   363→  }, [activeIndex]);
+   364→
+   365→  const toggleSelectionMode = () => {
+   366→    setIsSelectionMode(prev => !prev);
+   367→    setSelectedAgentIds(new Set());
+   368→  };
+   369→
+   370→  const toggleAgentSelection = (agentId: string, e?: React.MouseEvent) => {
+   371→    if (e) {
+   372→      e.stopPropagation();
+   373→    }
+   374→    setSelectedAgentIds(prev => {
+   375→      const next = new Set(prev);
+   376→      if (next.has(agentId)) {
+   377→        next.delete(agentId);
+   378→      } else {
+   379→        next.add(agentId);
+   380→      }
+   381→      return next;
+   382→    });
+   383→  };
+   384→
+   385→  const selectAllAgents = () => {
+   386→    setSelectedAgentIds(new Set(sortedAgents.map(a => a.id)));
+   387→  };
+   388→
+   389→  const handleBulkDelete = async () => {
+   390→    if (selectedAgentIds.size === 0) return;
+   391→
+   392→    const agentNames = Array.from(selectedAgentIds)
+   393→      .map(id => agents[id]?.name || agents[id]?.id.slice(0, 8))
+   394→      .filter(Boolean);
+   395→
+   396→    const confirmed = await ask(
+   397→      `Are you sure you want to delete ${selectedAgentIds.size} agent(s)? This will also permanently delete all of their sub-agents. This action cannot be undone.\n\nAgents: ${agentNames.slice(0, 5).join(', ')}${agentNames.length > 5 ? ` and ${agentNames.length - 5} more` : ''}`,
+   398→      {
+   399→        title: 'Bulk Delete Agents',
+   400→        kind: 'warning',
+   401→      }
+   402→    );
+   403→
+   404→    if (!confirmed) return;
+   405→
+   406→    await deleteAgents(Array.from(selectedAgentIds));
+   407→    setSelectedAgentIds(new Set());
+   408→    setIsSelectionMode(false);
+   409→  };
+   410→
+   411→  const handleBulkModelChange = async () => {
+   412→    if (!bulkProvider || !bulkModel) return;
+   413→    if (selectedAgentIds.size === 0) return;
+   414→
+   415→    await updateAgentsModel(Array.from(selectedAgentIds), {
+   416→      provider: bulkProvider,
+   417→      model: bulkModel
+   418→    });
+   419→
+   420→    setShowBulkModelDialog(false);
+   421→    setSelectedAgentIds(new Set());
+   422→    setIsSelectionMode(false);
+   423→    setBulkProvider('');
+   424→    setBulkModel('');
+   425→  };
+   426→
+   427→  useEffect(() => {
+   428→    if (showBulkModelDialog && config && apiKeys) {
+   429→      const defaultProvider = config?.inference?.chat?.provider;
+   430→      const defaultModel = config?.inference?.chat?.model;
+   431→
+   432→      if (defaultProvider && defaultModel && apiKeys) {
+   433→        const providerData = apiKeys.find(k => k.provider === defaultProvider);
+   434→        const isValid = providerData?.enabled === true;
+   435→
+   436→        if (isValid) {
+   437→          setBulkProvider(defaultProvider);
+   438→          setBulkModel(defaultModel);
+   439→        } else {
+   440→          const firstValid = apiKeys.find(k => k.enabled === true);
+   441→          if (firstValid) {
+   442→            setBulkProvider(firstValid.provider);
+   443→            const models = config?.available_models?.[firstValid.provider]?.chat || [];
+   444→            if (models.length > 0) setBulkModel(models[0]);
+   445→          }
+   446→        }
+   447→      }
+   448→    }
+   449→  }, [showBulkModelDialog, config, apiKeys]);
+   450→
+   451→  const enabledProviders = Object.keys(config?.available_models || {});
+   452→  const enabledProvidersList = enabledProviders.filter((p: string) => {
+   453→    const key = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+   454→    return key?.enabled === true;
+   455→  });
+   456→  const providers = enabledProvidersList.length > 0
+   457→    ? enabledProvidersList
+   458→    : (enabledProviders.length > 0 ? enabledProviders : []);
+   459→  const availableModels: string[] = bulkProvider ? (config?.available_models?.[bulkProvider]?.chat || []) : [];
+   460→
+   461→  return (
+   462→    <div className="flex flex-col h-full bg-background font-mono text-[12px] relative overflow-hidden select-none">
+   463→      <div className="sticky top-0 z-20 bg-surface/10 border-b border-border/20 px-4 py-2 min-h-[40px] flex items-center justify-between">
+   464→        {selectedAgentIds.size > 0 ? (
+   465→          <>
+   466→            <div className="flex items-center gap-3">
+   467→              <span className="text-[10px] font-black text-accent uppercase tracking-widest">
+   468→                [{selectedAgentIds.size}] SELECTED
+   469→              </span>
+   470→              <button
+   471→                onClick={selectAllAgents}
+   472→                className="text-[10px] font-black text-text-secondary hover:text-accent transition-colors uppercase tracking-widest"
+   473→                title="Select All"
+   474→              >
+   475→                [SELECT_ALL]
+   476→              </button>
+   477→              <button
+   478→                onClick={() => setSelectedAgentIds(new Set())}
+   479→                className="text-[10px] font-black text-text-secondary hover:text-accent transition-colors uppercase tracking-widest"
+   480→              >
+   481→                [CLEAR]
+   482→              </button>
+   483→            </div>
+   484→            <div className="flex items-center gap-3">
+   485→              <button
+   486→                onClick={() => setShowBulkModelDialog(true)}
+   487→                disabled={selectedAgentIds.size === 0}
+   488→                className={clsx(
+   489→                  "text-[10px] font-black uppercase tracking-widest transition-colors",
+   490→                  selectedAgentIds.size === 0
+   491→                    ? "text-text-tertiary/40 cursor-not-allowed"
+   492→                    : "text-accent hover:text-accent/80"
+   493→                )}
+   494→              >
+   495→                [SET_MODEL]
+   496→              </button>
+   497→              <button
+   498→                onClick={handleBulkDelete}
+   499→                disabled={selectedAgentIds.size === 0}
+   500→                className={clsx(
+   501→                  "text-[10px] font-black uppercase tracking-widest transition-colors",
+   502→                  selectedAgentIds.size === 0
+   503→                    ? "text-text-tertiary/40 cursor-not-allowed"
+   504→                    : "text-status-error hover:text-status-error/80"
+   505→                )}
+   506→              >
+   507→                [DELETE]
+   508→              </button>
+   509→              <button
+   510→                onClick={toggleSelectionMode}
+   511→                className="text-[10px] font-black text-text-secondary hover:text-accent transition-colors uppercase tracking-widest"
+   512→              >
+   513→                [EXIT]
+   514→              </button>
+   515→            </div>
+   516→          </>
+   517→        ) : (
+   518→          <div className="w-full"></div>
+   519→        )}
+   520→      </div>
+   521→      <div className="flex-1 overflow-auto p-1 custom-scrollbar" ref={listRef}>
+   522→        <div className="min-w-[800px]">
+   523→          <div className={clsx(
+   524→            "sticky z-10 grid gap-2 px-4 py-1.5 bg-background border-b border-border/10 text-[9px] font-black text-text-tertiary/40 uppercase tracking-widest items-center",
+   525→            "grid-cols-[30px_minmax(150px,2.5fr)_80px_minmax(100px,1.5fr)_minmax(80px,1fr)_120px_80px_60px_80px] top-0"
+   526→          )}>
+   527→            <div className="flex items-center justify-center">
+   528→              <button
+   529→                onClick={() => {
+   530→                  if (selectedAgentIds.size === sortedAgents.length && sortedAgents.length > 0) {
+   531→                    setSelectedAgentIds(new Set());
+   532→                    setIsSelectionMode(false);
+   533→                  } else {
+   534→                    selectAllAgents();
+   535→                    if (!isSelectionMode) {
+   536→                      setIsSelectionMode(true);
+   537→                    }
+   538→                  }
+   539→                }}
+   540→                className="text-[9px] font-black text-text-tertiary/40 hover:text-accent transition-colors uppercase tracking-widest"
+   541→                title={selectedAgentIds.size === sortedAgents.length && sortedAgents.length > 0 ? "Deselect All" : "Select All"}
+   542→              >
+   543→                {selectedAgentIds.size === sortedAgents.length && sortedAgents.length > 0 ? '[X]' : '[ ]'}
+   544→              </button>
+   545→            </div>
+   546→            <div>[NODE]</div>
+   547→            <div>[STATUS]</div>
+   548→            <div>[MODEL]</div>
+   549→            <div>[PROV]</div>
+   550→            <div>[LOAD]</div>
+   551→            <div className="text-center">[SCH]</div>
+   552→            <div className="text-center">[ERR]</div>
+   553→            <div className="text-right">[TIME]</div>
+   554→          </div>
+   555→
+   556→          <div className="flex flex-col">
+   557→            {groupedAgents.map((group) => {
+   558→              const isCollapsed = collapsedGroups.has(group.id);
+   559→              return (
+   560→                <React.Fragment key={group.id}>
+   561→                  {fleetGroup !== 'none' && (
+   562→                    <div
+   563→                      onClick={() => toggleGroup(group.id)}
+   564→                      className="flex items-center gap-2 px-4 py-1.5 bg-surface/5 cursor-pointer border-b border-border/5 select-none group/group"
+   565→                    >
+   566→                      <span className="text-[9px] font-black text-accent/80 uppercase tracking-widest font-mono">
+   567→                        {isCollapsed ? '[+]' : '[-]'} {group.label} <span className="ml-1 text-text-tertiary/40">({group.agents.length})</span>
+   568→                      </span>
+   569→                    </div>
+   570→                  )}
+   571→
+   572→                  {!isCollapsed && group.agents.map((agent, index) => {
+   573→                    const agentTasks = tasks.filter(t => t.parent_agent_id?.toLowerCase() === agent.id.toLowerCase());
+   574→                    const contextPct = agent.max_context_tokens > 0
+   575→                      ? Math.min(100, Math.round((agent.context_tokens / agent.max_context_tokens) * 100))
+   576→                      : 0;
+   577→
+   578→                    const absoluteIndex = sortedAgents.findIndex(a => a.id === agent.id);
+   579→
+   580→                    return (
+   581→                      <div
+   582→                        key={agent.id}
+   583→                        data-index={absoluteIndex}
+   584→                        onClick={() => {
+   585→                          if (isSelectionMode) {
+   586→                            toggleAgentSelection(agent.id);
+   587→                          } else {
+   588→                            navigate(`/agent/${agent.id}`);
+   589→                          }
+   590→                        }}
+   591→                        onContextMenu={(e) => handleContextMenu(e, agent.id)}
+   592→                        className={clsx(
+   593→                          "grid gap-2 px-4 py-1 border-b border-border/5 hover:bg-surface/10 transition-all items-center text-[10px] font-bold",
+   594→                          "grid-cols-[30px_minmax(150px,2.5fr)_80px_minmax(100px,1.5fr)_minmax(80px,1fr)_120px_80px_60px_80px] cursor-pointer",
+   595→                          activeIndex === absoluteIndex && !isSelectionMode && "bg-accent/5",
+   596→                          selectedAgentIds.has(agent.id) && "bg-accent/10"
+   597→                        )}
+   598→                      >
+   599→                        <div
+   600→                          onClick={(e) => {
+   601→                            e.stopPropagation();
+   602→                            if (!isSelectionMode) {
+   603→                              setIsSelectionMode(true);
+   604→                            }
+   605→                            toggleAgentSelection(agent.id, e);
+   606→                          }}
+   607→                          className="flex items-center justify-center"
+   608→                        >
+   609→                          <span className={clsx(
+   610→                            "font-mono text-[10px] font-black",
+   611→                            selectedAgentIds.has(agent.id) ? "text-accent" : "text-text-tertiary/40"
+   612→                          )}>
+   613→                            {selectedAgentIds.has(agent.id) ? '[X]' : '[ ]'}
+   614→                          </span>
+   615→                        </div>
+   616→                        <div className="flex items-center gap-2 min-w-0" style={{ paddingLeft: fleetView === 'tree' ? agent.depth * 12 : 0 }}>
+   617→                          {fleetView === 'tree' && agent.depth > 0 && (
+   618→                            <span className="text-text-tertiary/20 font-light">└</span>
+   619→                          )}
+   620→                          <span className={clsx(
+   621→                            "truncate tracking-tighter uppercase",
+   622→                            activeIndex === absoluteIndex && !isSelectionMode ? "text-accent font-black" : "text-text-primary/70 group-hover:text-text-primary"
+   623→                          )}>
+   624→                            {agent.name || agent.id.slice(0, 8)}
+   625→                          </span>
+   626→                          {agent.type === 'cli' && <span className="text-[8px] text-accent/40 font-black">@CLI</span>}
+   627→                        </div>
+   628→
+   629→                        <div className="flex items-center">
+   630→                          <span className={clsx(
+   631→                            "text-[9px] font-black shrink-0 font-mono w-12",
+   632→                            agent.state === 'running' ? "text-status-success" :
+   633→                              (agent.state === 'waiting' || agent.state === 'awaiting_approval' || agent.state === 'awaiting_secret') ? "text-status-warning" :
+   634→                                agent.state === 'error' ? "text-status-error" :
+   635→                                  "text-text-tertiary/40"
+   636→                          )}>
+   637→                            {agent.state === 'running' ? '[RUN]' :
+   638→                              agent.state === 'waiting' ? '[WAI]' :
+   639→                                (agent.state === 'awaiting_approval' || agent.state === 'awaiting_secret') ? '[!!!]' :
+   640→                                  agent.state === 'error' ? '[ERR]' :
+   641→                                    agent.state === 'paused' ? '[PAU]' : '[IDL]'}
+   642→                          </span>
+   643→                        </div>
+   644→
+   645→                        <div className="truncate text-text-secondary opacity-50 text-[9px] uppercase tracking-tighter">{agent.model_config.model.split('/').pop()}</div>
+   646→                        <div className="truncate text-text-tertiary uppercase text-[8px] opacity-30 font-mono">{agent.model_config.provider}</div>
+   647→
+   648→                        <div className="flex items-center gap-2">
+   649→                          <div className="flex-1 h-1 bg-border/10 border border-border/5 overflow-hidden relative">
+   650→                            <div
+   651→                              className={clsx(
+   652→                                "h-full transition-all duration-500",
+   653→                                contextPct > 90 ? "bg-status-error" : contextPct > 75 ? "bg-status-warning" : "bg-accent/60"
+   654→                              )}
+   655→                              style={{ width: `${contextPct}%` }}
+   656→                            />
+   657→                          </div>
+   658→                          <span className={clsx(
+   659→                            "text-[8px] w-6 text-right font-mono",
+   660→                            contextPct > 90 ? "text-status-error font-black" : "opacity-30"
+   661→                          )}>{contextPct}%</span>
+   662→                        </div>
+   663→
+   664→                        <div className="text-center font-mono">
+   665→                          {agentTasks.length > 0 ? (
+   666→                            <span className="text-accent/40 font-black text-[9px] tracking-widest">{agentTasks.length.toString().padStart(2, '0')}</span>
+   667→                          ) : (
+   668→                            <span className="opacity-10 text-[9px]">--</span>
+   669→                          )}
+   670→                        </div>
+   671→
+   672→                        <div className="text-center font-mono">
+   673→                          {agent.state === 'error' ? (
+   674→                            <span className="text-status-error font-black text-[9px] animate-pulse">!ERR</span>
+   675→                          ) : (
+   676→                            <span className="opacity-10 text-[9px]">--</span>
+   677→                          )}
+   678→                        </div>
+   679→
+   680→                        <div className="text-right text-text-tertiary opacity-30 text-[9px] font-mono tracking-tighter">
+   681→                          {new Date(agent.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+   682→                        </div>
+   683→                      </div>
+   684→                    );
+   685→                  })}
+   686→                </React.Fragment>
+   687→              );
+   688→            })}
+   689→          </div>
+   690→        </div>
+   691→      </div>
+   692→
+   693→
+   694→      {showBulkModelDialog && (
+   695→        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={() => setShowBulkModelDialog(false)}>
+   696→          <div
+   697→            className="bg-background border border-border p-6 min-w-[500px] font-mono"
+   698→            onClick={(e) => e.stopPropagation()}
+   699→          >
+   700→            <div className="mb-4">
+   701→              <h2 className="text-[12px] font-black text-accent uppercase tracking-widest mb-2">
+   702→                BULK_MODEL_OVERRIDE
+   703→              </h2>
+   704→              <p className="text-[10px] text-text-secondary">
+   705→                Update model/provider for {selectedAgentIds.size} selected agent(s)
+   706→              </p>
+   707→            </div>
+   708→
+   709→            <div className="space-y-4 mb-6">
+   710→              <div className="space-y-1.5">
+   711→                <label className="text-[9px] font-bold text-text-secondary uppercase tracking-[0.2em] ml-0.5 opacity-90">/PROVIDER</label>
+   712→                <div className="relative">
+   713→                  <select
+   714→                    value={bulkProvider}
+   715→                    onChange={(e) => {
+   716→                      const newProvider = e.target.value;
+   717→                      if (!newProvider) return;
+   718→                      setBulkProvider(newProvider);
+   719→                      const models = config?.available_models?.[newProvider]?.chat || [];
+   720→                      if (models.length > 0) setBulkModel(models[0]);
+   721→                    }}
+   722→                    className="w-full bg-background border border-border px-2 py-1.5 text-[11px] font-mono font-bold text-accent focus:outline-none focus:border-accent appearance-none cursor-pointer uppercase tracking-tight"
+   723→                  >
+   724→                    {providers.length > 0 ? (
+   725→                      providers.map(p => (
+   726→                        <option key={p} value={p}>
+   727→                          /{p}
+   728→                        </option>
+   729→                      ))
+   730→                    ) : (
+   731→                      <option value="" disabled>[ NO_PROVIDERS_ENABLED ]</option>
+   732→                    )}
+   733→                  </select>
+   734→                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary text-[10px]">▼</div>
+   735→                </div>
+   736→              </div>
+   737→
+   738→              <div className="space-y-1.5">
+   739→                <label className="text-[9px] font-bold text-text-secondary uppercase tracking-[0.2em] ml-0.5 opacity-90">/MODEL_ID</label>
+   740→                <div className="relative">
+   741→                  <select
+   742→                    value={bulkModel}
+   743→                    onChange={(e) => {
+   744→                      if (!e.target.value) return;
+   745→                      setBulkModel(e.target.value);
+   746→                    }}
+   747→                    disabled={!bulkProvider}
+   748→                    className="w-full bg-background border border-border px-2 py-1.5 text-[11px] font-mono font-bold text-text-primary focus:outline-none focus:border-accent appearance-none cursor-pointer tracking-tight uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+   749→                  >
+   750→                    {availableModels.length > 0 ? (
+   751→                      availableModels.map((m: string) => (
+   752→                        <option key={m} value={m}>/{m.split('/').pop()?.toUpperCase()}</option>
+   753→                      ))
+   754→                    ) : (
+   755→                      <option value="" disabled>[ NO_MODELS_AVAILABLE ]</option>
+   756→                    )}
+   757→                  </select>
+   758→                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary text-[10px]">▼</div>
+   759→                </div>
+   760→              </div>
+   761→            </div>
+   762→
+   763→            <div className="flex items-center justify-end gap-3">
+   764→              <button
+   765→                onClick={() => {
+   766→                  setShowBulkModelDialog(false);
+   767→                  setBulkProvider('');
+   768→                  setBulkModel('');
+   769→                }}
+   770→                className="text-[10px] font-black text-text-secondary hover:text-text-primary transition-colors uppercase tracking-widest px-3 py-1.5 border border-border hover:bg-surface/10"
+   771→              >
+   772→                [CANCEL]
+   773→              </button>
+   774→              <button
+   775→                onClick={handleBulkModelChange}
+   776→                disabled={!bulkProvider || !bulkModel}
+   777→                className={clsx(
+   778→                  "text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border transition-colors",
+   779→                  !bulkProvider || !bulkModel
+   780→                    ? "text-text-tertiary/40 border-border/20 cursor-not-allowed"
+   781→                    : "text-accent border-accent hover:bg-accent/10"
+   782→                )}
+   783→              >
+   784→                [EXECUTE_CHANGES]
+   785→              </button>
+   786→            </div>
+   787→          </div>
+   788→        </div>
+   789→      )}
+   790→
+   791→      {contextMenu && (
+   792→        <div
+   793→          className="fixed z-[100] w-44 bg-[#0a0a0a] border border-[#333] font-mono text-[10px] overflow-hidden animate-in fade-in duration-75"
+   794→          style={{ top: contextMenu.y, left: contextMenu.x }}
+   795→          onClick={(e) => e.stopPropagation()}
+   796→        >
+   797→          <div className="px-2 py-1 border-b border-[#333] bg-[#111] text-[#666]">
+   798→            <span className="text-[8px] tracking-wider">
+   799→              *** {agents[contextMenu.agentId]?.name || agents[contextMenu.agentId]?.id.slice(0, 8)}
+   800→            </span>
+   801→          </div>
+   802→
+   803→          <button
+   804→            className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   805→            onClick={() => {
+   806→              handleRename(contextMenu.agentId);
+   807→              setContextMenu(null);
+   808→            }}
+   809→          >
+   810→            RENAME
+   811→          </button>
+   812→
+   813→          <button
+   814→            className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   815→            onClick={() => {
+   816→              handleAddSubagent(contextMenu.agentId);
+   817→              setContextMenu(null);
+   818→            }}
+   819→          >
+   820→            ADD SUBAGENT
+   821→          </button>
+   822→
+   823→          <button
+   824→            className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   825→            onClick={() => {
+   826→              const agent = agents[contextMenu.agentId];
+   827→              if (agent) {
+   828→                updateAgentState(contextMenu.agentId, agent.state === 'running' ? 'pause' : 'resume');
+   829→              }
+   830→              setContextMenu(null);
+   831→            }}
+   832→          >
+   833→            {agents[contextMenu.agentId]?.state === 'running' ? 'PAUSE' : 'RESUME'}
+   834→          </button>
+   835→
+   836→          {agents[contextMenu.agentId]?.state === 'running' && (
+   837→            <button
+   838→              className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   839→              onClick={() => {
+   840→                updateAgentState(contextMenu.agentId, 'pause_tree');
+   841→                setContextMenu(null);
+   842→              }}
+   843→            >
+   844→              PAUSE TREE
+   845→            </button>
+   846→          )}
+   847→
+   848→          {(agents[contextMenu.agentId]?.state === 'paused' || agents[contextMenu.agentId]?.state === 'waiting') && (
+   849→            <button
+   850→              className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   851→              onClick={() => {
+   852→                updateAgentState(contextMenu.agentId, 'resume_tree');
+   853→                setContextMenu(null);
+   854→              }}
+   855→            >
+   856→              RESUME TREE
+   857→            </button>
+   858→          )}
+   859→
+   860→          <button
+   861→            className="w-full text-left px-2 py-1.5 text-[#f44] hover:bg-[#f44]/10 hover:text-[#f44] transition-colors"
+   862→            onClick={async () => {
+   863→              const agent = agents[contextMenu.agentId];
+   864→              if (agent) {
+   865→                const confirmed = await ask(`Are you sure you want to delete agent "${agent.name || agent.id.slice(0, 8)}"? This will also permanently delete all of its sub-agents. This action cannot be undone.`, {
+   866→                  title: 'Delete Agent',
+   867→                  kind: 'warning',
+   868→                });
+   869→                if (confirmed) {
+   870→                  await deleteAgent(agent.id);
+   871→                }
+   872→              }
+   873→              setContextMenu(null);
+   874→            }}
+   875→          >
+   876→            DELETE
+   877→          </button>
+   878→        </div>
+   879→      )}
+   880→    </div>
+   881→  );
+   882→};
+   883→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

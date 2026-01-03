@@ -1,0 +1,461 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { clsx } from 'clsx';
+import { AgentDashboard } from './components/Agent/AgentDashboard';
+import { FleetSidebar } from './components/Agent/FleetSidebar';
+import { AgentWorkspace } from './components/Agent/AgentWorkspace';
+import { AgentExplorer } from './components/Agent/AgentExplorer';
+import { SettingsSidebar } from './components/Agent/SettingsSidebar';
+import { SkillsSidebar } from './components/Agent/SkillsSidebar';
+import { StatusBar } from './components/Agent/StatusBar';
+import { SkillsView } from './components/Agent/SkillsView';
+import { TriggersView } from './components/Agent/TriggersView';
+import { SettingsView } from './components/Agent/SettingsView';
+import { UsageView } from './components/Agent/UsageView';
+import { UsageSidebar } from './components/Agent/UsageSidebar';
+import { TriggersSidebar } from './components/Agent/TriggersSidebar';
+import { Unibar } from './components/Unibar';
+import { SearchBar } from './components/SearchBar';
+import { MissedTasksModal } from './components/Agent/MissedTasksModal';
+import { api } from './lib/api';
+import { NotificationProvider } from './hooks/useNotifications';
+import { SystemProvider, useSystem } from './context/SystemContext';
+import { AgentProvider, useAgents } from './context/AgentContext';
+import { useQuery } from '@tanstack/react-query';
+import { isHotkey } from './lib/hotkeys';
+import { listen } from '@tauri-apps/api/event';
+import { confirm, message } from '@tauri-apps/plugin-dialog';
+import { useAutoUpdate } from './hooks/useAutoUpdate';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+function WaitingForBackend() {
+  return (
+    <div className="flex h-screen w-screen items-center justify-center bg-background text-text-primary">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <p className="text-text-secondary">Starting backend...</p>
+      </div>
+    </div>
+  );
+}
+
+function AgentRouteWrapper() {
+  const { id } = useParams<{ id: string }>();
+  const { selectAgent, agents, initialized } = useAgents();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!initialized || !id) return;
+
+    if (agents[id]) {
+      selectAgent(id);
+    } else {
+      // If agent doesn't exist, go back to dashboard
+      selectAgent(null);
+      navigate('/', { replace: true });
+    }
+  }, [id, agents, initialized, selectAgent, navigate]);
+
+  if (!id || !agents[id]) return null;
+
+  return <AgentWorkspace />;
+}
+
+function DashboardRouteWrapper() {
+  const { selectAgent } = useAgents();
+  useEffect(() => {
+    selectAgent(null);
+  }, [selectAgent]);
+  return <AgentDashboard />;
+}
+
+function SearchManager() {
+  const { isSearchBarOpen, setIsSearchBarOpen } = useSystem();
+
+  const { data: config } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => api.getConfig(),
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle Search Bar
+      if (isHotkey(e, 'Cmd+F')) {
+        e.preventDefault();
+        setIsSearchBarOpen(!isSearchBarOpen);
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isSearchBarOpen, setIsSearchBarOpen]);
+
+  if (!isSearchBarOpen) return null;
+
+  return <SearchBar onClose={() => setIsSearchBarOpen(false)} />;
+}
+
+function AppContent() {
+  useAutoUpdate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [zoom, setZoom] = useState(() => {
+    const saved = localStorage.getItem('pa_zoom');
+    return saved ? parseFloat(saved) : 1.2;
+  });
+
+  const { data: config } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => api.getConfig(),
+  });
+
+  const { createAgent, selectAgent, setSidebarCollapsed, isExplorerCollapsed, toggleExplorer, activeAgentId, agents, setFocusedPane } = useAgents();
+  const { activeSettingsTab, setActiveSettingsTab } = useSystem();
+
+  const activeAgent = activeAgentId ? agents[activeAgentId] : null;
+  const isSkillArchitect = activeAgent?.name?.toLowerCase().includes('skill architect') || activeAgent?.initial_prompt?.includes('Skill Architect');
+  const isTriggerArchitect = activeAgent?.name?.toLowerCase().includes('trigger architect') || activeAgent?.initial_prompt?.includes('Trigger Architect');
+  const isSkillsRoute = location.pathname === '/skills';
+  const isTriggersRoute = location.pathname === '/triggers';
+
+  const [explorerWidth, setExplorerWidth] = useState(() => {
+    const saved = localStorage.getItem('agent-explorer-width');
+    return saved ? parseInt(saved, 10) : 256;
+  });
+
+  const isResizingExplorer = useRef(false);
+
+  useEffect(() => {
+    localStorage.setItem('agent-explorer-width', explorerWidth.toString());
+  }, [explorerWidth]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isResizingExplorer.current) {
+        setExplorerWidth(Math.max(160, Math.min(600, e.clientX)));
+      }
+    };
+
+    const handleMouseUp = () => {
+      isResizingExplorer.current = false;
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const backHotkey = (config?.ui as any)?.hotkeys?.['global_back'] || 'Escape';
+      const toggleExplorerHotkey = (config?.ui as any)?.hotkeys?.['toggle_explorer'] || 'Cmd+E';
+
+      // Toggle Explorer hotkey
+      if (isHotkey(e, toggleExplorerHotkey)) {
+        e.preventDefault();
+        toggleExplorer();
+        return;
+      }
+
+      // Zoom hotkeys
+      if (isHotkey(e, 'Cmd+=') || isHotkey(e, 'Cmd++') || isHotkey(e, 'Cmd+Plus')) {
+        e.preventDefault();
+        setZoom(prev => {
+          const next = Math.min(prev + 0.1, 2.0);
+          localStorage.setItem('pa_zoom', next.toString());
+          return next;
+        });
+        return;
+      }
+      if (isHotkey(e, 'Cmd+-') || isHotkey(e, 'Cmd+_') || isHotkey(e, 'Cmd+Minus')) {
+        e.preventDefault();
+        setZoom(prev => {
+          const next = Math.max(prev - 0.1, 0.5);
+          localStorage.setItem('pa_zoom', next.toString());
+          return next;
+        });
+        return;
+      }
+      if (isHotkey(e, 'Cmd+0')) {
+        e.preventDefault();
+        setZoom(1.2);
+        localStorage.setItem('pa_zoom', '1.2');
+        return;
+      }
+
+      if (isHotkey(e, backHotkey)) {
+        // If another component already handled this Escape (e.g. closing a modal)
+        if (e.defaultPrevented) return;
+
+        // Don't navigate back if we're already at the dashboard
+        if (location.pathname === '/') return;
+
+        // Don't navigate back if the user is typing in an input or textarea
+        const activeElement = document.activeElement;
+        const isInput = activeElement instanceof HTMLInputElement ||
+          activeElement instanceof HTMLTextAreaElement ||
+          (activeElement as HTMLElement)?.isContentEditable;
+
+        if (isInput) {
+          (activeElement as HTMLElement).blur();
+          return;
+        }
+
+        navigate('/');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate, location.pathname, config, toggleExplorer]);
+
+  const configRef = useRef(config);
+  const restorePromptRef = useRef(false);
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
+
+  useEffect(() => {
+    let unlistenFeedback: (() => void) | undefined;
+    let unlistenOnboarding: (() => void) | undefined;
+    let unlistenRestoreSkills: (() => void) | undefined;
+    let unlistenRestoreTriggers: (() => void) | undefined;
+
+    const setupListeners = async () => {
+      try {
+        unlistenFeedback = await listen('feedback-requested', async () => {
+          const currentConfig = configRef.current;
+          try {
+            const response = await createAgent(
+              {
+                provider: currentConfig?.inference?.chat?.provider,
+                model: currentConfig?.inference?.chat?.model
+              },
+              "",
+              { is_feedback_collector: true }
+            );
+            if (response && response.id) {
+              setSidebarCollapsed(true);
+              selectAgent(response.id);
+              navigate(`/agent/${response.id}`);
+            }
+          } catch (err) {
+            console.error('Failed to create feedback agent:', err);
+          }
+        });
+
+        unlistenOnboarding = await listen('restart-onboarding', async () => {
+          try {
+            await api.restartOnboarding();
+            navigate('/');
+          } catch (err) {
+            console.error('Failed to restart onboarding:', err);
+          }
+        });
+
+        unlistenRestoreSkills = await listen('restore-default-skills', async () => {
+          if (restorePromptRef.current) return;
+          restorePromptRef.current = true;
+          try {
+            const confirmed = await confirm('Restore default skills? This will back up your current skills and replace them with defaults.', {
+              title: 'Restore Default Skills',
+              kind: 'warning',
+            });
+            if (!confirmed) return;
+            const result = await api.restoreDefaultSkills();
+            queryClient.invalidateQueries({ queryKey: ['skills'] });
+            const backupPath = result?.backup_path ? `Backup saved to:\n${result.backup_path}` : 'No existing skills to back up.';
+            await message(`Default skills restored.\n\n${backupPath}`, {
+              title: 'Restore Default Skills',
+              kind: 'info',
+            });
+          } catch (err) {
+            console.error('Failed to restore default skills:', err);
+          } finally {
+            restorePromptRef.current = false;
+          }
+        });
+
+        unlistenRestoreTriggers = await listen('restore-default-triggers', async () => {
+          if (restorePromptRef.current) return;
+          restorePromptRef.current = true;
+          try {
+            const confirmed = await confirm('Restore default triggers? This will back up your current triggers and replace them with defaults.', {
+              title: 'Restore Default Triggers',
+              kind: 'warning',
+            });
+            if (!confirmed) return;
+            const result = await api.restoreDefaultTriggers();
+            queryClient.invalidateQueries({ queryKey: ['triggers'] });
+            const backupPath = result?.backup_path ? `Backup saved to:\n${result.backup_path}` : 'No existing triggers to back up.';
+            await message(`Default triggers restored.\n\n${backupPath}`, {
+              title: 'Restore Default Triggers',
+              kind: 'info',
+            });
+          } catch (err) {
+            console.error('Failed to restore default triggers:', err);
+          } finally {
+            restorePromptRef.current = false;
+          }
+        });
+      } catch (err) {
+        console.error('Failed to setup Tauri listeners:', err);
+      }
+    };
+
+    setupListeners();
+
+    return () => {
+      if (unlistenFeedback) unlistenFeedback();
+      if (unlistenOnboarding) unlistenOnboarding();
+      if (unlistenRestoreSkills) unlistenRestoreSkills();
+      if (unlistenRestoreTriggers) unlistenRestoreTriggers();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only setup once on mount
+
+  useEffect(() => {
+    const syncTheme = async () => {
+      try {
+        const config = await api.getConfig();
+        const theme = config.ui?.theme || 'default';
+        localStorage.setItem('pa_theme', theme);
+        applyTheme(theme);
+      } catch (err) {
+        console.error('Failed to sync theme:', err);
+      }
+    };
+    syncTheme();
+  }, []);
+
+  return (
+    <div
+      className="flex flex-col h-screen w-screen overflow-hidden bg-background text-text-primary font-mono text-[13px]"
+      style={{ zoom: zoom } as React.CSSProperties}
+    >
+      <Unibar />
+
+      <div className="flex-1 flex overflow-hidden mt-6">
+        <aside
+          style={{ width: isExplorerCollapsed ? 0 : explorerWidth }}
+          onMouseDown={() => setFocusedPane('explorer')}
+          className={clsx(
+            "flex flex-col bg-background shrink-0 transition-all duration-300 ease-in-out",
+            isExplorerCollapsed ? "overflow-hidden" : "border-r border-border/50"
+          )}
+        >
+          {location.pathname === '/settings' ? (
+            <SettingsSidebar activeTab={activeSettingsTab} onTabChange={setActiveSettingsTab} />
+          ) : isSkillsRoute ? (
+            <SkillsSidebar />
+          ) : isTriggersRoute ? (
+            <TriggersSidebar />
+          ) : isSkillArchitect ? (
+            <SkillsSidebar />
+          ) : isTriggerArchitect ? (
+            <TriggersSidebar />
+          ) : location.pathname === '/usage' ? (
+            <UsageSidebar />
+          ) : location.pathname === '/' ? (
+            <FleetSidebar />
+          ) : (
+            <AgentExplorer />
+          )}
+        </aside>
+
+        {/* Explorer Resizer */}
+        {!isExplorerCollapsed && (
+          <div
+            className="w-[1px] hover:w-1 bg-border hover:bg-accent/50 cursor-col-resize transition-all shrink-0 z-10 -ml-[1px]"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              isResizingExplorer.current = true;
+              document.body.style.cursor = 'col-resize';
+              document.body.style.userSelect = 'none';
+            }}
+          />
+        )}
+
+        <main
+          className="flex-1 relative overflow-hidden flex flex-col"
+          onMouseDown={() => setFocusedPane('main')}
+        >
+          <Routes>
+            <Route path="/" element={<DashboardRouteWrapper />} />
+            <Route path="/agent/:id" element={<AgentRouteWrapper />} />
+            <Route path="/skills" element={<SkillsView />} />
+            <Route path="/triggers" element={<TriggersView />} />
+            <Route path="/settings" element={<SettingsView />} />
+            <Route path="/usage" element={<UsageView />} />
+          </Routes>
+        </main>
+      </div>
+
+      <StatusBar />
+
+      <MissedTasksModal />
+    </div>
+  );
+}
+
+function AppWithBackendCheck() {
+  const [backendReady, setBackendReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const checkBackend = async () => {
+      while (!cancelled) {
+        const ok = await api.health();
+        if (ok) {
+          setBackendReady(true);
+          return;
+        }
+        await new Promise(r => setTimeout(r, 500));
+      }
+    };
+    checkBackend();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (!backendReady) {
+    return <WaitingForBackend />;
+  }
+
+  return (
+    <NotificationProvider>
+      <SystemProvider>
+        <AgentProvider>
+          <BrowserRouter>
+            <SearchManager />
+            <AppContent />
+          </BrowserRouter>
+        </AgentProvider>
+      </SystemProvider>
+    </NotificationProvider>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppWithBackendCheck />
+    </QueryClientProvider>
+  );
+}
+
+export default App;

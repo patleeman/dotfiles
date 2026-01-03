@@ -1,0 +1,20 @@
+# OpenCode Claude API Usage Analysis
+
+Based on the provided GitHub repository content, **there is no information available** about how this project uses Claude Max API limits, Claude API integration, rate limiting, or Claude-specific configuration.
+
+The repository page contains:
+- Installation instructions
+- Feature descriptions (agents, desktop app)
+- FAQ comparing OpenCode to Claude Code
+- Contributing guidelines
+- License information (MIT)
+
+However, **no technical documentation** regarding Claude API integration, rate limits, or API configuration is visible in the extracted content.
+
+To find this information, you would need to:
+1. Check the project's actual configuration files in the `/packages` directory
+2. Review documentation at opencode.ai/docs
+3. Examine the source code repositories referenced in the project structure
+4. Check the project's API client implementation files
+
+The FAQ notes that OpenCode is "not coupled to any provider" and works with "Claude, OpenAI, Google or even local models," but specific API limit handling for any provider is not documented in this excerpt.

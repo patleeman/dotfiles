@@ -1,0 +1,184 @@
+2026-01-03T11:31:35.950Z [DEBUG] Getting matching hook commands for SessionEnd with query: clear
+2026-01-03T11:31:35.950Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:31:35.950Z [DEBUG] Matched 0 unique hooks for query "clear" (0 before deduplication)
+2026-01-03T11:31:35.950Z [DEBUG] Cleared all session hooks for session 9def64a9-4499-42b0-848a-876c27cd5c62
+2026-01-03T11:31:35.951Z [DEBUG] Getting matching hook commands for SessionStart with query: clear
+2026-01-03T11:31:35.951Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:31:35.951Z [DEBUG] Matched 0 unique hooks for query "clear" (0 before deduplication)
+2026-01-03T11:31:35.954Z [DEBUG] FileHistory: Added snapshot for a142b33b-9b19-4323-9c23-f25d10b2f00e, tracking 0 files
+2026-01-03T11:31:35.960Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:31:36.015Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:31:36.015Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:32:06.116Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:32:06.116Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:32:06.116Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:32:06.116Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:32:06.124Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T11:32:06.124Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:32:06.124Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:32:06.124Z [DEBUG] FileHistory: Making snapshot for message cbd2209c-ac08-4224-8641-ef57f6d354f1
+2026-01-03T11:32:06.124Z [DEBUG] FileHistory: Added snapshot for cbd2209c-ac08-4224-8641-ef57f6d354f1, tracking 0 files
+2026-01-03T11:32:06.660Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:32:10.337Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:32:18.778Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T11:32:18.780Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T11:32:18.780Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T11:32:18.780Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 17 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)"]
+2026-01-03T11:32:25.852Z [DEBUG] executePreToolHooks called for tool: AskUserQuestion
+2026-01-03T11:32:25.854Z [DEBUG] Getting matching hook commands for PreToolUse with query: AskUserQuestion
+2026-01-03T11:32:25.854Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:32:25.854Z [DEBUG] Matched 0 unique hooks for query "AskUserQuestion" (0 before deduplication)
+2026-01-03T11:32:25.891Z [DEBUG] executePermissionRequestHooks called for tool: AskUserQuestion
+2026-01-03T11:32:25.895Z [DEBUG] Getting matching hook commands for PermissionRequest with query: AskUserQuestion
+2026-01-03T11:32:25.895Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:32:25.895Z [DEBUG] Matched 0 unique hooks for query "AskUserQuestion" (0 before deduplication)
+2026-01-03T11:32:43.896Z [DEBUG] Getting matching hook commands for Notification with query: permission_prompt
+2026-01-03T11:32:43.896Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T11:32:43.896Z [DEBUG] Matched 1 unique hooks for query "permission_prompt" (1 before deduplication)
+2026-01-03T11:32:44.113Z [DEBUG] Notification:permission_prompt [bash -c 'terminal-notifier -title "Claude: ${CLAUDE_PROJECT_DIR##*/}" -message "Claude needs your attention" -activate com.apple.Terminal -sound Glass'] completed with status 0
+2026-01-03T11:32:44.113Z [DEBUG] Hook output does not start with {, treating as plain text
+2026-01-03T11:34:57.877Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T11:34:57.880Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T11:34:57.880Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T11:34:57.880Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 18 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)"]
+2026-01-03T11:35:00.357Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:35:00.360Z [DEBUG] Getting matching hook commands for PostToolUse with query: AskUserQuestion
+2026-01-03T11:35:00.360Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:35:00.360Z [DEBUG] Matched 0 unique hooks for query "AskUserQuestion" (0 before deduplication)
+2026-01-03T11:35:00.368Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:35:00.368Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:35:00.368Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:35:00.368Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:35:00.423Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:35:00.423Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:35:05.226Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:35:40.630Z [WARN] Streaming stall detected: 30.5s gap between events (stall #1)
+2026-01-03T11:35:41.059Z [WARN] Streaming completed with 1 stall(s), total stall time: 30.5s
+2026-01-03T11:35:41.072Z [DEBUG] executePreToolHooks called for tool: Write
+2026-01-03T11:35:41.074Z [DEBUG] Getting matching hook commands for PreToolUse with query: Write
+2026-01-03T11:35:41.074Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:35:41.075Z [DEBUG] Matched 0 unique hooks for query "Write" (0 before deduplication)
+2026-01-03T11:35:41.082Z [DEBUG] Writing to temp file: /Users/patrick/workingdir/familiar/scripts/claude-queue.sh.tmp.25572.1767440141082
+2026-01-03T11:35:41.082Z [DEBUG] Temp file written successfully, size: 8179 bytes
+2026-01-03T11:35:41.082Z [DEBUG] Renaming /Users/patrick/workingdir/familiar/scripts/claude-queue.sh.tmp.25572.1767440141082 to /Users/patrick/workingdir/familiar/scripts/claude-queue.sh
+2026-01-03T11:35:41.082Z [DEBUG] File /Users/patrick/workingdir/familiar/scripts/claude-queue.sh written atomically
+2026-01-03T11:35:41.084Z [DEBUG] FileHistory: Tracked file modification for /Users/patrick/workingdir/familiar/scripts/claude-queue.sh
+2026-01-03T11:35:41.089Z [DEBUG] [lspRecommendation] Looking for LSP plugins for .sh
+2026-01-03T11:35:41.092Z [DEBUG] Getting matching hook commands for PostToolUse with query: Write
+2026-01-03T11:35:41.092Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:35:41.092Z [DEBUG] Matched 0 unique hooks for query "Write" (0 before deduplication)
+2026-01-03T11:35:41.101Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:35:41.101Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:35:41.101Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:35:41.101Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:35:45.671Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:35:46.207Z [DEBUG] [SLOW OPERATION DETECTED] fs.appendFileSync (15.0ms)
+2026-01-03T11:35:46.660Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:35:46.666Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:35:46.666Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:35:46.666Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:35:47.260Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:35:47.415Z [DEBUG] Permission suggestions for Bash: [
+  {
+    "type": "addRules",
+    "rules": [
+      {
+        "toolName": "Bash",
+        "ruleContent": "chmod:*"
+      }
+    ],
+    "behavior": "allow",
+    "destination": "localSettings"
+  }
+]
+2026-01-03T11:35:47.429Z [DEBUG] executePermissionRequestHooks called for tool: Bash
+2026-01-03T11:35:47.433Z [DEBUG] Getting matching hook commands for PermissionRequest with query: Bash
+2026-01-03T11:35:47.433Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:35:47.433Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:35:53.432Z [DEBUG] Getting matching hook commands for Notification with query: permission_prompt
+2026-01-03T11:35:53.432Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T11:35:53.432Z [DEBUG] Matched 1 unique hooks for query "permission_prompt" (1 before deduplication)
+2026-01-03T11:35:53.655Z [DEBUG] Notification:permission_prompt [bash -c 'terminal-notifier -title "Claude: ${CLAUDE_PROJECT_DIR##*/}" -message "Claude needs your attention" -activate com.apple.Terminal -sound Glass'] completed with status 0
+2026-01-03T11:35:53.655Z [DEBUG] Hook output does not start with {, treating as plain text
+2026-01-03T11:36:07.632Z [DEBUG] Persisting permission update: addRules to source 'localSettings'
+2026-01-03T11:36:07.632Z [DEBUG] Persisting 1 allow rule(s) to localSettings
+2026-01-03T11:36:07.633Z [DEBUG] Writing to temp file: /Users/patrick/workingdir/familiar/.claude/settings.local.json.tmp.25572.1767440167633
+2026-01-03T11:36:07.633Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:36:07.634Z [DEBUG] Temp file written successfully, size: 940 bytes
+2026-01-03T11:36:07.634Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:36:07.634Z [DEBUG] Renaming /Users/patrick/workingdir/familiar/.claude/settings.local.json.tmp.25572.1767440167633 to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T11:36:07.634Z [DEBUG] File /Users/patrick/workingdir/familiar/.claude/settings.local.json written atomically
+2026-01-03T11:36:07.648Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'localSettings': ["Bash(chmod:*)"]
+2026-01-03T11:36:07.649Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:36:07.677Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:36:07.677Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:36:07.677Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:36:07.686Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:36:07.686Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:36:07.686Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:36:07.686Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:36:07.715Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:36:07.715Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:36:08.112Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:36:10.226Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:36:13.366Z [DEBUG] executePreToolHooks called for tool: Write
+2026-01-03T11:36:13.368Z [DEBUG] Getting matching hook commands for PreToolUse with query: Write
+2026-01-03T11:36:13.368Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:36:13.368Z [DEBUG] Matched 0 unique hooks for query "Write" (0 before deduplication)
+2026-01-03T11:36:13.378Z [DEBUG] Writing to temp file: /Users/patrick/workingdir/familiar/claude-queue.txt.example.tmp.25572.1767440173378
+2026-01-03T11:36:13.378Z [DEBUG] Temp file written successfully, size: 274 bytes
+2026-01-03T11:36:13.378Z [DEBUG] Renaming /Users/patrick/workingdir/familiar/claude-queue.txt.example.tmp.25572.1767440173378 to /Users/patrick/workingdir/familiar/claude-queue.txt.example
+2026-01-03T11:36:13.378Z [DEBUG] File /Users/patrick/workingdir/familiar/claude-queue.txt.example written atomically
+2026-01-03T11:36:13.380Z [DEBUG] FileHistory: Tracked file modification for /Users/patrick/workingdir/familiar/claude-queue.txt.example
+2026-01-03T11:36:13.382Z [DEBUG] [lspRecommendation] Looking for LSP plugins for .example
+2026-01-03T11:36:13.384Z [DEBUG] Getting matching hook commands for PostToolUse with query: Write
+2026-01-03T11:36:13.384Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:36:13.384Z [DEBUG] Matched 0 unique hooks for query "Write" (0 before deduplication)
+2026-01-03T11:36:13.391Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:36:13.391Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:36:13.391Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:36:13.391Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:36:17.787Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:36:22.253Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T11:36:22.253Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T11:36:22.253Z [DEBUG] Matched 1 unique hooks for query "no match query" (1 before deduplication)
+2026-01-03T11:36:25.173Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:36:33.973Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T11:36:33.973Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:36:33.973Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T12:01:06.557Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T12:01:06.559Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T12:01:06.560Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T12:01:06.560Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 20 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)"]
+2026-01-03T12:05:22.364Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T12:05:22.366Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T12:05:22.367Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T12:05:22.367Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 21 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]
+2026-01-03T12:06:07.767Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T12:06:07.768Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T12:14:38.244Z [DEBUG] UserCommandMessage rendering: "usage" (args: "none")
+2026-01-03T12:14:38.244Z [DEBUG] isSkillFormat: false
+2026-01-03T12:14:38.251Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T12:14:38.338Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T12:14:38.338Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T12:39:29.111Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:39:29.121Z [DEBUG] Settings changed from userSettings, updating AppState
+2026-01-03T12:39:29.122Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 2 rule(s): ["Bash(go:*)","Bash(make:*)"]
+2026-01-03T12:39:29.122Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 21 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]
+2026-01-03T12:44:14.591Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:44:14.598Z [DEBUG] Settings changed from userSettings, updating AppState
+2026-01-03T12:44:14.599Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 21 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]
+2026-01-03T12:44:38.341Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T12:44:38.341Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T12:47:30.374Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:47:30.379Z [DEBUG] Settings changed from userSettings, updating AppState
+2026-01-03T12:47:30.380Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 21 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]
+2026-01-03T12:47:34.850Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:47:34.865Z [DEBUG] Settings changed from userSettings, updating AppState
+2026-01-03T12:47:34.869Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 21 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]
+2026-01-03T12:47:40.051Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:47:40.062Z [DEBUG] Settings changed from userSettings, updating AppState
+2026-01-03T12:47:40.065Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 21 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]
+2026-01-03T12:50:27.109Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:50:27.120Z [DEBUG] Settings changed from userSettings, updating AppState
+2026-01-03T12:50:27.123Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 21 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]

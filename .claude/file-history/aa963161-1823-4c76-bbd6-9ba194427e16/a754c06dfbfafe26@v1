@@ -1,0 +1,108 @@
+import { useRef, useEffect, useCallback } from 'react';
+
+type Direction = 'horizontal' | 'vertical';
+
+interface UseDraggableResizeOptions {
+  direction: Direction;
+  minSize?: number;
+  maxSize?: number;
+  storageKey?: string;
+  defaultSize: number;
+  onResize?: (size: number) => void;
+}
+
+interface UseDraggableResizeReturn {
+  size: number;
+  isResizing: React.MutableRefObject<boolean>;
+  handleMouseDown: (e: React.MouseEvent) => void;
+  resizerProps: {
+    onMouseDown: (e: React.MouseEvent) => void;
+    className: string;
+  };
+}
+
+export function useDraggableResize({
+  direction,
+  minSize = 100,
+  maxSize = 600,
+  storageKey,
+  defaultSize,
+  onResize,
+}: UseDraggableResizeOptions): UseDraggableResizeReturn {
+  const isResizing = useRef(false);
+  const sizeRef = useRef(defaultSize);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    if (storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= minSize && parsed <= maxSize) {
+          sizeRef.current = parsed;
+          onResize?.(parsed);
+        }
+      }
+    }
+  }, [storageKey, minSize, maxSize, onResize]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = direction === 'horizontal' ? 'col-resize' : 'row-resize';
+    document.body.style.userSelect = 'none';
+  }, [direction]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+
+      let newSize: number;
+      if (direction === 'horizontal') {
+        newSize = e.clientX;
+      } else {
+        newSize = e.clientY;
+      }
+
+      // Clamp to min/max
+      newSize = Math.max(minSize, Math.min(maxSize, newSize));
+      sizeRef.current = newSize;
+      onResize?.(newSize);
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing.current) {
+        isResizing.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+
+        // Save to localStorage
+        if (storageKey) {
+          localStorage.setItem(storageKey, sizeRef.current.toString());
+        }
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [direction, minSize, maxSize, storageKey, onResize]);
+
+  const resizerClassName = direction === 'horizontal'
+    ? 'w-[1px] hover:w-1 bg-border hover:bg-accent/50 cursor-col-resize transition-all shrink-0 z-10'
+    : 'h-[1px] hover:h-1 bg-border hover:bg-accent/50 cursor-row-resize transition-all shrink-0 z-10';
+
+  return {
+    size: sizeRef.current,
+    isResizing,
+    handleMouseDown,
+    resizerProps: {
+      onMouseDown: handleMouseDown,
+      className: resizerClassName,
+    },
+  };
+}

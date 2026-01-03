@@ -1,0 +1,19 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   233→                    </tr>
+   234→                  </thead>
+   235→                  <tbody className="text-[11px]">
+   236→                    {agents.length === 0 ? (
+   237→                      <tr>
+   238→                        <td colSpan={5} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+   239→                          No data available
+   240→                        </td>
+   241→                      </tr>
+   242→                    ) : (
+   243→                      agents.map((a: UsageAgentSummaryItem, i: number) => (
+   244→                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+   245→                          <td className="px-4 py-1 truncate font-black text-text-primary" title={a.agent_id}>
+   246→                            {(a.agent_name || a.agent_id.slice(0, 8)).toUpperCase()}
+   247→                          </td>
+   248→                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+   249→                            {a.total_requests}
+   250→                          </td>

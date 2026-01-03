@@ -1,0 +1,753 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAgents } from '../../context/AgentContext';
+import { clsx } from 'clsx';
+import { useQuery } from '@tanstack/react-query';
+import { api, type Agent, isSubAgentManagedCLI } from '../../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { isHotkey } from '../../lib/hotkeys';
+import { Status, Tag, Button } from '../ui';
+import { Calendar, AlertCircle, Clock, MoreHorizontal, Circle } from 'lucide-react';
+
+export const AgentDashboard: React.FC = () => {
+  const {
+    agents,
+    tasks,
+    createAgent,
+    selectAgent,
+    setSidebarCollapsed,
+    isExplorerCollapsed,
+    deleteAgent,
+    deleteAgents,
+    fleetFilter,
+    fleetGroup,
+    fleetSearch,
+    fleetView,
+    renameAgent,
+    updateAgentState,
+    updateAgentsModel,
+    focusedPane
+  } = useAgents();
+  const navigate = useNavigate();
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, agentId: string } | null>(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedAgentIds, setSelectedAgentIds] = useState<Set<string>>(new Set());
+  const [showBulkModelDialog, setShowBulkModelDialog] = useState(false);
+  const listRef = React.useRef<HTMLDivElement>(null);
+
+  const { data: config } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => api.getConfig(),
+  });
+
+  const { data: apiKeys } = useQuery({
+    queryKey: ['apiKeys'],
+    queryFn: () => api.getApiKeys(),
+  });
+
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [bulkProvider, setBulkProvider] = useState('');
+  const [bulkModel, setBulkModel] = useState('');
+
+  useEffect(() => {
+    const defaultProvider = config?.inference?.chat?.provider;
+    const defaultModel = config?.inference?.chat?.model;
+
+    if (defaultProvider && defaultModel && apiKeys) {
+      const providerData = apiKeys.find(k => k.provider === defaultProvider);
+      const isValid = providerData?.enabled === true;
+
+      if (isValid) {
+        setSelectedProvider(defaultProvider);
+        setSelectedModel(defaultModel);
+      } else {
+        const firstValid = apiKeys.find(k => k.enabled === true);
+        if (firstValid) {
+          setSelectedProvider(firstValid.provider);
+          const models = config?.available_models?.[firstValid.provider]?.chat || [];
+          if (models.length > 0) setSelectedModel(models[0]);
+        }
+      }
+    }
+  }, [config, apiKeys]);
+
+  const handleCreateAgent = async () => {
+    if (!selectedProvider || !selectedModel) {
+      const confirmed = await ask("No LLM provider is enabled. You must enable at least one provider in Settings to create agents. Would you like to go to Settings now?", {
+        title: 'No Providers Enabled',
+        kind: 'warning',
+      });
+      if (confirmed) {
+        navigate('/settings');
+      }
+      return;
+    }
+
+    try {
+      const response = await createAgent(
+        { provider: selectedProvider, model: selectedModel },
+        ""
+      );
+      if (response && response.id) {
+        setSidebarCollapsed(true);
+        selectAgent(response.id);
+        navigate(`/agent/${response.id}`);
+      }
+    } catch (err) {
+      console.error('Failed to create agent:', err);
+    }
+  };
+
+  const filteredAgents = React.useMemo(() => {
+    let allArr = Object.values(agents);
+    let all = allArr.filter(a => {
+      if (a.is_internal) return false;
+
+      let curr = a;
+      while (curr.parent_id) {
+        const parent = agents[curr.parent_id];
+        if (parent && parent.is_internal) return false;
+        if (parent && (parent.name === 'Feedback Collector' || parent.name?.startsWith('Skill Architect') || parent.name?.startsWith('Trigger Architect'))) return false;
+        if (!parent) break;
+        curr = parent;
+      }
+
+      return true;
+    });
+
+    if (fleetFilter !== 'all') {
+      all = all.filter(a => {
+        if (fleetFilter === 'running') return a.state === 'running';
+        if (fleetFilter === 'failed') return a.state === 'error';
+        if (fleetFilter === 'idle') return a.state === 'idle';
+        if (fleetFilter === 'scheduled') {
+          return tasks.some(t => t.parent_agent_id?.toLowerCase() === a.id.toLowerCase());
+        }
+        return true;
+      });
+    }
+
+    if (fleetSearch) {
+      const query = fleetSearch.toLowerCase();
+      all = all.filter(a =>
+        a.name?.toLowerCase().includes(query) ||
+        a.id.toLowerCase().includes(query) ||
+        a.model_config.model.toLowerCase().includes(query) ||
+        a.model_config.provider.toLowerCase().includes(query)
+      );
+    }
+
+    return all;
+  }, [agents, tasks, fleetFilter, fleetSearch]);
+
+  const groupedAgents = React.useMemo(() => {
+    const all = [...filteredAgents].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    if (fleetView === 'tree') {
+      const result: (Agent & { depth: number })[] = [];
+      const visited = new Set<string>();
+
+      const addWithChildren = (parentId: string | null, depth: number) => {
+        const children = all.filter(a => {
+          if (parentId === null) return !a.parent_id;
+          return a.parent_id === parentId;
+        });
+
+        children.forEach(child => {
+          if (visited.has(child.id)) return;
+          visited.add(child.id);
+          result.push({ ...child, depth });
+          addWithChildren(child.id, depth + 1);
+        });
+      };
+
+      addWithChildren(null, 0);
+
+      all.forEach(a => {
+        if (!visited.has(a.id)) {
+          visited.add(a.id);
+          result.push({ ...a, depth: 0 });
+          addWithChildren(a.id, 1);
+        }
+      });
+      return [{ id: 'all', label: 'All Agents', agents: result }];
+    }
+
+    if (fleetGroup === 'none') {
+      return [{ id: 'all', label: 'All Agents', agents: all.map(a => ({ ...a, depth: 0 })) }];
+    }
+
+    const groups: Record<string, (Agent & { depth: number })[]> = {};
+    all.forEach(agent => {
+      let key = 'unknown';
+      if (fleetGroup === 'provider') key = agent.model_config.provider;
+      else if (fleetGroup === 'model') key = agent.model_config.model.split('/').pop() || 'unknown';
+      else if (fleetGroup === 'state') key = agent.state;
+      else if (fleetGroup === 'schedule') {
+        const agentTasks = (tasks || []).filter(t => t.parent_agent_id?.toLowerCase() === agent.id.toLowerCase() && t.next_run_at);
+        if (agentTasks.length === 0) {
+          key = 'not_scheduled';
+        } else {
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+          const threeDays = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+          const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+          const times = agentTasks
+            .map(t => t.next_run_at ? new Date(t.next_run_at).getTime() : NaN)
+            .filter(t => !isNaN(t));
+
+          if (times.length === 0) {
+            key = 'not_scheduled';
+          } else {
+            const earliest = new Date(Math.min(...times));
+
+            if (earliest <= today) key = '1_today';
+            else if (earliest <= threeDays) key = '2_next_three_days';
+            else if (earliest <= nextWeek) key = '3_next_week';
+            else if (earliest <= nextMonth) key = '4_next_month';
+            else key = '5_later';
+          }
+        }
+      }
+
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ ...agent, depth: 0 });
+    });
+
+    const scheduleLabels: Record<string, string> = {
+      '1_today': 'Today',
+      '2_next_three_days': 'Next 3 Days',
+      '3_next_week': 'Next Week',
+      '4_next_month': 'Next Month',
+      '5_later': 'Later',
+      'not_scheduled': 'Not Scheduled'
+    };
+
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, agents]) => ({
+        id: key,
+        label: fleetGroup === 'schedule' ? (scheduleLabels[key] || key) : key,
+        agents
+      }));
+  }, [filteredAgents, fleetGroup, fleetView, tasks]);
+
+  const sortedAgents = React.useMemo(() => {
+    return groupedAgents.flatMap(g => g.agents);
+  }, [groupedAgents]);
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, agentId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, agentId });
+  };
+
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  const handleRename = async (id: string) => {
+    const agent = agents[id];
+    if (!agent) return;
+
+    const newName = window.prompt("Enter new name for agent:", agent.name || agent.id.slice(0, 8));
+
+    if (newName && newName !== agent.name) {
+      await renameAgent(id, newName);
+    }
+  };
+
+  const handleAddSubagent = async (parentId: string) => {
+    const parent = agents[parentId];
+    if (!parent) return;
+
+    try {
+      const response = await createAgent(
+        parent.model_config,
+        "",
+        { parent_id: parentId }
+      );
+      if (response && response.id) {
+        selectAgent(response.id);
+        navigate(`/agent/${response.id}`);
+      }
+    } catch (err) {
+      console.error('Failed to create subagent:', err);
+    }
+  };
+
+  const handleDeleteHighlightedAgent = useCallback(async () => {
+    if (activeIndex < 0 || !sortedAgents[activeIndex]) return;
+
+    const agent = sortedAgents[activeIndex];
+    const confirmed = await ask(`Are you sure you want to delete agent "${agent.name || agent.id.slice(0, 8)}"? This will also permanently delete all of its sub-agents. This action cannot be undone.`, {
+      title: 'Delete Agent',
+      kind: 'warning',
+    });
+
+    if (!confirmed) return;
+    await deleteAgent(agent.id);
+    if (activeIndex >= sortedAgents.length - 1) {
+      setActiveIndex(prev => Math.max(-1, prev - 1));
+    }
+  }, [activeIndex, sortedAgents, deleteAgent]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInput = activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement as HTMLElement)?.isContentEditable;
+
+      if (isInput) return;
+
+      if (focusedPane !== 'main') return;
+
+      const newAgentHotkey = (config?.ui as any)?.hotkeys?.['new_agent'] || 'Cmd+N';
+      if (isHotkey(e, newAgentHotkey)) {
+        e.preventDefault();
+        handleCreateAgent();
+        return;
+      }
+
+      const deleteAgentHotkey = (config?.ui as any)?.hotkeys?.['delete_agent'] || 'Cmd+D';
+      if (isHotkey(e, deleteAgentHotkey)) {
+        e.preventDefault();
+        handleDeleteHighlightedAgent();
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex(prev => Math.min(prev + 1, sortedAgents.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter') {
+        if (activeIndex >= 0 && sortedAgents[activeIndex]) {
+          e.preventDefault();
+          navigate(`/agent/${sortedAgents[activeIndex].id}`);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [sortedAgents, activeIndex, handleCreateAgent, navigate, config, focusedPane]);
+
+  useEffect(() => {
+    if (activeIndex >= 0 && listRef.current) {
+      const element = listRef.current.querySelector(`[data-index="${activeIndex}"]`);
+      if (element) {
+        element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [activeIndex]);
+
+  const toggleAgentSelection = (agentId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedAgentIds(prev => {
+      const next = new Set(prev);
+      if (next.has(agentId)) next.delete(agentId);
+      else next.add(agentId);
+      return next;
+    });
+  };
+
+  const selectAllAgents = () => {
+    setSelectedAgentIds(new Set(sortedAgents.map(a => a.id)));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedAgentIds.size === 0) return;
+
+    const agentNames = Array.from(selectedAgentIds)
+      .map(id => agents[id]?.name || agents[id]?.id.slice(0, 8))
+      .filter(Boolean);
+
+    const confirmed = await ask(
+      `Are you sure you want to delete ${selectedAgentIds.size} agent(s)? This will also permanently delete all of their sub-agents.\n\nAgents: ${agentNames.slice(0, 5).join(', ')}${agentNames.length > 5 ? ` and ${agentNames.length - 5} more` : ''}`,
+      { title: 'Bulk Delete Agents', kind: 'warning' }
+    );
+
+    if (!confirmed) return;
+
+    await deleteAgents(Array.from(selectedAgentIds));
+    setSelectedAgentIds(new Set());
+    setIsSelectionMode(false);
+  };
+
+  const handleBulkModelChange = async () => {
+    if (!bulkProvider || !bulkModel) return;
+    if (selectedAgentIds.size === 0) return;
+
+    await updateAgentsModel(Array.from(selectedAgentIds), {
+      provider: bulkProvider,
+      model: bulkModel
+    });
+
+    setShowBulkModelDialog(false);
+    setSelectedAgentIds(new Set());
+    setIsSelectionMode(false);
+    setBulkProvider('');
+    setBulkModel('');
+  };
+
+  useEffect(() => {
+    if (showBulkModelDialog && config && apiKeys) {
+      const defaultProvider = config?.inference?.chat?.provider;
+      const defaultModel = config?.inference?.chat?.model;
+
+      if (defaultProvider && defaultModel && apiKeys) {
+        const providerData = apiKeys.find(k => k.provider === defaultProvider);
+        const isValid = providerData?.enabled === true;
+
+        if (isValid) {
+          setBulkProvider(defaultProvider);
+          setBulkModel(defaultModel);
+        } else {
+          const firstValid = apiKeys.find(k => k.enabled === true);
+          if (firstValid) {
+            setBulkProvider(firstValid.provider);
+            const models = config?.available_models?.[firstValid.provider]?.chat || [];
+            if (models.length > 0) setBulkModel(models[0]);
+          }
+        }
+      }
+    }
+  }, [showBulkModelDialog, config, apiKeys]);
+
+  const enabledProviders = Object.keys(config?.available_models || {});
+  const enabledProvidersList = enabledProviders.filter((p: string) => {
+    const key = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+    return key?.enabled === true;
+  });
+  const providers = enabledProvidersList.length > 0 ? enabledProvidersList : enabledProviders;
+  const availableModels: string[] = bulkProvider ? (config?.available_models?.[bulkProvider]?.chat || []) : [];
+
+  return (
+    <div className="flex flex-col h-full bg-[#0f1117] text-[12px] relative overflow-hidden select-none">
+      {/* Bulk actions bar */}
+      {selectedAgentIds.size > 0 && (
+        <div className="sticky top-0 z-20 bg-[#0a0b0f] border-b border-[#1e293b] px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-[#a5b4fc]">
+              {selectedAgentIds.size} selected
+            </span>
+            <Button onClick={selectAllAgents}>Select All</Button>
+            <Button onClick={() => setSelectedAgentIds(new Set())}>Clear</Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowBulkModelDialog(true)}>Set Model</Button>
+            <Button variant="danger" onClick={handleBulkDelete}>Delete</Button>
+            <Button onClick={() => { setIsSelectionMode(false); setSelectedAgentIds(new Set()); }}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-auto custom-scrollbar" ref={listRef}>
+        <div className="min-w-[900px]">
+          {/* Table Header */}
+          <div className={clsx(
+            "sticky z-10 grid gap-3 px-4 py-2 bg-[#0a0b0f] border-b border-[#1e293b] text-[10px] text-[#64748b] items-center",
+            "grid-cols-[24px_minmax(150px,2fr)_70px_minmax(100px,1.5fr)_80px_50px_50px_70px] top-0"
+          )}>
+            <div className="flex items-center justify-center">
+              <button
+                onClick={() => {
+                  if (selectedAgentIds.size === sortedAgents.length && sortedAgents.length > 0) {
+                    setSelectedAgentIds(new Set());
+                    setIsSelectionMode(false);
+                  } else {
+                    selectAllAgents();
+                    setIsSelectionMode(true);
+                  }
+                }}
+                className="w-4 h-4 rounded border border-[#334155] flex items-center justify-center hover:border-[#6366f1] transition-colors"
+              >
+                {selectedAgentIds.size === sortedAgents.length && sortedAgents.length > 0 && (
+                  <div className="w-2 h-2 rounded-sm bg-[#6366f1]" />
+                )}
+              </button>
+            </div>
+            <div>Agent</div>
+            <div>Status</div>
+            <div>Model / Provider</div>
+            <div className="text-center">Sched</div>
+            <div className="text-center">Err</div>
+            <div className="text-right">Last</div>
+            <div></div>
+          </div>
+
+          {/* Agent Rows */}
+          <div className="flex flex-col">
+            {groupedAgents.map((group) => {
+              const isCollapsed = collapsedGroups.has(group.id);
+              return (
+                <React.Fragment key={group.id}>
+                  {fleetGroup !== 'none' && (
+                    <div
+                      onClick={() => toggleGroup(group.id)}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#0a0b0f]/50 cursor-pointer border-b border-[#1e293b]/50"
+                    >
+                      <span className="text-[10px] text-[#64748b]">
+                        {isCollapsed ? '>' : 'v'} {group.label}
+                      </span>
+                      <span className="text-[10px] text-[#475569]">({group.agents.length})</span>
+                    </div>
+                  )}
+
+                  {!isCollapsed && group.agents.map((agent) => {
+                    const agentTasks = tasks.filter(t => t.parent_agent_id?.toLowerCase() === agent.id.toLowerCase());
+                    const absoluteIndex = sortedAgents.findIndex(a => a.id === agent.id);
+
+                    return (
+                      <div
+                        key={agent.id}
+                        data-index={absoluteIndex}
+                        onClick={() => {
+                          if (isSelectionMode) {
+                            toggleAgentSelection(agent.id);
+                          } else {
+                            navigate(`/agent/${agent.id}`);
+                          }
+                        }}
+                        onContextMenu={(e) => handleContextMenu(e, agent.id)}
+                        className={clsx(
+                          "grid gap-3 px-4 py-1.5 border-b border-[#1e293b]/30 hover:bg-[#1e293b]/20 transition-all items-center cursor-pointer",
+                          "grid-cols-[24px_minmax(150px,2fr)_70px_minmax(100px,1.5fr)_80px_50px_50px_70px]",
+                          activeIndex === absoluteIndex && !isSelectionMode && "bg-[#6366f1]/10",
+                          selectedAgentIds.has(agent.id) && "bg-[#6366f1]/15"
+                        )}
+                      >
+                        {/* Checkbox */}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isSelectionMode) setIsSelectionMode(true);
+                            toggleAgentSelection(agent.id, e);
+                          }}
+                          className="flex items-center justify-center"
+                        >
+                          <div className={clsx(
+                            "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                            selectedAgentIds.has(agent.id) ? "border-[#6366f1] bg-[#6366f1]" : "border-[#334155]"
+                          )}>
+                            {selectedAgentIds.has(agent.id) && (
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Agent Name */}
+                        <div className="flex items-center gap-2 min-w-0" style={{ paddingLeft: fleetView === 'tree' ? agent.depth * 16 : 0 }}>
+                          {fleetView === 'tree' && agent.depth > 0 && (
+                            <span className="text-[#334155]">-</span>
+                          )}
+                          <span className={clsx(
+                            "truncate text-[12px]",
+                            activeIndex === absoluteIndex && !isSelectionMode ? "text-[#a5b4fc]" : "text-[#e2e8f0]"
+                          )}>
+                            {agent.name || agent.id.slice(0, 8)}
+                          </span>
+                          {agent.type === 'cli' && <Tag color="#8b5cf6">CLI</Tag>}
+                        </div>
+
+                        {/* Status */}
+                        <div>
+                          <Status status={agent.state as any} />
+                        </div>
+
+                        {/* Model / Provider */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Tag color="#8b5cf6">{agent.model_config.model.split('/').pop()}</Tag>
+                          <span className="text-[10px] text-[#475569] truncate">{agent.model_config.provider}</span>
+                        </div>
+
+                        {/* Scheduled */}
+                        <div className="text-center">
+                          {agentTasks.length > 0 ? (
+                            <div className="flex items-center justify-center gap-1 text-[#8b5cf6]">
+                              <Calendar size={10} />
+                              <span className="font-mono text-[10px]">{agentTasks.length}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[#334155]">-</span>
+                          )}
+                        </div>
+
+                        {/* Errors */}
+                        <div className="text-center">
+                          {agent.state === 'error' ? (
+                            <div className="flex items-center justify-center text-[#ef4444]">
+                              <AlertCircle size={12} />
+                            </div>
+                          ) : (
+                            <span className="text-[#334155]">-</span>
+                          )}
+                        </div>
+
+                        {/* Last Active */}
+                        <div className="flex items-center justify-end gap-1 text-[10px] text-[#64748b]">
+                          <Clock size={10} />
+                          {new Date(agent.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-end">
+                          <button
+                            onClick={(e) => handleContextMenu(e, agent.id)}
+                            className="p-1 text-[#475569] hover:text-[#94a3b8] transition-colors"
+                          >
+                            <MoreHorizontal size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Bulk Model Dialog */}
+      {showBulkModelDialog && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60" onClick={() => setShowBulkModelDialog(false)}>
+          <div
+            className="bg-[#0f1117] border border-[#1e293b] rounded-lg p-6 min-w-[400px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-[14px] font-medium text-[#e2e8f0] mb-1">Change Model</h2>
+            <p className="text-[11px] text-[#64748b] mb-4">
+              Update model for {selectedAgentIds.size} selected agent(s)
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-[11px] text-[#94a3b8] mb-1.5 block">Provider</label>
+                <select
+                  value={bulkProvider}
+                  onChange={(e) => {
+                    setBulkProvider(e.target.value);
+                    const models = config?.available_models?.[e.target.value]?.chat || [];
+                    if (models.length > 0) setBulkModel(models[0]);
+                  }}
+                  className="w-full bg-[#0a0b0f] border border-[#334155] rounded px-3 py-2 text-[12px] text-[#e2e8f0] focus:outline-none focus:border-[#6366f1]"
+                >
+                  {providers.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-[#94a3b8] mb-1.5 block">Model</label>
+                <select
+                  value={bulkModel}
+                  onChange={(e) => setBulkModel(e.target.value)}
+                  disabled={!bulkProvider}
+                  className="w-full bg-[#0a0b0f] border border-[#334155] rounded px-3 py-2 text-[12px] text-[#e2e8f0] focus:outline-none focus:border-[#6366f1] disabled:opacity-50"
+                >
+                  {availableModels.map((m: string) => (
+                    <option key={m} value={m}>{m.split('/').pop()}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => { setShowBulkModelDialog(false); setBulkProvider(''); setBulkModel(''); }}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={handleBulkModelChange} disabled={!bulkProvider || !bulkModel}>
+                Apply Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[100] w-40 bg-[#0a0b0f] border border-[#1e293b] rounded text-[11px] overflow-hidden shadow-xl"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-3 py-1.5 border-b border-[#1e293b] text-[#64748b] text-[10px]">
+            {agents[contextMenu.agentId]?.name || agents[contextMenu.agentId]?.id.slice(0, 8)}
+          </div>
+
+          <button
+            className="w-full text-left px-3 py-1.5 text-[#94a3b8] hover:bg-[#1e293b] transition-colors"
+            onClick={() => {
+              handleRename(contextMenu.agentId);
+              setContextMenu(null);
+            }}
+          >
+            Rename
+          </button>
+
+          <button
+            className="w-full text-left px-3 py-1.5 text-[#94a3b8] hover:bg-[#1e293b] transition-colors"
+            onClick={() => {
+              handleAddSubagent(contextMenu.agentId);
+              setContextMenu(null);
+            }}
+          >
+            Add Subagent
+          </button>
+
+          <button
+            className="w-full text-left px-3 py-1.5 text-[#94a3b8] hover:bg-[#1e293b] transition-colors"
+            onClick={() => {
+              const agent = agents[contextMenu.agentId];
+              if (agent) {
+                updateAgentState(contextMenu.agentId, agent.state === 'running' ? 'pause' : 'resume');
+              }
+              setContextMenu(null);
+            }}
+          >
+            {agents[contextMenu.agentId]?.state === 'running' ? 'Pause' : 'Resume'}
+          </button>
+
+          <button
+            className="w-full text-left px-3 py-1.5 text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
+            onClick={async () => {
+              const agent = agents[contextMenu.agentId];
+              if (agent) {
+                const confirmed = await ask(`Delete agent "${agent.name || agent.id.slice(0, 8)}"? This cannot be undone.`, {
+                  title: 'Delete Agent',
+                  kind: 'warning',
+                });
+                if (confirmed) await deleteAgent(agent.id);
+              }
+              setContextMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};

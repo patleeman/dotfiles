@@ -1,0 +1,38 @@
+import React from 'react';
+
+interface SettingRowProps {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+  badge?: React.ReactNode;
+}
+
+export const SettingRow: React.FC<SettingRowProps> = ({
+  label,
+  description,
+  children,
+  badge
+}) => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'flex-start',
+    padding: '10px 0',
+    borderBottom: '1px solid #1e293b',
+    gap: '16px',
+  }}>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '12px', color: '#e2e8f0' }}>{label}</span>
+        {badge}
+      </div>
+      {description && (
+        <p style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: 1.4 }}>
+          {description}
+        </p>
+      )}
+    </div>
+    <div style={{ flexShrink: 0 }}>
+      {children}
+    </div>
+  </div>
+);

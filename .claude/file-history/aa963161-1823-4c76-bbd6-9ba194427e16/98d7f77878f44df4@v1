@@ -1,0 +1,43 @@
+import React, { useState } from 'react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
+
+interface SectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+export const Section: React.FC<SectionProps> = ({
+  title,
+  children,
+  defaultOpen = true
+}) => {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div style={{ marginBottom: '16px' }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          background: 'none',
+          border: 'none',
+          color: '#94a3b8',
+          fontSize: '11px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          cursor: 'pointer',
+          marginBottom: '8px',
+          padding: 0,
+        }}
+      >
+        {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        {title}
+      </button>
+      {open && children}
+    </div>
+  );
+};

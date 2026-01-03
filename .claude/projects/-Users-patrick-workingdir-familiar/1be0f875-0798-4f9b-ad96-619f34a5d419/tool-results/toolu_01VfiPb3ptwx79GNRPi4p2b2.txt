@@ -1,0 +1,26 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   101→      <div className="flex-1 overflow-auto p-6 custom-scrollbar" ref={scrollRef}>
+   102→        <div className="max-w-7xl mx-auto space-y-10 pb-12">
+   103→          {/* Header */}
+   104→          <div className="flex items-center justify-between border-b border-border/10 pb-2">
+   105→            <div className="flex items-center gap-3 text-accent/80 font-black uppercase tracking-[0.2em]">
+   106→              <h2 className="text-[12px]">Resource Usage</h2>
+   107→            </div>
+   108→            <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-text-primary/40">
+   109→              <div className="flex items-center gap-1.5">
+   110→                <span>Requests: {totals?.total_requests || 0}</span>
+   111→              </div>
+   112→              <div className="flex items-center gap-1.5">
+   113→                <span>In: {totals?.total_input_tokens?.toLocaleString() || 0}</span>
+   114→              </div>
+   115→              <div className="flex items-center gap-1.5">
+   116→                <span>Out: {totals?.total_output_tokens?.toLocaleString() || 0}</span>
+   117→              </div>
+   118→              <div className="flex items-center gap-1.5 text-status-success/80">
+   119→                <span>Cost: ${totals?.total_cost?.toFixed(2) || '0.00'}</span>
+   120→              </div>
+   121→            </div>
+   122→          </div>
+   123→
+   124→          <div className="space-y-8">
+   125→            {/* Provider Summary Table */}

@@ -1,0 +1,96 @@
+import { test, expect } from './fixtures/test-fixtures';
+
+test.describe('Agent Management', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('should display the agent dashboard', async ({ dashboardPage }) => {
+    await dashboardPage.goto();
+    await expect(dashboardPage.page).toHaveURL('/');
+  });
+
+  test('should create a new agent', async ({ page }) => {
+    // Find and click the create agent button
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+
+    // Wait for agent to appear in the list
+    await page.waitForTimeout(1000);
+
+    // Verify an agent was created
+    const agentItems = page.locator('[data-testid="agent-item"]');
+    await expect(agentItems.first()).toBeVisible();
+  });
+
+  test('should select an agent from the list', async ({ page }) => {
+    // First create an agent if none exist
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    // Click on the agent
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+
+    // URL should change to include agent ID
+    await expect(page).toHaveURL(/\/agent\/.+/);
+  });
+
+  test('should open context menu on right-click', async ({ page }) => {
+    // Create an agent first
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    // Right-click on the agent
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click({ button: 'right' });
+
+    // Context menu should be visible
+    await expect(page.locator('[data-testid="context-menu"]')).toBeVisible();
+  });
+
+  test('should show agent status indicator', async ({ page }) => {
+    // Create an agent
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    // Check for status indicator
+    const statusIndicator = page.locator('[data-testid="agent-status"]');
+    await expect(statusIndicator.first()).toBeVisible();
+  });
+});
+
+test.describe('Agent Workspace', () => {
+  test('should display agent workspace when agent is selected', async ({ page }) => {
+    await page.goto('/');
+
+    // Create and select an agent
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+
+    // Workspace elements should be visible
+    await expect(page.locator('[data-testid="agent-workspace"]')).toBeVisible();
+  });
+
+  test('should show chat input in workspace', async ({ page }) => {
+    await page.goto('/');
+
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+
+    // Chat input should be visible (textarea)
+    const chatInput = page.locator('textarea').last();
+    await expect(chatInput).toBeVisible();
+  });
+});

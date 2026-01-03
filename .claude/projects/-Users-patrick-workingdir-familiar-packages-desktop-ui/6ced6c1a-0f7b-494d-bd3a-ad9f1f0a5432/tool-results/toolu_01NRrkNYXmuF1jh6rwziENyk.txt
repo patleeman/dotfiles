@@ -1,0 +1,12 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/global-setup.ts has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    22→  }
+    23→  throw new Error(`Server at ${url} did not start within ${timeout}ms`);
+    24→}
+    25→
+    26→export default async function globalSetup() {
+    27→  const backendPath = resolve(__dirname, '../../../bin/familiar-go');
+    28→  const backendUrl = 'http://localhost:18080/api/health';
+    29→
+    30→  // Check if server is already running
+    31→  try {
+    32→    const response = await fetch(backendUrl);

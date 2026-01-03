@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Unibar.test.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    78→      Object.defineProperty(event, 'ctrlKey', { value: !isMac, configurable: true });
+    79→      window.dispatchEvent(event);
+    80→    });
+    81→
+    82→    await waitFor(() => {
+    83→      expect(screen.getByPlaceholderText('Search agents or commands...')).toBeInTheDocument();
+    84→    }, { timeout: 3000 });
+    85→  });
+    86→
+    87→  it('filters commands based on query', async () => {
+    88→    render(
+    89→      <QueryClientProvider client={queryClient}>
+    90→        <MemoryRouter>
+    91→          <Unibar />

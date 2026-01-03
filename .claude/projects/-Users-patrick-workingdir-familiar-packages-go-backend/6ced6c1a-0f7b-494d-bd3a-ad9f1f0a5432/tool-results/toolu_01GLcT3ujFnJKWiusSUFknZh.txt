@@ -1,0 +1,64 @@
+     1→package tools
+     2→
+     3→import (
+     4→	"context"
+     5→	"encoding/json"
+     6→	"fmt"
+     7→	"strings"
+     8→
+     9→	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+    10→)
+    11→
+    12→type SpawnSubAgentTool struct {
+    13→	BaseTool
+    14→	Spawner func(parentID string, name string, prompt string, objective string, workingDir string) (string, error)
+    15→}
+    16→
+    17→func NewSpawnSubAgentTool(spawner func(parentID string, name string, prompt string, objective string, workingDir string) (string, error)) *SpawnSubAgentTool {
+    18→	return &SpawnSubAgentTool{
+    19→		BaseTool: BaseTool{
+    20→			NameVal:     "agent_spawn",
+    21→			Description: "Spawn a specialized sub-agent to handle a specific sub-task. IMPORTANT: You MUST have an active plan (via 'agent_plan') that covers the objective of this sub-agent before calling this tool. If your current plan already describes spawning this sub-agent, you do NOT need to update it again. Returns the sub-agent ID.",
+    22→			Parameters: map[string]interface{}{
+    23→				"type": "object",
+    24→				"properties": map[string]interface{}{
+    25→					"name": map[string]interface{}{
+    26→						"type":        "string",
+    27→						"description": "A meaningful name for the sub-agent, describing its purpose (e.g., 'Researcher', 'DataCruncher', 'Writer').",
+    28→					},
+    29→					"prompt": map[string]interface{}{
+    30→						"type":        "string",
+    31→						"description": "The initial prompt/instructions for the sub-agent. IMPORTANT: Keep this mission extremely short and concise (a few sentences max) to remain token-efficient.",
+    32→					},
+    33→					"objective": map[string]interface{}{
+    34→						"type":        "string",
+    35→						"description": "The specific objective for the sub-agent. Keep this very brief.",
+    36→					},
+    37→					"working_directory": map[string]interface{}{
+    38→						"type":        "string",
+    39→						"description": "Optional: Specify an absolute path to a directory where the sub-agent should perform its work. If omitted, a dedicated sandboxed workspace will be created.",
+    40→					},
+    41→				},
+    42→				"required": []string{"name", "prompt", "objective"},
+    43→			},
+    44→		},
+    45→		Spawner: spawner,
+    46→	}
+    47→}
+    48→
+    49→func (t *SpawnSubAgentTool) Execute(ctx context.Context, args map[string]interface{}, toolCtx map[string]interface{}) (ToolResult, error) {
+    50→	name := args["name"].(string)
+    51→	prompt := args["prompt"].(string)
+    52→	objective := args["objective"].(string)
+    53→	workingDir, _ := args["working_directory"].(string)
+    54→
+    55→	var parentID string
+    56→	if id, ok := toolCtx["agent_id"].(string); ok {
+    57→		parentID = id
+    58→	}
+    59→
+    60→	// Constraint: We currently allow any depth of sub-agents.
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

@@ -1,0 +1,297 @@
+package utils
+
+import (
+	"runtime"
+	"sync"
+	"testing"
+)
+
+func TestGetBrowserManager(t *testing.T) {
+	// Reset singleton for testing
+	browserManager = nil
+	bmOnce = sync.Once{}
+
+	bm1 := GetBrowserManager()
+	bm2 := GetBrowserManager()
+
+	if bm1 != bm2 {
+		t.Error("expected GetBrowserManager to return same instance (singleton)")
+	}
+
+	if bm1 == nil {
+		t.Fatal("expected non-nil BrowserManager")
+	}
+
+	if bm1.instances == nil {
+		t.Error("expected instances map to be initialized")
+	}
+}
+
+func TestBrowserManager_GetPage(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("browser tests only run on macOS")
+	}
+
+	bm := GetBrowserManager()
+	bm.Shutdown() // Clear any existing instances
+
+	page, err := bm.GetPage("test-agent-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if page == nil {
+		t.Fatal("expected non-nil page")
+	}
+
+	// Get same page again
+	page2, err := bm.GetPage("test-agent-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if page != page2 {
+		t.Error("expected same page instance for same agent ID")
+	}
+}
+
+func TestBrowserManager_CreateInstance(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("browser tests only run on macOS")
+	}
+
+	bm := GetBrowserManager()
+	bm.Shutdown() // Clear any existing instances
+
+	page1, err := bm.CreateInstance("agent-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if page1 == nil {
+		t.Fatal("expected non-nil page")
+	}
+
+	// Create instance for same agent again
+	page2, err := bm.CreateInstance("agent-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if page1 != page2 {
+		t.Error("expected same page instance when creating for same agent")
+	}
+
+	// Create instance for different agent
+	page3, err := bm.CreateInstance("agent-2")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if page1 == page3 {
+		t.Error("expected different page instance for different agent")
+	}
+}
+
+func TestBrowserManager_CreateInstance_NonMacOS(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("this test only runs on non-macOS")
+	}
+
+	bm := GetBrowserManager()
+	bm.Shutdown()
+
+	_, err := bm.CreateInstance("agent-1")
+	if err == nil {
+		t.Error("expected error on non-macOS")
+	}
+	if err.Error() != "safari control is only supported on macOS" {
+		t.Errorf("expected specific error message, got: %v", err)
+	}
+}
+
+func TestBrowserManager_CloseInstance(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("browser tests only run on macOS")
+	}
+
+	bm := GetBrowserManager()
+	bm.Shutdown()
+
+	// Create an instance
+	_, err := bm.CreateInstance("agent-to-close")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify it exists
+	_, err = bm.GetPage("agent-to-close")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Close it
+	bm.CloseInstance("agent-to-close")
+
+	// Verify it's gone (should create new instance)
+	// Note: GetPage will create a new instance, so we can't easily verify deletion
+	// But we can verify CloseInstance doesn't panic
+}
+
+func TestBrowserManager_CloseInstance_NonExistent(t *testing.T) {
+	bm := GetBrowserManager()
+	bm.Shutdown()
+
+	// Should not panic
+	bm.CloseInstance("non-existent-agent")
+}
+
+func TestBrowserManager_GetAvailableEngines(t *testing.T) {
+	engines := GetBrowserManager().GetAvailableEngines()
+
+	if runtime.GOOS == "darwin" {
+		// On macOS, should return webkit if Safari exists
+		// We can't easily mock file system, so just verify it doesn't crash
+		_ = engines
+	} else {
+		// On non-macOS, should return empty
+		if len(engines) != 0 {
+			t.Errorf("expected empty engines on non-macOS, got %v", engines)
+		}
+	}
+}
+
+func TestBrowserManager_Shutdown(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("browser tests only run on macOS")
+	}
+
+	bm := GetBrowserManager()
+	bm.Shutdown() // Clear first
+
+	// Create multiple instances
+	_, err := bm.CreateInstance("agent-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_, err = bm.CreateInstance("agent-2")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Shutdown should clear all instances
+	bm.Shutdown()
+
+	// Verify instances are cleared (GetPage will create new ones)
+	// We can't easily verify the map is empty without exposing it,
+	// but we can verify Shutdown doesn't panic
+}
+
+func TestSafariPage_URL(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("Safari tests only run on macOS")
+	}
+
+	page := &SafariPage{}
+	url := page.URL()
+
+	// URL() may return empty if Safari isn't running or no tab is open
+	// We just verify it doesn't panic
+	_ = url
+}
+
+func TestSafariPage_Title(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("Safari tests only run on macOS")
+	}
+
+	page := &SafariPage{}
+	title, err := page.Title()
+
+	// Title() may return error if Safari isn't running
+	// We just verify it doesn't panic
+	_ = title
+	_ = err
+}
+
+func TestSafariPage_Close(t *testing.T) {
+	page := &SafariPage{}
+	err := page.Close()
+
+	// Close() should not error (it's a no-op)
+	if err != nil {
+		t.Errorf("expected no error from Close(), got %v", err)
+	}
+}
+
+func TestBrowserManager_ConcurrentAccess(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("browser tests only run on macOS")
+	}
+
+	bm := GetBrowserManager()
+	bm.Shutdown()
+
+	// Test concurrent access
+	var wg sync.WaitGroup
+	numGoroutines := 10
+
+	for i := 0; i < numGoroutines; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			agentID := "agent-" + string(rune('0'+id))
+			_, err := bm.CreateInstance(agentID)
+			if err != nil {
+				t.Errorf("unexpected error in goroutine %d: %v", id, err)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
+	// Verify all instances were created
+	for i := 0; i < numGoroutines; i++ {
+		agentID := "agent-" + string(rune('0'+i))
+		_, err := bm.GetPage(agentID)
+		if err != nil {
+			t.Errorf("failed to get page for %s: %v", agentID, err)
+		}
+	}
+}
+
+func TestBrowserManager_GetPage_CreatesIfNotExists(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("browser tests only run on macOS")
+	}
+
+	bm := GetBrowserManager()
+	bm.Shutdown()
+
+	// GetPage should create instance if it doesn't exist
+	page, err := bm.GetPage("new-agent")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if page == nil {
+		t.Fatal("expected non-nil page")
+	}
+
+	// Verify it was stored
+	page2, err := bm.GetPage("new-agent")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if page != page2 {
+		t.Error("expected same page instance")
+	}
+}
+
+
+
+
+
+
+

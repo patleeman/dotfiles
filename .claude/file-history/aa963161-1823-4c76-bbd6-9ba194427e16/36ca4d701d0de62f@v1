@@ -1,0 +1,45 @@
+import { invoke } from '@tauri-apps/api/core';
+
+let cachedPort: number | null = null;
+
+export async function getBackendPort(): Promise<number> {
+  if (cachedPort !== null) {
+    return cachedPort;
+  }
+  
+  // Allow override via query parameter (useful for E2E tests)
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryPort = urlParams.get('backend_port');
+  if (queryPort) {
+    if (import.meta.env.DEV) {
+    }
+    cachedPort = parseInt(queryPort, 10);
+    return cachedPort;
+  }
+
+  // Allow override via env var (injected by Vite)
+  const envPort = import.meta.env.VITE_BACKEND_PORT;
+  if (envPort) {
+    cachedPort = parseInt(envPort, 10);
+    return cachedPort;
+  }
+
+  try {
+    cachedPort = await invoke<number>('get_backend_port');
+    return cachedPort;
+  } catch {
+    // Fallback for dev mode when not running in Tauri (matches DEFAULT_PORT in sidecar.rs)
+    cachedPort = 18080;
+    return cachedPort;
+  }
+}
+
+export async function getBackendUrl(): Promise<string> {
+  const port = await getBackendPort();
+  return `http://localhost:${port}`;
+}
+
+export async function getWebSocketUrl(path: string): Promise<string> {
+  const port = await getBackendPort();
+  return `ws://localhost:${port}${path}`;
+}

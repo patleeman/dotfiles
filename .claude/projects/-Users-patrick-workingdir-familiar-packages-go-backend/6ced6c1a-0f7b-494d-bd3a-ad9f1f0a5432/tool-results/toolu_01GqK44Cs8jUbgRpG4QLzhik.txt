@@ -1,0 +1,6 @@
+/Users/patrick/workingdir/familiar/packages/go-backend/internal/config/vault.go
+/Users/patrick/workingdir/familiar/packages/go-backend/internal/config/keychain.go
+/Users/patrick/workingdir/familiar/packages/go-backend/internal/config/config_test.go
+/Users/patrick/workingdir/familiar/packages/go-backend/internal/config/loader.go
+/Users/patrick/workingdir/familiar/packages/go-backend/internal/config/keychain_test.go
+/Users/patrick/workingdir/familiar/packages/go-backend/internal/config/vault_test.go

@@ -1,0 +1,358 @@
+2025-12-31T19:02:41.132Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (17.1ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-31T19:02:41.155Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-31T19:02:41.155Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-31T19:02:41.155Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-31T19:02:41.157Z [DEBUG] LSP server manager initialized successfully
+2025-12-31T19:02:41.157Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-31T19:02:41.158Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-31T19:02:41.169Z [DEBUG] Stats cache is up to date
+2025-12-31T19:02:41.172Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-31T19:02:41.327Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (152.5ms): cursor --version
+2025-12-31T19:02:41.327Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-31T19:02:41.340Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-31T19:02:41.340Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-31T19:02:41.341Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-31T19:02:41.341Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767207761341-1ib7xc.sh
+2025-12-31T19:02:41.341Z [DEBUG] Shell binary exists: true
+2025-12-31T19:02:41.341Z [DEBUG] Execution timeout: 10000ms
+2025-12-31T19:02:41.342Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/c09d299e-e321-4e06-bb31-bf51088ec0c5-agent-c09d299e-e321-4e06-bb31-bf51088ec0c5.json.tmp.93240.1767207761342
+2025-12-31T19:02:41.347Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.4ms)
+2025-12-31T19:02:41.347Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-31T19:02:41.347Z [DEBUG] Renaming /Users/patrick/.claude/todos/c09d299e-e321-4e06-bb31-bf51088ec0c5-agent-c09d299e-e321-4e06-bb31-bf51088ec0c5.json.tmp.93240.1767207761342 to /Users/patrick/.claude/todos/c09d299e-e321-4e06-bb31-bf51088ec0c5-agent-c09d299e-e321-4e06-bb31-bf51088ec0c5.json
+2025-12-31T19:02:41.347Z [DEBUG] File /Users/patrick/.claude/todos/c09d299e-e321-4e06-bb31-bf51088ec0c5-agent-c09d299e-e321-4e06-bb31-bf51088ec0c5.json written atomically
+2025-12-31T19:02:41.376Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-31T19:02:41.376Z [DEBUG] Total plugin skills loaded: 0
+2025-12-31T19:02:41.376Z [DEBUG] Total plugin commands loaded: 0
+2025-12-31T19:02:41.377Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-31T19:02:41.380Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-31T19:02:41.381Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-31T19:02:41.404Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2025-12-31T19:02:41.404Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2025-12-31T19:02:41.404Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2025-12-31T19:02:41.404Z [DEBUG] Path /Users/patrick/workingdir/personal-agent/packages/desktop/src-tauri already tracked for repo patleeman/familiar
+2025-12-31T19:02:41.416Z [DEBUG] Total plugin agents loaded: 0
+2025-12-31T19:02:41.423Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2025-12-31T19:02:41.425Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2025-12-31T19:02:41.425Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:02:41.425Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2025-12-31T19:02:41.431Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.5ms)
+2025-12-31T19:02:41.434Z [DEBUG] Total plugin output styles loaded: 0
+2025-12-31T19:02:41.438Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2025-12-31T19:02:41.438Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:02:41.438Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2025-12-31T19:02:41.438Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2025-12-31T19:02:41.438Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:02:41.438Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2025-12-31T19:02:41.443Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-31T19:02:41.443Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-31T19:02:41.443Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-31T19:02:41.443Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-31T19:02:41.444Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2025-12-31T19:02:41.444Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:02:41.444Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T19:02:41.446Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-31T19:02:41.449Z [DEBUG] Skills and commands included in Skill tool:
+2025-12-31T19:02:41.682Z [DEBUG] Remote settings: No settings found (404)
+2025-12-31T19:02:41.682Z [DEBUG] Programmatic settings change notification for policySettings
+2025-12-31T19:02:41.682Z [DEBUG] Plugin hooks: reloading due to policySettings change
+2025-12-31T19:02:41.683Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-31T19:02:41.684Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-31T19:02:41.731Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.93240.1767207761731
+2025-12-31T19:02:41.731Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T19:02:41.736Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2025-12-31T19:02:41.736Z [DEBUG] Applied original permissions to temp file
+2025-12-31T19:02:41.736Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.93240.1767207761731 to /Users/patrick/.claude.json
+2025-12-31T19:02:41.736Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T19:02:42.025Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T19:02:42.028Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T19:02:42.190Z [ERROR] Error streaming, falling back to non-streaming mode: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHPEqhjAGkwdYNjjNkZ"}
+2025-12-31T19:02:42.577Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHPGdrW1mpehShUkm9N"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:4211
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2262
+    at async gT3 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1006:16947)
+    at async bmB (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2195)
+    at async RyA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:52)
+    at async _yA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:261)
+2025-12-31T19:02:44.601Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHPRGX2oEbUs3jToXQJ"}
+2025-12-31T19:02:44.601Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHPRGX2oEbUs3jToXQJ"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2025-12-31T19:02:44.618Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-31T19:02:44.618Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:02:44.618Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T19:02:51.345Z [DEBUG] Shell snapshot creation failed: Command failed: /bin/zsh -c -l SNAPSHOT_FILE=/Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767207761341-1ib7xc.sh
+      source "/Users/patrick/.zshrc" < /dev/null
+
+      # First, create/clear the snapshot file
+      echo "# Snapshot file" >| "$SNAPSHOT_FILE"
+
+      # When this file is sourced, we first unalias to avoid conflicts
+      # This is necessary because aliases get "frozen" inside function definitions at definition time,
+      # which can cause unexpected behavior when functions use commands that conflict with aliases
+      echo "# Unset all aliases to avoid conflicts with functions" >> "$SNAPSHOT_FILE"
+      echo "unalias -a 2>/dev/null || true" >> "$SNAPSHOT_FILE"
+
+      
+      echo "# Functions" >> "$SNAPSHOT_FILE"
+
+      # Force autoload all functions first
+      typeset -f > /dev/null 2>&1
+
+      # Now get user function names - filter system ones and write directly to file
+      typeset +f | grep -vE '^(_|__)' | while read func; do
+        typeset -f "$func" >> "$SNAPSHOT_FILE"
+      done
+    
+      echo "# Shell Options" >> "$SNAPSHOT_FILE"
+      setopt | sed 's/^/setopt /' | head -n 1000 >> "$SNAPSHOT_FILE"
+    
+      echo "# Aliases" >> "$SNAPSHOT_FILE"
+      # Filter out winpty aliases on Windows to avoid "stdin is not a tty" errors
+      # Git Bash automatically creates aliases like "alias node='winpty node.exe'" for
+      # programs that need Win32 Console in mintty, but winpty fails when there's no TTY
+      if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+        alias | grep -v "='winpty " | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> "$SNAPSHOT_FILE"
+      else
+        alias | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> "$SNAPSHOT_FILE"
+      fi
+  
+
+      
+      # Check for rg availability
+      echo "# Check for rg availability" >> "$SNAPSHOT_FILE"
+      echo "if ! command -v rg >/dev/null 2>&1; then" >> "$SNAPSHOT_FILE"
+      echo '  alias rg='"'/opt/homebrew/lib/node_modules/\@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg'" >> "$SNAPSHOT_FILE"
+      echo "fi" >> "$SNAPSHOT_FILE"
+  
+
+      # Add PATH to the file
+      echo "export PATH=/Users/patrick/workingdir/personal-agent/packages/desktop/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/packages/desktop/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/packages/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/node_modules/.bin\:/Users/patrick/workingdir/node_modules/.bin\:/Users/patrick/node_modules/.bin\:/Users/node_modules/.bin\:/node_modules/.bin\:/opt/homebrew/lib/node_modules/npm/node_modules/\@npmcli/run-script/lib/node-gyp-bin\:/Users/patrick/.opencode/bin\:/opt/homebrew/Cellar/pyenv-virtualenv/1.2.4/shims\:/Users/patrick/.pyenv/shims\:/opt/homebrew/bin\:/Users/patrick/dotfiles/bin\:/usr/local/bin\:/System/Cryptexes/App/usr/bin\:/usr/bin\:/bin\:/usr/sbin\:/sbin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin\:/opt/pmk/env/global/bin\:/Library/Apple/usr/bin\:/Users/patrick/.opencode/bin\:/Users/patrick/.local/bin\:/opt/homebrew/Cellar/pyenv-virtualenv/1.2.4/shims\:/opt/homebrew/bin\:/Users/patrick/dotfiles/bin\:/Users/patrick/.cargo/bin\:/Users/patrick/.lmstudio/bin\:/Users/patrick/.cursor/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts\:/Users/patrick/.lmstudio/bin" >> "$SNAPSHOT_FILE"
+  
+
+      # Exit silently on success, only report errors
+      if [ ! -f "$SNAPSHOT_FILE" ]; then
+        echo "Error: Snapshot file was not created at $SNAPSHOT_FILE" >&2
+        exit 1
+      fi
+2025-12-31T19:02:51.345Z [DEBUG] Error details:
+2025-12-31T19:02:51.345Z [DEBUG] - Error code: null
+2025-12-31T19:02:51.345Z [DEBUG] - Error signal: SIGTERM
+2025-12-31T19:02:51.345Z [DEBUG] - Error killed: true
+2025-12-31T19:02:51.345Z [DEBUG] - Shell path: /bin/zsh
+2025-12-31T19:02:51.345Z [DEBUG] - Config file: /Users/patrick/.zshrc
+2025-12-31T19:02:51.345Z [DEBUG] - Config file exists: true
+2025-12-31T19:02:51.345Z [DEBUG] - Working directory: /Users/patrick/workingdir/personal-agent/packages/desktop/src-tauri
+2025-12-31T19:02:51.345Z [DEBUG] - Claude home: /Users/patrick/.claude
+2025-12-31T19:02:51.345Z [DEBUG] Full snapshot script:
+SNAPSHOT_FILE=/Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767207761341-1ib7xc.sh
+      source "/Users/patrick/.zshrc" < /dev/null
+
+      # First, create/clear the snapshot file
+      echo "# Snapshot file" >| "$SNAPSHOT_FILE"
+
+      # When this file is sourced, we first unalias to avoid conflicts
+      # This is necessary because aliases get "frozen" inside function definitions at definition time,
+      # which can cause unexpected behavior when functions use commands that conflict with aliases
+      echo "# Unset all aliases to avoid conflicts with functions" >> "$SNAPSHOT_FILE"
+      echo "unalias -a 2>/dev/null || true" >> "$SNAPSHOT_FILE"
+
+      
+      echo "# Functions" >> "$SNAPSHOT_FILE"
+
+      # Force autoload all functions first
+      typeset -f > /dev/null 2>&1
+
+      # Now get user function names - filter system ones and write directly to file
+      typeset +f | grep -vE '^(_|__)' | while read func; do
+        typeset -f "$func" >> "$SNAPSHOT_FILE"
+      done
+    
+      echo "# Shell Options" >> "$SNAPSHOT_FILE"
+      setopt | sed 's/^/setopt /' | head -n 1000 >> "$SNAPSHOT_FILE"
+    
+      echo "# Aliases" >> "$SNAPSHOT_FILE"
+      # Filter out winpty aliases on Windows to avoid "stdin is not a tty" errors
+      # Git Bash automatically creates aliases like "alias node='winpty node.exe'" for
+      # programs that need Win32 Console in mintty, but winpty fails when there's no TTY
+      if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+        alias | grep -v "='winpty " | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> "$SNAPSHOT_FILE"
+      else
+        alias | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> "$SNAPSHOT_FILE"
+      fi
+  
+
+      
+      # Check for rg availability
+      echo "# Check for rg availability" >> "$SNAPSHOT_FILE"
+      echo "if ! command -v rg >/dev/null 2>&1; then" >> "$SNAPSHOT_FILE"
+      echo '  alias rg='"'/opt/homebrew/lib/node_modules/\@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg'" >> "$SNAPSHOT_FILE"
+      echo "fi" >> "$SNAPSHOT_FILE"
+  
+
+      # Add PATH to the file
+      echo "export PATH=/Users/patrick/workingdir/personal-agent/packages/desktop/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/packages/desktop/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/packages/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/node_modules/.bin\:/Users/patrick/workingdir/node_modules/.bin\:/Users/patrick/node_modules/.bin\:/Users/node_modules/.bin\:/node_modules/.bin\:/opt/homebrew/lib/node_modules/npm/node_modules/\@npmcli/run-script/lib/node-gyp-bin\:/Users/patrick/.opencode/bin\:/opt/homebrew/Cellar/pyenv-virtualenv/1.2.4/shims\:/Users/patrick/.pyenv/shims\:/opt/homebrew/bin\:/Users/patrick/dotfiles/bin\:/usr/local/bin\:/System/Cryptexes/App/usr/bin\:/usr/bin\:/bin\:/usr/sbin\:/sbin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin\:/opt/pmk/env/global/bin\:/Library/Apple/usr/bin\:/Users/patrick/.opencode/bin\:/Users/patrick/.local/bin\:/opt/homebrew/Cellar/pyenv-virtualenv/1.2.4/shims\:/opt/homebrew/bin\:/Users/patrick/dotfiles/bin\:/Users/patrick/.cargo/bin\:/Users/patrick/.lmstudio/bin\:/Users/patrick/.cursor/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts\:/Users/patrick/.lmstudio/bin" >> "$SNAPSHOT_FILE"
+  
+
+      # Exit silently on success, only report errors
+      if [ ! -f "$SNAPSHOT_FILE" ]; then
+        echo "Error: Snapshot file was not created at $SNAPSHOT_FILE" >&2
+        exit 1
+      fi
+2025-12-31T19:02:51.345Z [DEBUG] stdout output (36 chars):
+Checking for updates to dotfiles...
+2025-12-31T19:02:51.345Z [DEBUG] No stderr output captured
+2025-12-31T19:02:51.346Z [ERROR] Error: Error: Failed to create shell snapshot: Command failed: /bin/zsh -c -l SNAPSHOT_FILE=/Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767207761341-1ib7xc.sh
+      source "/Users/patrick/.zshrc" < /dev/null
+
+      # First, create/clear the snapshot file
+      echo "# Snapshot file" >| "$SNAPSHOT_FILE"
+
+      # When this file is sourced, we first unalias to avoid conflicts
+      # This is necessary because aliases get "frozen" inside function definitions at definition time,
+      # which can cause unexpected behavior when functions use commands that conflict with aliases
+      echo "# Unset all aliases to avoid conflicts with functions" >> "$SNAPSHOT_FILE"
+      echo "unalias -a 2>/dev/null || true" >> "$SNAPSHOT_FILE"
+
+      
+      echo "# Functions" >> "$SNAPSHOT_FILE"
+
+      # Force autoload all functions first
+      typeset -f > /dev/null 2>&1
+
+      # Now get user function names - filter system ones and write directly to file
+      typeset +f | grep -vE '^(_|__)' | while read func; do
+        typeset -f "$func" >> "$SNAPSHOT_FILE"
+      done
+    
+      echo "# Shell Options" >> "$SNAPSHOT_FILE"
+      setopt | sed 's/^/setopt /' | head -n 1000 >> "$SNAPSHOT_FILE"
+    
+      echo "# Aliases" >> "$SNAPSHOT_FILE"
+      # Filter out winpty aliases on Windows to avoid "stdin is not a tty" errors
+      # Git Bash automatically creates aliases like "alias node='winpty node.exe'" for
+      # programs that need Win32 Console in mintty, but winpty fails when there's no TTY
+      if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+        alias | grep -v "='winpty " | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> "$SNAPSHOT_FILE"
+      else
+        alias | sed 's/^alias //g' | sed 's/^/alias -- /' | head -n 1000 >> "$SNAPSHOT_FILE"
+      fi
+  
+
+      
+      # Check for rg availability
+      echo "# Check for rg availability" >> "$SNAPSHOT_FILE"
+      echo "if ! command -v rg >/dev/null 2>&1; then" >> "$SNAPSHOT_FILE"
+      echo '  alias rg='"'/opt/homebrew/lib/node_modules/\@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg'" >> "$SNAPSHOT_FILE"
+      echo "fi" >> "$SNAPSHOT_FILE"
+  
+
+      # Add PATH to the file
+      echo "export PATH=/Users/patrick/workingdir/personal-agent/packages/desktop/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/packages/desktop/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/packages/node_modules/.bin\:/Users/patrick/workingdir/personal-agent/node_modules/.bin\:/Users/patrick/workingdir/node_modules/.bin\:/Users/patrick/node_modules/.bin\:/Users/node_modules/.bin\:/node_modules/.bin\:/opt/homebrew/lib/node_modules/npm/node_modules/\@npmcli/run-script/lib/node-gyp-bin\:/Users/patrick/.opencode/bin\:/opt/homebrew/Cellar/pyenv-virtualenv/1.2.4/shims\:/Users/patrick/.pyenv/shims\:/opt/homebrew/bin\:/Users/patrick/dotfiles/bin\:/usr/local/bin\:/System/Cryptexes/App/usr/bin\:/usr/bin\:/bin\:/usr/sbin\:/sbin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin\:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin\:/opt/pmk/env/global/bin\:/Library/Apple/usr/bin\:/Users/patrick/.opencode/bin\:/Users/patrick/.local/bin\:/opt/homebrew/Cellar/pyenv-virtualenv/1.2.4/shims\:/opt/homebrew/bin\:/Users/patrick/dotfiles/bin\:/Users/patrick/.cargo/bin\:/Users/patrick/.lmstudio/bin\:/Users/patrick/.cursor/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts\:/Users/patrick/.lmstudio/bin" >> "$SNAPSHOT_FILE"
+  
+
+      # Exit silently on success, only report errors
+      if [ ! -f "$SNAPSHOT_FILE" ]; then
+        echo "Error: Snapshot file was not created at $SNAPSHOT_FILE" >&2
+        exit 1
+      fi
+    
+
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2579:132
+    at ChildProcess.exithandler (node:child_process:429:5)
+    at ChildProcess.emit (node:events:519:28)
+    at ChildProcess.emit (node:domain:488:12)
+    at maybeClose (node:internal/child_process:1104:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5)
+    at Process.callbackTrampoline (node:internal/async_hooks:130:17)
+2025-12-31T19:02:57.326Z [ERROR] Error: Error: 1P event logging: 9 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T19:02:57.326Z [ERROR] Error: Error: {"stack":"Error: Failed to export 9 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 9 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T19:02:57.951Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHQQMUgZj88oMhvGHWu"}
+2025-12-31T19:02:57.951Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHQQMUgZj88oMhvGHWu"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2025-12-31T19:02:57.984Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-31T19:02:57.984Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:02:57.984Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T19:03:02.058Z [ERROR] AggregateError: AggregateError
+    at m3A.from (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:43:63985)
+    at VU.<anonymous> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:57:10016)
+    at VU.emit (node:events:531:35)
+    at VU.emit (node:domain:488:12)
+    at bw1.<computed> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:56:3432)
+    at ClientRequest.emit (node:events:531:35)
+    at ClientRequest.emit (node:domain:488:12)
+    at emitErrorEvent (node:_http_client:103:11)
+    at TLSSocket.socketErrorListener (node:_http_client:506:5)
+    at TLSSocket.emit (node:events:519:28)
+    at fzA.request (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:59:2130)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async zR0 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4868:4053)
+2025-12-31T19:03:03.215Z [ERROR] Error: Error: 1P event logging: 8 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T19:03:03.216Z [ERROR] Error: Error: {"stack":"Error: Failed to export 8 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 8 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T19:03:25.153Z [ERROR] Error: Error: 1P event logging: 3 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T19:03:25.153Z [ERROR] Error: Error: {"stack":"Error: Failed to export 3 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 3 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T19:03:56.265Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHUhgsmhGuSZK8hpq29"}
+2025-12-31T19:03:56.265Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWfHUhgsmhGuSZK8hpq29"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2025-12-31T19:03:56.294Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2025-12-31T19:03:56.294Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:03:56.294Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T19:03:56.295Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2025-12-31T19:03:56.295Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T19:03:56.295Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

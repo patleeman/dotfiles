@@ -1,0 +1,318 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useAgents } from '../../context/AgentContext';
+import { Settings, Folder, PanelRight, PanelLeft, Circle } from 'lucide-react';
+import { clsx } from 'clsx';
+import { api, isSubAgentManagedCLI } from '../../lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Status, Tag } from '../ui';
+
+export const StatusBar: React.FC = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const {
+        agents,
+        tasks,
+        activeAgentId,
+        renameAgent,
+        updateAgentConfig,
+        isSidebarCollapsed,
+        toggleSidebar,
+        isExplorerCollapsed,
+        toggleExplorer,
+        activeTab,
+        setActiveTab,
+        deleteTask,
+        openWorkspace,
+        listAgentSubscriptions,
+    } = useAgents();
+
+    const [isEditingProvider, setIsEditingProvider] = useState(false);
+    const [isEditingModel, setIsEditingModel] = useState(false);
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [tempName, setTempName] = useState('');
+
+    const renameInputRef = useRef<HTMLInputElement>(null);
+
+    const agent = activeAgentId ? agents[activeAgentId] : null;
+    const isSkillArchitect = agent?.name?.toLowerCase().includes('skill architect') || agent?.initial_prompt?.includes('Skill Architect');
+    const isTriggerArchitect = agent?.name?.toLowerCase().includes('trigger architect') || agent?.initial_prompt?.includes('Trigger Architect');
+
+    const { data: config } = useQuery({
+        queryKey: ['config'],
+        queryFn: () => api.getConfig(),
+    });
+
+    const { data: apiKeys } = useQuery({
+        queryKey: ['apiKeys'],
+        queryFn: () => api.getApiKeys(),
+    });
+
+    useEffect(() => {
+        if (isRenaming && renameInputRef.current) {
+            renameInputRef.current.focus();
+            renameInputRef.current.select();
+        }
+    }, [isRenaming]);
+
+    const handleRenameStart = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!agent) return;
+        setTempName(agent.name || agent.id.slice(0, 8));
+        setIsRenaming(true);
+    };
+
+    const handleRenameSave = async () => {
+        if (!agent) return;
+        const trimmedName = tempName.trim();
+        if (trimmedName && trimmedName !== agent.name) {
+            await renameAgent(agent.id, trimmedName);
+        }
+        setIsRenaming(false);
+    };
+
+    const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleRenameSave();
+        } else if (e.key === 'Escape') {
+            setIsRenaming(false);
+        }
+    };
+
+    const handleOpenBaseFolder = async (folder: 'skills' | 'triggers') => {
+        try {
+            await api.openFolder(folder);
+        } catch (err) {
+            console.error(`Failed to open ${folder} directory:`, err);
+        }
+    };
+
+    const isFleetPage = location.pathname === '/' || location.pathname.endsWith('/');
+    const isSettingsPage = location.pathname === '/settings';
+    const isSkillsPage = location.pathname === '/skills';
+    const isTriggersPage = location.pathname === '/triggers';
+    const isUsagePage = location.pathname === '/usage';
+
+    if (!agent && !isFleetPage && !isSettingsPage && !isSkillsPage && !isTriggersPage && !isUsagePage) return null;
+
+    const enabledProviders = Object.keys(config?.available_models || {}).filter(p => {
+        const key = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+        return key?.enabled === true;
+    });
+
+    const providers = agent
+        ? (enabledProviders.includes(agent.model_config.provider)
+            ? enabledProviders
+            : (agent.model_config.provider ? [...enabledProviders, agent.model_config.provider] : enabledProviders))
+        : enabledProviders;
+
+    const currentProvider = agent?.model_config.provider || providers[0] || '';
+    const availableModels = config?.available_models?.[currentProvider]?.chat || [];
+
+    const contextPct = agent && agent.max_context_tokens > 0
+        ? Math.min(100, Math.round((agent.context_tokens / agent.max_context_tokens) * 100))
+        : 0;
+
+    return (
+        <div className="h-6 border-t border-[#1e293b] flex items-center justify-between px-3 shrink-0 bg-[#0a0b0f] text-[11px] z-50">
+            <div className="flex items-center gap-3 min-w-0 flex-1 h-full">
+                {/* Connection Status */}
+                <div className="flex items-center gap-1.5">
+                    <Circle size={5} fill="#22c55e" stroke="none" />
+                    <span className="text-[#64748b]">Connected</span>
+                </div>
+
+                <div className="w-px h-3 bg-[#1e293b]" />
+
+                {/* Agent Info or Page Info */}
+                {agent ? (
+                    <>
+                        <div className="flex items-center gap-2">
+                            {!(isSkillArchitect || isTriggerArchitect) && (
+                                <button
+                                    onClick={() => setActiveTab('settings')}
+                                    className="text-[#64748b] hover:text-[#94a3b8] transition-colors"
+                                    title="Agent Settings"
+                                >
+                                    <Settings size={12} />
+                                </button>
+                            )}
+                            <button
+                                onClick={() => openWorkspace(agent.id)}
+                                className="text-[#64748b] hover:text-[#94a3b8] transition-colors"
+                                title="Open Workspace"
+                            >
+                                <Folder size={12} />
+                            </button>
+                            {isRenaming ? (
+                                <input
+                                    ref={renameInputRef}
+                                    type="text"
+                                    value={tempName}
+                                    onChange={(e) => setTempName(e.target.value)}
+                                    onBlur={handleRenameSave}
+                                    onKeyDown={handleRenameKeyDown}
+                                    className="bg-[#1e293b] border border-[#6366f1] text-[#e2e8f0] outline-none text-[11px] h-5 px-1.5 w-28 rounded"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            ) : (
+                                <button
+                                    className="text-[#e2e8f0] hover:text-[#a5b4fc] transition-colors"
+                                    onClick={handleRenameStart}
+                                    title="Click to rename"
+                                >
+                                    {agent.name || agent.id.slice(0, 8)}
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="w-px h-3 bg-[#1e293b]" />
+
+                        <Status status={agent.state as any} />
+
+                        {agent.max_context_tokens > 0 && !isSubAgentManagedCLI(agent) && (
+                            <>
+                                <div className="w-px h-3 bg-[#1e293b]" />
+                                <div
+                                    className="flex items-center gap-1.5"
+                                    title={`${agent.context_tokens.toLocaleString()} / ${agent.max_context_tokens.toLocaleString()} tokens`}
+                                >
+                                    <span className="text-[#64748b]">CTX</span>
+                                    <div className="w-12 h-1 bg-[#1e293b] rounded overflow-hidden">
+                                        <div
+                                            className={clsx(
+                                                "h-full",
+                                                contextPct > 90 ? "bg-[#ef4444]" : contextPct > 75 ? "bg-[#f59e0b]" : "bg-[#6366f1]"
+                                            )}
+                                            style={{ width: `${contextPct}%` }}
+                                        />
+                                    </div>
+                                    <span className={clsx(
+                                        "font-mono text-[10px]",
+                                        contextPct > 90 ? "text-[#ef4444]" : contextPct > 75 ? "text-[#f59e0b]" : "text-[#64748b]"
+                                    )}>
+                                        {contextPct}%
+                                    </span>
+                                </div>
+                            </>
+                        )}
+
+                        {!isSubAgentManagedCLI(agent) && (
+                            <>
+                                <div className="w-px h-3 bg-[#1e293b]" />
+                                <div className="flex items-center gap-1.5 cursor-pointer hover:opacity-80" onClick={() => setIsEditingModel(true)}>
+                                    {isEditingModel || isEditingProvider ? (
+                                        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                            <select
+                                                autoFocus
+                                                className="bg-[#1e293b] border border-[#6366f1] text-[#e2e8f0] outline-none text-[10px] h-5 px-1 rounded"
+                                                value={providers.includes(agent.model_config.provider) ? agent.model_config.provider : (providers[0] || '')}
+                                                onBlur={() => { if (!isEditingModel) setIsEditingProvider(false); }}
+                                                onChange={async (e) => {
+                                                    const newProvider = e.target.value;
+                                                    if (!newProvider) return;
+                                                    const models = config?.available_models?.[newProvider]?.chat || [];
+                                                    await updateAgentConfig(agent.id, {
+                                                        ...agent.model_config,
+                                                        provider: newProvider,
+                                                        model: models[0] || agent.model_config.model
+                                                    });
+                                                    setIsEditingProvider(false);
+                                                }}
+                                            >
+                                                {providers.map(p => (
+                                                    <option key={p} value={p}>
+                                                        {p}{!enabledProviders.includes(p) ? ' (DISABLED)' : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <span className="text-[#475569]">/</span>
+                                            <select
+                                                className="bg-[#1e293b] border border-[#6366f1] text-[#e2e8f0] outline-none text-[10px] h-5 px-1 rounded"
+                                                value={availableModels.includes(agent.model_config.model) ? agent.model_config.model : (availableModels[0] || '')}
+                                                onBlur={() => { setIsEditingModel(false); setIsEditingProvider(false); }}
+                                                onChange={async (e) => {
+                                                    if (!e.target.value) return;
+                                                    await updateAgentConfig(agent.id, { ...agent.model_config, model: e.target.value });
+                                                    setIsEditingModel(false);
+                                                }}
+                                            >
+                                                {availableModels.map((m: string) => (
+                                                    <option key={m} value={m}>{m.split('/').pop()}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="text-[#64748b]">{agent.model_config.provider || 'unknown'}</span>
+                                            <span className="text-[#475569]">/</span>
+                                            <Tag color="#8b5cf6">{agent.model_config.model?.split('/').pop() || 'unknown'}</Tag>
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        {(isSkillsPage || isTriggersPage) && (
+                            <button
+                                onClick={() => handleOpenBaseFolder(isTriggersPage ? 'triggers' : 'skills')}
+                                className="text-[#64748b] hover:text-[#94a3b8] transition-colors"
+                                title={`Open ${isTriggersPage ? 'Triggers' : 'Skills'} Folder`}
+                            >
+                                <Folder size={12} />
+                            </button>
+                        )}
+                        <button
+                            onClick={() => navigate('/')}
+                            className="text-[#94a3b8] hover:text-[#e2e8f0] transition-colors"
+                        >
+                            System
+                        </button>
+                        <span className="text-[#475569]">/</span>
+                        <span className="text-[#a5b4fc]">
+                            {isSettingsPage ? 'Settings' :
+                                isFleetPage ? 'Fleet' :
+                                    isSkillsPage ? 'Skills' :
+                                        isTriggersPage ? 'Triggers' :
+                                            isUsagePage ? 'Usage' : 'Node'}
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            {/* Toggles */}
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={() => toggleExplorer()}
+                    className={clsx(
+                        "p-1 rounded transition-colors",
+                        !isExplorerCollapsed
+                            ? "text-[#a5b4fc] bg-[#6366f1]/10"
+                            : "text-[#64748b] hover:bg-[#1e293b]"
+                    )}
+                    title={isExplorerCollapsed ? "Expand Explorer" : "Collapse Explorer"}
+                >
+                    <PanelLeft size={14} />
+                </button>
+
+                <button
+                    onClick={() => toggleSidebar()}
+                    disabled={!agent || isFleetPage || isSettingsPage || isSkillsPage || isUsagePage || activeTab === 'settings'}
+                    className={clsx(
+                        "p-1 rounded transition-colors",
+                        (!agent || isFleetPage || isSettingsPage || isSkillsPage || isUsagePage || activeTab === 'settings')
+                            ? "opacity-20 cursor-not-allowed text-[#64748b]"
+                            : !isSidebarCollapsed
+                                ? "text-[#a5b4fc] bg-[#6366f1]/10"
+                                : "text-[#64748b] hover:bg-[#1e293b]"
+                    )}
+                    title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                >
+                    <PanelRight size={14} />
+                </button>
+            </div>
+        </div>
+    );
+};

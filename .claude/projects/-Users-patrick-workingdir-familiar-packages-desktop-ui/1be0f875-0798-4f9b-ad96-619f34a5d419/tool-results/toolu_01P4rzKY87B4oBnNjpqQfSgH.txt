@@ -1,0 +1,13 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/TriggersView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   123→            </div>
+   124→
+   125→            <div className="flex-1 overflow-auto p-1 custom-scrollbar">
+   126→                <div className="w-full font-mono">
+   127→                    <div className="sticky top-0 z-10 grid grid-cols-[200px_1fr] gap-2 px-4 py-1.5 bg-background border-b border-border/40 text-[9px] font-black text-text-tertiary uppercase tracking-widest shadow-sm">
+   128→                        <div>Trigger</div>
+   129→                        <div>Type</div>
+   130→                    </div>
+   131→
+   132→                    <div className="flex flex-col">
+   133→                        {triggersLoading ? (
+   134→                            <div className="px-4 py-12 text-center">

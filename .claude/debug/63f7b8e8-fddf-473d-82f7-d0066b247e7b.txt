@@ -1,0 +1,203 @@
+2026-01-03T11:19:08.158Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:08.158Z [DEBUG] [Claude in Chrome] Starting MCP server
+2026-01-03T11:19:08.160Z [DEBUG] [Claude in Chrome] MCP server started
+2026-01-03T11:19:08.160Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:08.163Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at async ensureConnected (/$bunfs/root/claude:2596:27223)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:08.174Z [INFO] [Claude in Chrome] Reconnecting in 1000ms (attempt 1)
+2026-01-03T11:19:09.175Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:09.176Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:09.176Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:09.176Z [INFO] [Claude in Chrome] Reconnecting in 1500ms (attempt 2)
+2026-01-03T11:19:10.678Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:10.678Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:10.679Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:10.679Z [INFO] [Claude in Chrome] Reconnecting in 2250ms (attempt 3)
+2026-01-03T11:19:12.931Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:12.931Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:12.933Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:12.933Z [INFO] [Claude in Chrome] Reconnecting in 3375ms (attempt 4)
+2026-01-03T11:19:13.164Z [INFO] [Claude in Chrome] Initial socket connection failed: l1T [SocketConnectionError]: [Claude in Chrome] Connection attempt timed out after 5000ms
+    at <anonymous> (/$bunfs/root/claude:2596:27284)
+2026-01-03T11:19:16.309Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:16.310Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:16.310Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:16.310Z [INFO] [Claude in Chrome] Reconnecting in 5063ms (attempt 5)
+2026-01-03T11:19:21.373Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:21.373Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:21.374Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:21.374Z [INFO] [Claude in Chrome] Reconnecting in 7594ms (attempt 6)
+2026-01-03T11:19:28.969Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:28.969Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:28.969Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:28.969Z [INFO] [Claude in Chrome] Reconnecting in 11391ms (attempt 7)
+2026-01-03T11:19:40.360Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:40.361Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:40.361Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:40.361Z [INFO] [Claude in Chrome] Reconnecting in 17086ms (attempt 8)
+2026-01-03T11:19:57.447Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:19:57.447Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:19:57.448Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:19:57.448Z [INFO] [Claude in Chrome] Reconnecting in 25629ms (attempt 9)
+2026-01-03T11:20:23.077Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:20:23.077Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:20:23.079Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:20:23.079Z [INFO] [Claude in Chrome] Reconnecting in 30000ms (attempt 10)
+2026-01-03T11:20:53.080Z [INFO] [Claude in Chrome] Attempting to connect to: /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+2026-01-03T11:20:53.080Z [INFO] [Claude in Chrome] Socket not found, will be created by server
+2026-01-03T11:20:53.081Z [INFO] [Claude in Chrome] Socket error: Error: connect ENOENT /var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick
+    at afterConnect (node:net:1153:39)
+    at connectError (node:net:350:48)
+    at doConnect (unknown)
+    at kConnectPipe (node:net:365:19)
+    at internalConnect (node:net:1061:93)
+    at connect (node:net:630:58)
+    at connect (/$bunfs/root/claude:2596:25281)
+    at processTicksAndRejections (native:7:39) {
+  errno: -2,
+  syscall: 'connect',
+  port: undefined,
+  address: '/var/folders/c_/wv0qj11n47s5jdvn6z162py80000gn/T/claude-mcp-browser-bridge-patrick',
+  code: 'ENOENT'
+}
+2026-01-03T11:20:53.081Z [INFO] [Claude in Chrome] Max reconnection attempts reached

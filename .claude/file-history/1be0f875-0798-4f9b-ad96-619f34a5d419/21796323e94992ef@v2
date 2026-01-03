@@ -1,0 +1,152 @@
+import React, { useState } from 'react';
+import { clsx } from 'clsx';
+import { api } from '../../lib/api';
+
+interface SecretRequestProps {
+    agentId: string;
+    toolCallId: string;
+    secretKeys?: string[];
+    secretKey?: string; // deprecated
+    args?: any;
+    isProcessed?: boolean;
+}
+
+export const SecretRequest: React.FC<SecretRequestProps> = ({
+    secretKeys: initialSecretKeys,
+    secretKey: initialSecretKey,
+    args,
+    isProcessed
+}) => {
+    const [values, setValues] = useState<Record<string, string>>({});
+    const [submittingKeys, setSubmittingKeys] = useState<Record<string, boolean>>({});
+    const [submittedKeys, setSubmittedKeys] = useState<Record<string, boolean>>({});
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Extract keys from various possible sources
+    const keys = (() => {
+        if (initialSecretKeys && initialSecretKeys.length > 0) return initialSecretKeys;
+        if (initialSecretKey) return [initialSecretKey];
+        if (!args) return ['Secret'];
+        try {
+            const parsed = typeof args === 'string' ? JSON.parse(args) : args;
+            if (Array.isArray(parsed.keys)) return parsed.keys;
+            if (parsed.key) return [parsed.key];
+            return ['Secret'];
+        } catch (e) {
+            return ['Secret'];
+        }
+    })();
+
+    const handleSingleSubmit = async (key: string) => {
+        const val = values[key];
+        if (!val || !val.trim()) return;
+
+        setSubmittingKeys(prev => ({ ...prev, [key]: true }));
+        setErrors(prev => ({ ...prev, [key]: '' }));
+        try {
+            await api.setVaultSecret(key, val);
+            setSubmittedKeys(prev => ({ ...prev, [key]: true }));
+        } catch (err) {
+            console.error(`Failed to save secret ${key}:`, err);
+            setErrors(prev => ({ ...prev, [key]: 'Failed to save secret.' }));
+        } finally {
+            setSubmittingKeys(prev => ({ ...prev, [key]: false }));
+        }
+    };
+
+    const allSubmitted = keys.every((k: string) => submittedKeys[k] || isProcessed);
+
+    if (allSubmitted) {
+        return (
+            <div className="flex flex-col gap-1 opacity-40 font-mono text-[10px] pl-2">
+                {keys.map((key: string) => (
+                    <div key={key} className="flex flex-row items-baseline gap-2">
+                        <span className="text-status-success font-black">[@]</span>
+                        <span className="italic uppercase">Secret Stored:</span>
+                        <span className="text-accent">{key}</span>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-2 py-2 px-3 my-2 border-l border-accent/40 bg-surface/5 font-mono text-[11px] animate-in fade-in slide-in-from-left-1 duration-200">
+            <div className="flex items-center gap-2 text-accent/80 font-black tracking-widest uppercase text-[10px]">
+                <span>Secret Required</span>
+                <span className="opacity-20">·</span>
+                <span className="text-text-primary/60">{keys.length} key{keys.length > 1 ? 's' : ''} needed</span>
+            </div>
+
+            <div className="flex flex-col gap-4 pl-4 uppercase">
+                <div className="flex items-start gap-2 text-text-secondary leading-normal italic opacity-80 font-black text-[9px]">
+                    <span className="text-status-success mt-0.5 shrink-0">[@]</span>
+                    <p>
+                        Secrets required. Stored in <span className="text-text-primary not-italic font-black">system keychain</span>.
+                        <span className="text-text-primary not-italic font-black block mt-1 underline">Not sent to LLM.</span>
+                    </p>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                    {keys.map((key: string, index: number) => (
+                        <div key={key} className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-text-tertiary/40 font-black text-[9px] w-4">{index + 1}.</span>
+                                <span className="text-text-primary font-black uppercase text-[10px] tracking-widest">{key}</span>
+                                {(submittedKeys[key] || isProcessed) && (
+                                    <div className="flex items-center gap-2 text-status-success text-[9px] font-black tracking-widest ml-2">
+                                        <span>[@] STORED</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {!submittedKeys[key] && !isProcessed && (
+                                <div className="flex flex-col gap-2 pl-6">
+                                    <div className="relative">
+                                        <input
+                                            type="password"
+                                            value={values[key] || ''}
+                                            onChange={(e) => setValues(prev => ({ ...prev, [key]: e.target.value }))}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleSingleSubmit(key);
+                                                }
+                                            }}
+                                            placeholder={`Value for ${key}`}
+                                            disabled={submittingKeys[key]}
+                                            autoFocus={index === 0}
+                                            className="w-full bg-background/40 border border-accent/20 px-2 py-1.5 text-[11px] text-text-primary placeholder:text-text-tertiary/20 focus:outline-none focus:border-accent/40 transition-colors uppercase"
+                                        />
+                                    </div>
+
+                                    {errors[key] && (
+                                        <div className="flex items-center gap-2 text-status-error text-[9px] font-black uppercase tracking-widest">
+                                            <span>[!] {errors[key]}</span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSingleSubmit(key)}
+                                            disabled={submittingKeys[key] || !(values[key] || '').trim()}
+                                            className="text-accent hover:text-accent-hover transition-all uppercase font-black text-[10px] tracking-widest disabled:opacity-20 active:scale-95"
+                                        >
+                                            {submittingKeys[key] ? (
+                                                'Processing...'
+                                            ) : (
+                                                index === keys.length - 1 ? 'Save and Continue' : 'Save Secret'
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+

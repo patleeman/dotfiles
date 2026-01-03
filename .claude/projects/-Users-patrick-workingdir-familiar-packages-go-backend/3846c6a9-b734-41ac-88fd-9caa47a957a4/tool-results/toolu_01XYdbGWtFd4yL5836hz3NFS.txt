@@ -1,0 +1,34 @@
+# Claude Usage Limit Handling in Opencode
+
+## Issue Summary
+
+The GitHub issue #877 documents a feature request for better error messaging when Claude's usage limit is reached in Opencode.
+
+## Current Behavior
+
+**Problem:** "Opencode UI remains stuck at 'working...' with no error message displayed" when Claude usage limits are exceeded. Users must manually check Claude to diagnose the issue.
+
+## Key Technical Details
+
+The issue includes logs showing the service initialization sequence but lacks error handling specifics. Log entries show:
+- Provider initialization for Anthropic
+- Session creation and message handling
+- No visible quota/rate limit error capture in standard logs
+
+## Related Issues
+
+Multiple duplicate issues indicate this is a persistent problem:
+- Issue #2964: "Hangs without error message when Claude Code session limit is reached"
+- Issue #3106: "Opencode Silent on Reaching Provider Quota"
+- Issue #3525: "Quota Limit Exceeded Error is not handled properly"
+
+## Requested Improvements
+
+1. **Immediate error display** when rate limits or quota errors occur
+2. **Usage statistics visualization** (referenced: ryoppippi/ccusage project)
+3. **Time-to-reset information** displayed to users
+4. **Optional auto-retry** after quota resets
+
+## Implementation Status
+
+As of November 2025, the issue was marked as duplicate of #777 and remains in discussion phase regarding optimal implementation approach.

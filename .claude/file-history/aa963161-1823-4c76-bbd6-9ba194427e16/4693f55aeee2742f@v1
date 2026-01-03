@@ -1,0 +1,234 @@
+import React, { useEffect, useRef } from 'react';
+import { useAgents } from '../../context/AgentContext';
+import { clsx } from 'clsx';
+import { X, Plus, Circle, LayoutList, GitBranch } from 'lucide-react';
+import type { FleetFilterStatus, FleetGroupingMode, FleetViewMode } from '../../context/AgentStore';
+import { isHotkey } from '../../lib/hotkeys';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { SidebarSection, SidebarItem, Button } from '../ui';
+
+const filterOptions: { id: FleetFilterStatus; label: string; color: string }[] = [
+    { id: 'all', label: 'All', color: '#64748b' },
+    { id: 'running', label: 'Running', color: '#22c55e' },
+    { id: 'failed', label: 'Failed', color: '#ef4444' },
+    { id: 'scheduled', label: 'Scheduled', color: '#8b5cf6' },
+    { id: 'idle', label: 'Idle', color: '#3b82f6' },
+];
+
+const groupingOptions: { id: FleetGroupingMode; label: string }[] = [
+    { id: 'none', label: 'None' },
+    { id: 'provider', label: 'Provider' },
+    { id: 'model', label: 'Model' },
+    { id: 'state', label: 'State' },
+    { id: 'schedule', label: 'Next Run' },
+];
+
+export const FleetSidebar: React.FC = () => {
+    const {
+        fleetFilter,
+        setFleetFilter,
+        fleetGroup,
+        setFleetGroup,
+        fleetSearch,
+        setFleetSearch,
+        fleetView,
+        setFleetView,
+        agents,
+        tasks,
+        createAgent,
+        selectAgent,
+        focusedPane
+    } = useAgents();
+
+    const navigate = useNavigate();
+    const searchRef = useRef<HTMLInputElement>(null);
+    const [activeIndex, setActiveIndex] = React.useState(-1);
+
+    const { data: config } = useQuery({
+        queryKey: ['config'],
+        queryFn: () => api.getConfig(),
+    });
+
+    const { data: apiKeys } = useQuery({
+        queryKey: ['apiKeys'],
+        queryFn: () => api.getApiKeys(),
+    });
+
+    const handleCreateAgent = async () => {
+        try {
+            let provider = config?.inference?.chat?.provider || '';
+            let model = config?.inference?.chat?.model || '';
+
+            if (provider && config?.providers) {
+                const isEnabled = config.providers[provider]?.enabled === true ||
+                    (config.custom_providers && provider in config.custom_providers);
+                if (!isEnabled) {
+                    provider = '';
+                    model = '';
+                }
+            }
+
+            const response = await createAgent({ provider, model }, "");
+
+            if (response && response.id) {
+                selectAgent(response.id);
+                navigate(`/agent/${response.id}`);
+            }
+        } catch (err) {
+            console.error('Failed to create agent:', err);
+        }
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && document.activeElement === searchRef.current) {
+                setFleetSearch('');
+                searchRef.current?.blur();
+            }
+
+            if (focusedPane !== 'explorer') return;
+
+            const totalOptions = filterOptions.length + groupingOptions.length;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActiveIndex(prev => Math.min(prev + 1, totalOptions - 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActiveIndex(prev => Math.max(prev - 1, 0));
+            } else if (e.key === 'Enter') {
+                if (activeIndex >= 0 && activeIndex < filterOptions.length) {
+                    e.preventDefault();
+                    setFleetFilter(filterOptions[activeIndex].id);
+                } else if (activeIndex >= filterOptions.length && activeIndex < totalOptions) {
+                    e.preventDefault();
+                    setFleetGroup(groupingOptions[activeIndex - filterOptions.length].id);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setFleetSearch, focusedPane, activeIndex, filterOptions.length, groupingOptions.length, setFleetFilter, setFleetGroup]);
+
+    const getFilterCount = (status: FleetFilterStatus) => {
+        const allArr = Object.values(agents);
+        const all = allArr.filter(a => {
+            if (a.is_internal) return false;
+            let curr = a;
+            while (curr.parent_id) {
+                const parent = agents[curr.parent_id];
+                if (parent && parent.is_internal) return false;
+                if (!parent) break;
+                curr = parent;
+            }
+            return true;
+        });
+
+        if (status === 'all') return all.length;
+        if (status === 'running') return all.filter(a => a.state === 'running').length;
+        if (status === 'failed') return all.filter(a => a.state === 'error').length;
+        if (status === 'idle') return all.filter(a => a.state === 'idle').length;
+        if (status === 'scheduled') {
+            return all.filter(a => tasks.some(t => t.parent_agent_id?.toLowerCase() === a.id.toLowerCase())).length;
+        }
+        return 0;
+    };
+
+    const agentCount = getFilterCount('all');
+
+    return (
+        <div className="flex flex-col h-full bg-[#0f1117] select-none">
+            {/* Sidebar Header */}
+            <div className="p-3 border-b border-[#1e293b]">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-[12px] font-medium text-[#e2e8f0]">Agent Fleet</span>
+                    <span className="text-[10px] font-mono text-[#64748b]">
+                        {agentCount}
+                    </span>
+                </div>
+                <p className="text-[11px] text-[#64748b] leading-tight mb-3">
+                    Manage and monitor your agent fleet
+                </p>
+
+                <Button variant="primary" onClick={handleCreateAgent}>
+                    <Plus size={12} />
+                    New Agent
+                </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2">
+                {/* View Mode */}
+                <SidebarSection title="Views">
+                    <SidebarItem
+                        label="List"
+                        icon={<LayoutList size={12} />}
+                        active={fleetView === 'list'}
+                        onClick={() => {
+                            setFleetView('list');
+                            setFleetGroup('none');
+                        }}
+                    />
+                    <SidebarItem
+                        label="Tree"
+                        icon={<GitBranch size={12} />}
+                        active={fleetView === 'tree'}
+                        onClick={() => setFleetView('tree')}
+                    />
+                </SidebarSection>
+
+                {/* Search */}
+                <div className="px-2 mb-3">
+                    <div className="relative">
+                        <input
+                            ref={searchRef}
+                            type="text"
+                            placeholder="Search..."
+                            value={fleetSearch}
+                            onChange={(e) => setFleetSearch(e.target.value)}
+                            className="w-full bg-[#0a0b0f] border border-[#1e293b] rounded px-2 py-1.5 text-[11px] text-[#e2e8f0] placeholder:text-[#475569] focus:outline-none focus:border-[#6366f1] transition-colors"
+                        />
+                        {fleetSearch && (
+                            <button
+                                onClick={() => setFleetSearch('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#94a3b8] transition-colors"
+                            >
+                                <X size={12} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Status Filters */}
+                <SidebarSection title="Status">
+                    {filterOptions.map((opt) => (
+                        <SidebarItem
+                            key={opt.id}
+                            label={opt.label}
+                            count={getFilterCount(opt.id)}
+                            color={opt.color}
+                            active={fleetFilter === opt.id}
+                            onClick={() => setFleetFilter(opt.id)}
+                        />
+                    ))}
+                </SidebarSection>
+
+                {/* Grouping */}
+                <div className={clsx(fleetView === 'tree' && "opacity-30 pointer-events-none")}>
+                    <SidebarSection title="Group By">
+                        {groupingOptions.map((opt) => (
+                            <SidebarItem
+                                key={opt.id}
+                                label={opt.label}
+                                active={fleetGroup === opt.id}
+                                onClick={() => setFleetGroup(opt.id)}
+                            />
+                        ))}
+                    </SidebarSection>
+                </div>
+            </div>
+        </div>
+    );
+};

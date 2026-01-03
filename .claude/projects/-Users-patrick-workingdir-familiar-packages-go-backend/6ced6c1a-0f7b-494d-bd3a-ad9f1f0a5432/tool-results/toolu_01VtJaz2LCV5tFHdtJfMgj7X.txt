@@ -1,0 +1,572 @@
+     1→package agent
+     2→
+     3→import (
+     4→	"context"
+     5→	"encoding/json"
+     6→	"os"
+     7→	"path/filepath"
+     8→	"strings"
+     9→	"testing"
+    10→
+    11→	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+    12→)
+    13→
+    14→func TestNewCLIExecutor(t *testing.T) {
+    15→	agent := types.Agent{
+    16→		ID: "test-agent-1",
+    17→		CLIConfig: &types.CLIConfig{
+    18→			Command: "echo",
+    19→			Args:    []string{"hello"},
+    20→		},
+    21→	}
+    22→
+    23→	executor := NewCLIExecutor(agent, "/tmp/test-workspace", nil)
+    24→	if executor == nil {
+    25→		t.Fatal("expected non-nil executor")
+    26→	}
+    27→	if executor.AgentID != "test-agent-1" {
+    28→		t.Errorf("expected agent ID test-agent-1, got %s", executor.AgentID)
+    29→	}
+    30→	if executor.Config.Command != "echo" {
+    31→		t.Errorf("expected command echo, got %s", executor.Config.Command)
+    32→	}
+    33→	if executor.WorkspacePath != "/tmp/test-workspace" {
+    34→		t.Errorf("expected workspace /tmp/test-workspace, got %s", executor.WorkspacePath)
+    35→	}
+    36→}
+    37→
+    38→func TestCLIExecutor_GetJSONOutput(t *testing.T) {
+    39→	t.Run("JSONL format - multiple objects", func(t *testing.T) {
+    40→		executor := &CLIExecutor{}
+    41→		executor.FullOutput.WriteString(`{"key1": "value1"}
+    42→{"key2": "value2"}
+    43→{"key1": "overridden"}`)
+    44→
+    45→		result, err := executor.GetJSONOutput()
+    46→		if err != nil {
+    47→			t.Fatalf("unexpected error: %v", err)
+    48→		}
+    49→
+    50→		if result["key1"] != "overridden" {
+    51→			t.Errorf("expected key1 to be overridden, got %v", result["key1"])
+    52→		}
+    53→		if result["key2"] != "value2" {
+    54→			t.Errorf("expected key2 to be value2, got %v", result["key2"])
+    55→		}
+    56→	})
+    57→
+    58→	t.Run("single JSON object", func(t *testing.T) {
+    59→		executor := &CLIExecutor{}
+    60→		executor.FullOutput.WriteString(`{"session_id": "abc123", "status": "ok"}`)
+    61→
+    62→		result, err := executor.GetJSONOutput()
+    63→		if err != nil {
+    64→			t.Fatalf("unexpected error: %v", err)
+    65→		}
+    66→
+    67→		if result["session_id"] != "abc123" {
+    68→			t.Errorf("expected session_id abc123, got %v", result["session_id"])
+    69→		}
+    70→		if result["status"] != "ok" {
+    71→			t.Errorf("expected status ok, got %v", result["status"])
+    72→		}
+    73→	})
+    74→
+    75→	t.Run("JSON object with extra text", func(t *testing.T) {
+    76→		executor := &CLIExecutor{}
+    77→		executor.FullOutput.WriteString(`Some log output
+    78→More logs
+    79→{"result": "success", "code": 200}
+    80→Even more logs`)
+    81→
+    82→		result, err := executor.GetJSONOutput()
+    83→		if err != nil {
+    84→			t.Fatalf("unexpected error: %v", err)
+    85→		}
+    86→
+    87→		if result["result"] != "success" {
+    88→			t.Errorf("expected result success, got %v", result["result"])
+    89→		}
+    90→		if result["code"].(float64) != 200 {
+    91→			t.Errorf("expected code 200, got %v", result["code"])
+    92→		}
+    93→	})
+    94→
+    95→	t.Run("empty output", func(t *testing.T) {
+    96→		executor := &CLIExecutor{}
+    97→
+    98→		_, err := executor.GetJSONOutput()
+    99→		if err == nil {
+   100→			t.Error("expected error for empty output")
+   101→		}
+   102→		if !strings.Contains(err.Error(), "empty output") {
+   103→			t.Errorf("expected 'empty output' error, got %v", err)
+   104→		}
+   105→	})
+   106→
+   107→	t.Run("no JSON objects", func(t *testing.T) {
+   108→		executor := &CLIExecutor{}
+   109→		executor.FullOutput.WriteString("plain text output\nno json here")
+   110→
+   111→		_, err := executor.GetJSONOutput()
+   112→		if err == nil {
+   113→			t.Error("expected error for no JSON objects")
+   114→		}
+   115→		if !strings.Contains(err.Error(), "no JSON objects found") {
+   116→			t.Errorf("expected 'no JSON objects found' error, got %v", err)
+   117→		}
+   118→	})
+   119→
+   120→	t.Run("invalid JSON", func(t *testing.T) {
+   121→		executor := &CLIExecutor{}
+   122→		executor.FullOutput.WriteString(`{"invalid": json}`)
+   123→
+   124→		_, err := executor.GetJSONOutput()
+   125→		if err == nil {
+   126→			t.Error("expected error for invalid JSON")
+   127→		}
+   128→	})
+   129→
+   130→	t.Run("whitespace only lines", func(t *testing.T) {
+   131→		executor := &CLIExecutor{}
+   132→		executor.FullOutput.WriteString(`   
+   133→{"key": "value"}
+   134→   `)
+   135→
+   136→		result, err := executor.GetJSONOutput()
+   137→		if err != nil {
+   138→			t.Fatalf("unexpected error: %v", err)
+   139→		}
+   140→
+   141→		if result["key"] != "value" {
+   142→			t.Errorf("expected key value, got %v", result["key"])
+   143→		}
+   144→	})
+   145→
+   146→	t.Run("nested JSON objects", func(t *testing.T) {
+   147→		executor := &CLIExecutor{}
+   148→		executor.FullOutput.WriteString(`{"data": {"nested": {"value": 42}}}`)
+   149→
+   150→		result, err := executor.GetJSONOutput()
+   151→		if err != nil {
+   152→			t.Fatalf("unexpected error: %v", err)
+   153→		}
+   154→
+   155→		data, ok := result["data"].(map[string]interface{})
+   156→		if !ok {
+   157→			t.Fatalf("expected data to be map, got %T", result["data"])
+   158→		}
+   159→		nested, ok := data["nested"].(map[string]interface{})
+   160→		if !ok {
+   161→			t.Fatalf("expected nested to be map, got %T", data["nested"])
+   162→		}
+   163→		if nested["value"].(float64) != 42 {
+   164→			t.Errorf("expected nested value 42, got %v", nested["value"])
+   165→		}
+   166→	})
+   167→
+   168→	t.Run("array in JSON", func(t *testing.T) {
+   169→		executor := &CLIExecutor{}
+   170→		executor.FullOutput.WriteString(`{"items": [1, 2, 3]}`)
+   171→
+   172→		result, err := executor.GetJSONOutput()
+   173→		if err != nil {
+   174→			t.Fatalf("unexpected error: %v", err)
+   175→		}
+   176→
+   177→		items, ok := result["items"].([]interface{})
+   178→		if !ok {
+   179→			t.Fatalf("expected items to be array, got %T", result["items"])
+   180→		}
+   181→		if len(items) != 3 {
+   182→			t.Errorf("expected 3 items, got %d", len(items))
+   183→		}
+   184→	})
+   185→}
+   186→
+   187→func TestEnsureCodexTrustedProject(t *testing.T) {
+   188→	tmpDir, err := os.MkdirTemp("", "test-codex-*")
+   189→	if err != nil {
+   190→		t.Fatal(err)
+   191→	}
+   192→	defer os.RemoveAll(tmpDir)
+   193→
+   194→	homeDir := filepath.Join(tmpDir, "home")
+   195→	if err := os.MkdirAll(homeDir, 0755); err != nil {
+   196→		t.Fatal(err)
+   197→	}
+   198→
+   199→	// Mock home directory
+   200→	originalHome := os.Getenv("HOME")
+   201→	defer func() {
+   202→		if originalHome != "" {
+   203→			os.Setenv("HOME", originalHome)
+   204→		} else {
+   205→			os.Unsetenv("HOME")
+   206→		}
+   207→	}()
+   208→
+   209→	os.Setenv("HOME", homeDir)
+   210→
+   211→	workspacePath := filepath.Join(tmpDir, "workspace")
+   212→	if err := os.MkdirAll(workspacePath, 0755); err != nil {
+   213→		t.Fatal(err)
+   214→	}
+   215→
+   216→	t.Run("create new config file", func(t *testing.T) {
+   217→		codexDir := filepath.Join(homeDir, ".codex")
+   218→		configPath := filepath.Join(codexDir, "config.toml")
+   219→
+   220→		// Clean up if exists
+   221→		os.RemoveAll(codexDir)
+   222→
+   223→		err := ensureCodexTrustedProject(workspacePath)
+   224→		if err != nil {
+   225→			t.Fatalf("unexpected error: %v", err)
+   226→		}
+   227→
+   228→		// Verify config file was created
+   229→		content, err := os.ReadFile(configPath)
+   230→		if err != nil {
+   231→			t.Fatalf("failed to read config file: %v", err)
+   232→		}
+   233→
+   234→		contentStr := string(content)
+   235→		if !strings.Contains(contentStr, workspacePath) {
+   236→			t.Errorf("expected config to contain workspace path, got: %s", contentStr)
+   237→		}
+   238→		if !strings.Contains(contentStr, "trust_level = \"trusted\"") {
+   239→			t.Errorf("expected config to contain trust_level, got: %s", contentStr)
+   240→		}
+   241→	})
+   242→
+   243→	t.Run("append to existing config", func(t *testing.T) {
+   244→		codexDir := filepath.Join(homeDir, ".codex")
+   245→		configPath := filepath.Join(codexDir, "config.toml")
+   246→
+   247→		// Create existing config
+   248→		existingConfig := `[projects."/existing/path"]
+   249→trust_level = "trusted"
+   250→`
+   251→		if err := os.MkdirAll(codexDir, 0755); err != nil {
+   252→			t.Fatal(err)
+   253→		}
+   254→		if err := os.WriteFile(configPath, []byte(existingConfig), 0644); err != nil {
+   255→			t.Fatal(err)
+   256→		}
+   257→
+   258→		newWorkspace := filepath.Join(tmpDir, "new-workspace")
+   259→		if err := os.MkdirAll(newWorkspace, 0755); err != nil {
+   260→			t.Fatal(err)
+   261→		}
+   262→
+   263→		err := ensureCodexTrustedProject(newWorkspace)
+   264→		if err != nil {
+   265→			t.Fatalf("unexpected error: %v", err)
+   266→		}
+   267→
+   268→		// Verify both paths are in config
+   269→		content, err := os.ReadFile(configPath)
+   270→		if err != nil {
+   271→			t.Fatalf("failed to read config file: %v", err)
+   272→		}
+   273→
+   274→		contentStr := string(content)
+   275→		if !strings.Contains(contentStr, "/existing/path") {
+   276→			t.Error("expected existing path to remain in config")
+   277→		}
+   278→		if !strings.Contains(contentStr, newWorkspace) {
+   279→			t.Error("expected new workspace path to be added")
+   280→		}
+   281→	})
+   282→
+   283→	t.Run("skip if already trusted", func(t *testing.T) {
+   284→		codexDir := filepath.Join(homeDir, ".codex")
+   285→		configPath := filepath.Join(codexDir, "config.toml")
+   286→
+   287→		// Create config with workspace already trusted
+   288→		existingConfig := `[projects."` + workspacePath + `"]
+   289→trust_level = "trusted"
+   290→`
+   291→		if err := os.MkdirAll(codexDir, 0755); err != nil {
+   292→			t.Fatal(err)
+   293→		}
+   294→		if err := os.WriteFile(configPath, []byte(existingConfig), 0644); err != nil {
+   295→			t.Fatal(err)
+   296→		}
+   297→
+   298→		// Read original content
+   299→		originalContent, err := os.ReadFile(configPath)
+   300→		if err != nil {
+   301→			t.Fatal(err)
+   302→		}
+   303→
+   304→		// Call ensureCodexTrustedProject
+   305→		err = ensureCodexTrustedProject(workspacePath)
+   306→		if err != nil {
+   307→			t.Fatalf("unexpected error: %v", err)
+   308→		}
+   309→
+   310→		// Verify content hasn't changed (no duplicate entry)
+   311→		newContent, err := os.ReadFile(configPath)
+   312→		if err != nil {
+   313→			t.Fatal(err)
+   314→		}
+   315→
+   316→		// Count occurrences of workspace path
+   317→		originalCount := strings.Count(string(originalContent), workspacePath)
+   318→		newCount := strings.Count(string(newContent), workspacePath)
+   319→
+   320→		if newCount > originalCount {
+   321→			t.Error("expected no duplicate entry for already trusted workspace")
+   322→		}
+   323→	})
+   324→
+   325→	t.Run("handle symlink resolution", func(t *testing.T) {
+   326→		codexDir := filepath.Join(homeDir, ".codex")
+   327→		configPath := filepath.Join(codexDir, "config.toml")
+   328→
+   329→		// Clean up
+   330→		os.RemoveAll(codexDir)
+   331→
+   332→		// Create a symlink workspace
+   333→		symlinkPath := filepath.Join(tmpDir, "symlink-workspace")
+   334→		realPath := filepath.Join(tmpDir, "real-workspace")
+   335→		if err := os.MkdirAll(realPath, 0755); err != nil {
+   336→			t.Fatal(err)
+   337→		}
+   338→
+   339→		// Create symlink (skip if not supported on this platform)
+   340→		if err := os.Symlink(realPath, symlinkPath); err != nil {
+   341→			t.Skipf("symlinks not supported: %v", err)
+   342→		}
+   343→		defer os.Remove(symlinkPath)
+   344→
+   345→		err := ensureCodexTrustedProject(symlinkPath)
+   346→		if err != nil {
+   347→			t.Fatalf("unexpected error: %v", err)
+   348→		}
+   349→
+   350→		// Verify config contains resolved path
+   351→		content, err := os.ReadFile(configPath)
+   352→		if err != nil {
+   353→			t.Fatalf("failed to read config file: %v", err)
+   354→		}
+   355→
+   356→		contentStr := string(content)
+   357→		// Should contain the resolved real path, not the symlink
+   358→		if !strings.Contains(contentStr, realPath) {
+   359→			t.Errorf("expected config to contain resolved path %s, got: %s", realPath, contentStr)
+   360→		}
+   361→	})
+   362→}
+   363→
+   364→func TestCLIExecutor_Run(t *testing.T) {
+   365→	tmpDir, err := os.MkdirTemp("", "test-cli-executor-*")
+   366→	if err != nil {
+   367→		t.Fatal(err)
+   368→	}
+   369→	defer os.RemoveAll(tmpDir)
+   370→
+   371→	ctx := context.Background()
+   372→
+   373→	t.Run("simple command execution", func(t *testing.T) {
+   374→		logCalls := []map[string]interface{}{}
+   375→		onLog := func(agentID, eventType string, payload interface{}) {
+   376→			logCalls = append(logCalls, map[string]interface{}{
+   377→				"agent_id": agentID,
+   378→				"type":     eventType,
+   379→				"payload":   payload,
+   380→			})
+   381→		}
+   382→
+   383→		agent := types.Agent{
+   384→			ID: "test-agent",
+   385→			CLIConfig: &types.CLIConfig{
+   386→				Command: "echo",
+   387→				Args:    []string{"hello", "world"},
+   388→			},
+   389→		}
+   390→
+   391→		executor := NewCLIExecutor(agent, tmpDir, onLog)
+   392→		err := executor.Run(ctx)
+   393→		if err != nil {
+   394→			t.Fatalf("unexpected error: %v", err)
+   395→		}
+   396→
+   397→		// Verify output was captured
+   398→		output := executor.FullOutput.String()
+   399→		if !strings.Contains(output, "hello") || !strings.Contains(output, "world") {
+   400→			t.Errorf("expected output to contain 'hello world', got: %s", output)
+   401→		}
+   402→
+   403→		// Verify log was called
+   404→		if len(logCalls) == 0 {
+   405→			t.Error("expected log calls")
+   406→		}
+   407→	})
+   408→
+   409→	t.Run("command with environment variables", func(t *testing.T) {
+   410→		agent := types.Agent{
+   411→			ID: "test-agent-env",
+   412→			CLIConfig: &types.CLIConfig{
+   413→				Command: "sh",
+   414→				Args:    []string{"-c", "echo $TEST_VAR"},
+   415→				Env: map[string]string{
+   416→					"TEST_VAR": "test-value-123",
+   417→				},
+   418→			},
+   419→		}
+   420→
+   421→		executor := NewCLIExecutor(agent, tmpDir, nil)
+   422→		err := executor.Run(ctx)
+   423→		if err != nil {
+   424→			t.Fatalf("unexpected error: %v", err)
+   425→		}
+   426→
+   427→		output := executor.FullOutput.String()
+   428→		if !strings.Contains(output, "test-value-123") {
+   429→			t.Errorf("expected output to contain env var value, got: %s", output)
+   430→		}
+   431→	})
+   432→
+   433→	t.Run("command failure", func(t *testing.T) {
+   434→		agent := types.Agent{
+   435→			ID: "test-agent-fail",
+   436→			CLIConfig: &types.CLIConfig{
+   437→				Command: "false", // Command that always fails
+   438→				Args:    []string{},
+   439→			},
+   440→		}
+   441→
+   442→		executor := NewCLIExecutor(agent, tmpDir, nil)
+   443→		err := executor.Run(ctx)
+   444→		if err == nil {
+   445→			t.Error("expected error for failing command")
+   446→		}
+   447→		if !strings.Contains(err.Error(), "command failed") {
+   448→			t.Errorf("expected 'command failed' error, got: %v", err)
+   449→		}
+   450→	})
+   451→
+   452→	t.Run("workspace creation", func(t *testing.T) {
+   453→		newWorkspace := filepath.Join(tmpDir, "new-workspace")
+   454→		agent := types.Agent{
+   455→			ID: "test-agent-workspace",
+   456→			CLIConfig: &types.CLIConfig{
+   457→				Command: "pwd",
+   458→				Args:    []string{},
+   459→			},
+   460→		}
+   461→
+   462→		executor := NewCLIExecutor(agent, newWorkspace, nil)
+   463→		err := executor.Run(ctx)
+   464→		if err != nil {
+   465→			t.Fatalf("unexpected error: %v", err)
+   466→		}
+   467→
+   468→		// Verify workspace was created
+   469→		if _, err := os.Stat(newWorkspace); os.IsNotExist(err) {
+   470→			t.Error("expected workspace directory to be created")
+   471→		}
+   472→	})
+   473→}
+   474→
+   475→func TestCLIExecutor_GetJSONOutput_Complex(t *testing.T) {
+   476→	t.Run("merge multiple JSON objects with overlapping keys", func(t *testing.T) {
+   477→		executor := &CLIExecutor{}
+   478→		jsonLines := []string{
+   479→			`{"session_id": "abc", "step": 1}`,
+   480→			`{"step": 2, "status": "processing"}`,
+   481→			`{"step": 3, "status": "complete", "result": "success"}`,
+   482→		}
+   483→		executor.FullOutput.WriteString(strings.Join(jsonLines, "\n"))
+   484→
+   485→		result, err := executor.GetJSONOutput()
+   486→		if err != nil {
+   487→			t.Fatalf("unexpected error: %v", err)
+   488→		}
+   489→
+   490→		// Later values should override earlier ones
+   491→		if result["step"].(float64) != 3 {
+   492→			t.Errorf("expected step 3 (last value), got %v", result["step"])
+   493→		}
+   494→		if result["status"] != "complete" {
+   495→			t.Errorf("expected status 'complete' (last value), got %v", result["status"])
+   496→		}
+   497→		if result["session_id"] != "abc" {
+   498→			t.Errorf("expected session_id 'abc', got %v", result["session_id"])
+   499→		}
+   500→		if result["result"] != "success" {
+   501→			t.Errorf("expected result 'success', got %v", result["result"])
+   502→		}
+   503→	})
+   504→
+   505→	t.Run("handle JSON with numbers and booleans", func(t *testing.T) {
+   506→		executor := &CLIExecutor{}
+   507→		executor.FullOutput.WriteString(`{"count": 42, "active": true, "score": 3.14}`)
+   508→
+   509→		result, err := executor.GetJSONOutput()
+   510→		if err != nil {
+   511→			t.Fatalf("unexpected error: %v", err)
+   512→		}
+   513→
+   514→		if result["count"].(float64) != 42 {
+   515→			t.Errorf("expected count 42, got %v", result["count"])
+   516→		}
+   517→		if result["active"].(bool) != true {
+   518→			t.Errorf("expected active true, got %v", result["active"])
+   519→		}
+   520→		if result["score"].(float64) != 3.14 {
+   521→			t.Errorf("expected score 3.14, got %v", result["score"])
+   522→		}
+   523→	})
+   524→}
+   525→
+   526→func TestCLIExecutor_JSONRoundTrip(t *testing.T) {
+   527→	// Test that JSON output can be properly marshaled/unmarshaled
+   528→	executor := &CLIExecutor{}
+   529→	testData := map[string]interface{}{
+   530→		"string": "value",
+   531→		"number": 42,
+   532→		"bool":   true,
+   533→		"array":  []interface{}{1, 2, 3},
+   534→		"object": map[string]interface{}{
+   535→			"nested": "value",
+   536→		},
+   537→	}
+   538→
+   539→	jsonBytes, err := json.Marshal(testData)
+   540→	if err != nil {
+   541→		t.Fatal(err)
+   542→	}
+   543→
+   544→	executor.FullOutput.WriteString(string(jsonBytes))
+   545→	result, err := executor.GetJSONOutput()
+   546→	if err != nil {
+   547→		t.Fatalf("unexpected error: %v", err)
+   548→	}
+   549→
+   550→	// Verify all fields are present
+   551→	if result["string"] != "value" {
+   552→		t.Errorf("expected string 'value', got %v", result["string"])
+   553→	}
+   554→	if result["number"].(float64) != 42 {
+   555→		t.Errorf("expected number 42, got %v", result["number"])
+   556→	}
+   557→	if result["bool"].(bool) != true {
+   558→		t.Errorf("expected bool true, got %v", result["bool"])
+   559→	}
+   560→}
+   561→
+   562→
+   563→
+   564→
+   565→
+   566→
+   567→
+   568→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

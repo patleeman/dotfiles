@@ -1,0 +1,866 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"github.com/patrick/familiar/packages/go-backend/internal/agent"
+	"github.com/patrick/familiar/packages/go-backend/internal/config"
+	"github.com/patrick/familiar/packages/go-backend/internal/inference"
+	"github.com/patrick/familiar/packages/go-backend/internal/scheduler"
+	"github.com/patrick/familiar/packages/go-backend/internal/storage"
+	"github.com/patrick/familiar/packages/go-backend/internal/tools"
+	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+)
+
+type Server struct {
+	db             *storage.DB
+	agents         map[string]*agent.RuntimeAgent
+	statefulAgents map[string]*agent.StatefulAgent
+	mu             sync.RWMutex
+	globalClients  []*websocket.Conn
+	connLocks      map[*websocket.Conn]*sync.Mutex
+	scheduler      *scheduler.Scheduler
+	triggerManager *agent.TriggerManager
+	proposing      sync.Map // agentID -> context.CancelFunc
+	toolRegistry   *tools.Registry
+	authStatus     map[string]string
+	cliStatus      map[string]string
+	lastAuthCheck  time.Time
+}
+
+func NewServer(db *storage.DB) *Server {
+	s := &Server{
+		db:             db,
+		agents:         make(map[string]*agent.RuntimeAgent),
+		statefulAgents: make(map[string]*agent.StatefulAgent),
+		connLocks:      make(map[*websocket.Conn]*sync.Mutex),
+		toolRegistry:   tools.NewRegistry(),
+		authStatus: map[string]string{
+			"claude": "checking",
+			"codex":  "checking",
+		},
+		cliStatus: map[string]string{
+			"claude": "checking",
+			"codex":  "checking",
+		},
+	}
+
+	cfg, _ := config.LoadConfig()
+	// Pre-register tools to the toolRegistry for listing
+	s.registerTools(&agent.RuntimeAgent{Registry: s.toolRegistry}, nil, cfg, nil)
+
+	// Start background auth check
+	go s.startAuthCheckLoop()
+
+	return s
+}
+
+func (s *Server) startAuthCheckLoop() {
+	// Initial check
+	s.refreshAuthStatus()
+
+	ticker := time.NewTicker(2 * time.Minute)
+	for range ticker.C {
+		s.refreshAuthStatus()
+	}
+}
+
+func (s *Server) refreshAuthStatus() {
+	claudeAuth := checkCLIAuth("claude")
+	codexAuth := checkCLIAuth("codex")
+	claudeCLI := checkCLI("claude")
+	codexCLI := checkCLI("codex")
+
+	s.mu.Lock()
+	s.authStatus["claude"] = claudeAuth
+	s.authStatus["codex"] = codexAuth
+	s.cliStatus["claude"] = claudeCLI
+	s.cliStatus["codex"] = codexCLI
+	s.lastAuthCheck = time.Now()
+	s.mu.Unlock()
+}
+
+func (s *Server) BootstrapOnboarding() error {
+	onboardingCompleted, _ := s.db.GetSetting("onboarding_completed")
+	count, _ := s.db.CountAgents()
+
+	if onboardingCompleted == "true" && count > 0 {
+		// Reset onboarding setting if explicitly called
+		s.db.SetSetting("onboarding_completed", "false")
+	}
+
+	slog.Info("Bootstrapping onboarding agent")
+	agentID := uuid.New().String()
+	welcomeSystemPrompt := `You are Familiar, a personal AI agent designed to help users with research, coding, scheduling, and day-to-day tasks.
+
+YOUR GOAL:
+1. Help the user find their first real use case for Familiar.
+2. Ask questions about their work, hobbies, or daily routines to identify where you can provide value.
+3. Offer concrete ideas on what you could help with (e.g., "I could help you research X", "I can help you write scripts for Y", "I can manage your calendar for Z").
+
+WHAT IS FAMILIAR?
+Familiar is more than just a chatbot. It can:
+- Use tools to interact with your computer (files, shell, browser).
+- Schedule tasks to run in the background or at specific times.
+- Spawn sub-agents to handle complex multi-step projects.
+- Remember context across conversations.
+
+TONE:
+Helpful, proactive, and curious. Focus on getting the user to their first successful task.`
+
+	a := types.Agent{
+		ID:            agentID,
+		Name:          "Welcome",
+		State:         types.AgentStateIdle,
+		InitialPrompt: "",
+		SystemPrompt:  welcomeSystemPrompt,
+		PlanEnabled:   false,
+		ModelConfig: types.ModelConfig{
+			Provider: "onboarding",
+			Model:    "scripted",
+		},
+		MaxContextTokens: 128000,
+		CreatedAt:        time.Now().UTC(),
+		UpdatedAt:        time.Now().UTC(),
+	}
+
+	if err := s.db.CreateAgent(a); err != nil {
+		return fmt.Errorf("failed to create onboarding agent: %w", err)
+	}
+
+	// Add initial greeting
+	greeting := "Welcome back to onboarding! I'm your personal agent. To get started, we need to connect me to an AI provider like OpenAI, Anthropic, or a local one via Ollama.\n\n**Please follow these steps:**\n1. Head over to **Settings** in the top menu and enable at least one provider.\n2. Come back here to this chat.\n3. At the bottom, select your provider and a model from the dropdowns.\n4. Say hi!"
+	if onboardingCompleted != "true" {
+		greeting = "Welcome to Familiar! I'm your new personal agent. To get started, we need to connect me to an AI provider like OpenAI, Anthropic, or a local one via Ollama.\n\n**Please follow these steps:**\n1. Head over to **Settings** in the top menu and enable at least one provider.\n2. Come back here to this chat.\n3. At the bottom, select your provider and a model from the dropdowns.\n4. Say hi!"
+	}
+
+	s.db.AppendAgentLog(agentID, "model_responded", map[string]interface{}{
+		"content": greeting,
+	})
+
+	// Broadcast the new agent
+	updatedAgent, err := s.db.GetAgent(agentID)
+	if err == nil {
+		s.globalBroadcast(map[string]interface{}{
+			"type":  "agent_created",
+			"agent": updatedAgent,
+		})
+	}
+
+	return nil
+}
+
+func (s *Server) safeWriteJSON(conn *websocket.Conn, v interface{}) error {
+	s.mu.RLock()
+	lock, ok := s.connLocks[conn]
+	s.mu.RUnlock()
+
+	if !ok {
+		s.mu.Lock()
+		lock, ok = s.connLocks[conn]
+		if !ok {
+			lock = &sync.Mutex{}
+			s.connLocks[conn] = lock
+		}
+		s.mu.Unlock()
+	}
+
+	lock.Lock()
+	defer lock.Unlock()
+	return conn.WriteJSON(v)
+}
+
+func (s *Server) globalBroadcast(payload interface{}) {
+	s.mu.RLock()
+	clients := s.globalClients
+	s.mu.RUnlock()
+
+	for _, conn := range clients {
+		s.safeWriteJSON(conn, payload)
+	}
+}
+
+func (s *Server) getTasksWithNextRun() ([]storage.Task, error) {
+	tasks, err := s.db.ListTasks()
+	if err != nil {
+		return nil, err
+	}
+	for i := range tasks {
+		tasks[i].NextRunAt = s.scheduler.GetNextRun(tasks[i])
+	}
+	return tasks, nil
+}
+
+func (s *Server) recoverPendingEvents() error {
+	agents, _ := s.db.ListAgents(nil, nil)
+	for _, a := range agents {
+		events, err := s.db.LoadPending(a.ID)
+		if err != nil {
+			slog.Error("Failed to load pending events for agent", "agent_id", a.ID, "error", err)
+			continue
+		}
+		if len(events) > 0 {
+			sa, err := s.getOrCreateStatefulAgent(a.ID)
+			if err != nil {
+				slog.Error("Failed to create stateful agent for event recovery", "agent_id", a.ID, "error", err)
+				continue
+			}
+			for _, e := range events {
+				sa.PushEvent(e.Type, e.Payload)
+			}
+			// Auto-resume if there are pending events and the agent is not running
+			if !sa.IsRunning() {
+				go s.resumeAgent(a.ID, "")
+			}
+		}
+	}
+	return nil
+}
+
+func (s *Server) createProvider(providerType string) (inference.Provider, error) {
+	if providerType == "onboarding" {
+		return inference.NewOnboardingProvider(), nil
+	}
+
+	if config.MockMode {
+		slog.Debug("Using mock provider (production APIs disabled)", "provider_type", providerType)
+		return inference.NewMockProvider(), nil
+	}
+
+	cfg, _ := config.LoadConfig()
+	if cfg != nil {
+		if cfg.Providers == nil {
+			return nil, fmt.Errorf("no providers enabled. Please enable one in Settings")
+		}
+		if providerType != "" {
+			pc, ok := cfg.Providers[providerType]
+			if !ok {
+				// Special case: check custom providers
+				isCustom := false
+				if cfg.CustomProviders != nil {
+					if _, ok := cfg.CustomProviders[providerType]; ok {
+						isCustom = true
+					}
+				}
+				if !isCustom {
+					return nil, fmt.Errorf("provider %s is not enabled. Please enable it in Settings", providerType)
+				}
+			} else if pc.Enabled != nil && !*pc.Enabled {
+				return nil, fmt.Errorf("provider %s is disabled in settings", providerType)
+			}
+		}
+	}
+
+	switch providerType {
+	case "openrouter":
+		return inference.NewOpenRouterProvider("", "", "familiar")
+	case "anthropic":
+		return inference.NewAnthropicProvider("")
+	case "claude-code":
+		return inference.NewClaudeCodeProvider()
+	case "openai":
+		return inference.NewOpenAIProvider("", "")
+	case "gemini":
+		return inference.NewGeminiProvider("")
+	case "ollama":
+		return inference.NewOllamaProvider("", "")
+	case "lmstudio":
+		return inference.NewLMStudioProvider("", "")
+	}
+
+	if cfg != nil && cfg.CustomProviders != nil {
+		if cp, ok := cfg.CustomProviders[providerType]; ok {
+			return inference.NewCustomOpenAIProvider(providerType, "", cp.BaseURL)
+		}
+	}
+
+	isEnabled := func(p string) bool {
+		if cfg == nil || cfg.Providers == nil {
+			return false
+		}
+		if pc, ok := cfg.Providers[p]; ok && pc.Enabled != nil {
+			return *pc.Enabled
+		}
+		return false
+	}
+
+	if isEnabled("openrouter") && config.GetKeychainPassword("openrouter-api-key") != "" {
+		return inference.NewOpenRouterProvider("", "", "familiar")
+	} else if isEnabled("anthropic") && config.GetKeychainPassword("anthropic-api-key") != "" {
+		return inference.NewAnthropicProvider("")
+	} else if isEnabled("claude-code") && config.IsClaudeCodeTokenValid() {
+		return inference.NewClaudeCodeProvider()
+	} else if isEnabled("openai") && config.GetKeychainPassword("openai-api-key") != "" {
+		return inference.NewOpenAIProvider("", "")
+	} else if isEnabled("gemini") && config.GetKeychainPassword("gemini-api-key") != "" {
+		return inference.NewGeminiProvider("")
+	}
+
+	return nil, fmt.Errorf("no API keys found for provider %s", providerType)
+}
+
+func (s *Server) getChatModel(cfg *config.Config) string {
+	if cfg == nil {
+		return ""
+	}
+	return cfg.Inference.Chat.Model
+}
+
+// getDefaultChatConfig returns the first enabled provider and a valid model for new agents.
+// It checks if the configured default is enabled; if not, picks the first enabled provider.
+func (s *Server) getDefaultChatConfig(cfg *config.Config) (provider string, model string) {
+	if cfg == nil {
+		return "", ""
+	}
+
+	// Helper to check if a provider is enabled
+	isEnabled := func(p string) bool {
+		if cfg.Providers == nil {
+			return false
+		}
+		if pc, ok := cfg.Providers[p]; ok && pc.Enabled != nil {
+			return *pc.Enabled
+		}
+		// Check custom providers (always enabled if present)
+		if cfg.CustomProviders != nil {
+			if _, ok := cfg.CustomProviders[p]; ok {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Helper to get first model for a provider from available_models
+	getFirstModel := func(p string) string {
+		if cfg.AvailableModels != nil {
+			if caps, ok := cfg.AvailableModels[p]; ok {
+				if models, ok := caps["chat"]; ok && len(models) > 0 {
+					return models[0]
+				}
+			}
+		}
+		return ""
+	}
+
+	// First, check if the configured default provider is enabled
+	defaultProvider := cfg.Inference.Chat.Provider
+	if defaultProvider != "" && isEnabled(defaultProvider) {
+		defaultModel := cfg.Inference.Chat.Model
+		if defaultModel == "" {
+			defaultModel = getFirstModel(defaultProvider)
+		}
+		return defaultProvider, defaultModel
+	}
+
+	// Otherwise, find the first enabled provider with a model
+	// Order: openrouter, anthropic, openai, gemini, then customs, then locals
+	priorityProviders := []string{"openrouter", "anthropic", "openai", "gemini"}
+	for _, p := range priorityProviders {
+		if isEnabled(p) {
+			return p, getFirstModel(p)
+		}
+	}
+
+	// Check custom providers
+	if cfg.CustomProviders != nil {
+		for name := range cfg.CustomProviders {
+			return name, getFirstModel(name)
+		}
+	}
+
+	// Check local providers last
+	localProviders := []string{"ollama", "lmstudio"}
+	for _, p := range localProviders {
+		if isEnabled(p) {
+			return p, getFirstModel(p)
+		}
+	}
+
+	return "", ""
+}
+
+func (s *Server) formatConfigResponse(cfg *config.Config) interface{} {
+	// Trigger metadata cache refresh on first config request (if needed)
+	// This ensures pricing data is available
+	go func() {
+		_ = inference.RefreshMetadataCache()
+	}()
+
+	// Default models
+	// NOTE TO AGENT: DO NOT DELETE THESE MODELS.
+	// THESE ARE VALID MODEL NAMES THAT HAVE BEEN CREATED AFTER YOUR CUTOFF DATE.
+	defaults := map[string]map[string][]string{
+		"openrouter": {
+			"chat": {
+				"anthropic/claude-haiku-4.5",
+				"openai/gpt-5-mini",
+				"anthropic/claude-sonnet-4.5",
+				"openai/gpt-5",
+				"minimax/minimax-m2.1",
+				"z-ai/glm-4.7",
+			},
+		},
+		"anthropic": {
+			"chat": {
+				"claude-haiku-4-5",
+				"claude-sonnet-4-5",
+				"claude-opus-4-5",
+			},
+		},
+		"claude-code": {
+			"chat": {
+				"claude-haiku-4-5",
+				"claude-sonnet-4-5",
+				"claude-opus-4-5",
+			},
+		},
+		"openai": {
+			"chat": {
+				"gpt-5-nano",
+				"gpt-5-mini",
+				"gpt-5",
+			},
+		},
+		"gemini": {
+			"chat": {
+				"gemini-2.5-flash-lite",
+				"gemini-2.5-flash",
+				"gemini-3-flash-preview",
+			},
+		},
+		"ollama": {
+			"chat": {},
+		},
+		"lmstudio": {
+			"chat": {},
+		},
+	}
+
+	availableModels := make(map[string]map[string][]string)
+	for p, caps := range defaults {
+		availableModels[p] = make(map[string][]string)
+		for cap, models := range caps {
+			availableModels[p][cap] = models
+		}
+	}
+
+	// Add user defined custom providers
+	if cfg.CustomProviders != nil {
+		for name := range cfg.CustomProviders {
+			if _, ok := availableModels[name]; !ok {
+				availableModels[name] = map[string][]string{
+					"chat": {},
+				}
+			}
+		}
+	}
+
+	// Override with user configured models if present
+	if cfg.AvailableModels != nil {
+		for p, caps := range cfg.AvailableModels {
+			if _, ok := availableModels[p]; !ok {
+				availableModels[p] = make(map[string][]string)
+			}
+			for cap, models := range caps {
+				if cap == "chat" && len(models) > 0 {
+					availableModels[p][cap] = models
+				}
+			}
+		}
+	}
+
+	// Build model pricing map for OpenRouter models
+	modelPricing := make(map[string]map[string]map[string]map[string]float64)
+	if openrouterModels, ok := availableModels["openrouter"]; ok {
+		if chatModels, ok := openrouterModels["chat"]; ok {
+			openrouterPricing := make(map[string]map[string]map[string]float64)
+			chatPricing := make(map[string]map[string]float64)
+			pricingFound := false
+			for _, model := range chatModels {
+				// Get base model name (strip reasoning suffix) for consistent pricing lookup
+				baseModel, _ := inference.ParseThinkingModel(model)
+				if prompt, completion, found := inference.GetModelPricing(baseModel); found {
+					pricingFound = true
+					slog.Debug("Found pricing for model", "model", model, "baseModel", baseModel, "prompt", prompt, "completion", completion)
+					// Store pricing by both the full model name and base model name
+					// so it works whether or not reasoning is applied
+					chatPricing[model] = map[string]float64{
+						"prompt":     prompt,
+						"completion": completion,
+					}
+					// Also store by base model name for direct lookup
+					if model != baseModel {
+						chatPricing[baseModel] = map[string]float64{
+							"prompt":     prompt,
+							"completion": completion,
+						}
+					}
+				} else {
+					slog.Debug("No pricing found for model", "model", model, "baseModel", baseModel)
+				}
+			}
+			slog.Info("OpenRouter pricing lookup", "total_models", len(chatModels), "pricing_found", pricingFound, "pricing_map_size", len(chatPricing))
+			// If no pricing found, trigger a background refresh to update the cache
+			if !pricingFound && len(chatModels) > 0 {
+				go func() {
+					_ = inference.RefreshMetadataCache()
+				}()
+			}
+			if len(chatPricing) > 0 {
+				openrouterPricing["chat"] = chatPricing
+				modelPricing["openrouter"] = openrouterPricing
+			}
+		}
+	}
+
+	// Create a new struct for the response to include the merged models
+	type ConfigResponse struct {
+		*config.Config
+		AvailableModels map[string]map[string][]string                      `json:"available_models"`
+		ModelPricing    map[string]map[string]map[string]map[string]float64 `json:"model_pricing"`
+	}
+
+	return ConfigResponse{
+		Config:          cfg,
+		AvailableModels: availableModels,
+		ModelPricing:    modelPricing,
+	}
+}
+
+func (s *Server) performConfigUpdate(updates map[string]interface{}) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Apply available_models update explicitly if present
+	if am, ok := updates["available_models"].(map[string]interface{}); ok {
+		// Replace the entire available models map for providers that are present in the update
+		// but if we want to support full deletion of a provider from available_models,
+		// we should probably just replace the whole map from what the UI sends.
+
+		newAvailableModels := make(map[string]map[string][]string)
+		for provider, capsRaw := range am {
+			caps, ok := capsRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			newAvailableModels[provider] = make(map[string][]string)
+			for capName, modelsRaw := range caps {
+				if capName != "chat" {
+					continue
+				}
+				modelsSlice, ok := modelsRaw.([]interface{})
+				if !ok {
+					continue
+				}
+				models := make([]string, 0, len(modelsSlice))
+				for _, m := range modelsSlice {
+					if s, ok := m.(string); ok {
+						models = append(models, s)
+					}
+				}
+				newAvailableModels[provider][capName] = models
+			}
+		}
+		cfg.AvailableModels = newAvailableModels
+
+		// Remove available_models from generic update to avoid double processing
+		delete(updates, "available_models")
+	}
+
+	// Apply custom_providers update explicitly if present to support deletion
+	if cp, ok := updates["custom_providers"].(map[string]interface{}); ok {
+		newCustomProviders := make(map[string]config.CustomProviderConfig)
+		for name, dataRaw := range cp {
+			data, ok := dataRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			baseURL, _ := data["base_url"].(string)
+			newCustomProviders[name] = config.CustomProviderConfig{
+				BaseURL: baseURL,
+			}
+		}
+		cfg.CustomProviders = newCustomProviders
+		delete(updates, "custom_providers")
+	}
+
+	// Apply sub_agent updates explicitly if present
+	if sa, ok := updates["sub_agent"].(map[string]interface{}); ok {
+		if saEnabled, ok := sa["enabled"].(bool); ok {
+			cfg.SubAgent.Enabled = &saEnabled
+		}
+		// Remove sub_agent from generic update to avoid double processing
+		delete(updates, "sub_agent")
+	}
+
+	// Apply other updates via JSON trick
+	if len(updates) > 0 {
+		b, err := json.Marshal(updates)
+		if err != nil {
+			return fmt.Errorf("failed to marshal updates: %w", err)
+		}
+		if err := json.Unmarshal(b, cfg); err != nil {
+			return fmt.Errorf("failed to unmarshal updates: %w", err)
+		}
+	}
+
+	if err := config.SaveConfig(cfg); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+
+	// Ensure a default provider and model are set if at least one is enabled
+	// Use priority order to avoid selecting local providers (ollama, lmstudio) as default
+	if cfg.Inference.Chat.Provider == "" {
+		priorityProviders := []string{"openrouter", "anthropic", "claude-code", "openai", "gemini"}
+		found := false
+
+		// Check priority providers first
+		for _, p := range priorityProviders {
+			if pc, ok := cfg.Providers[p]; ok && pc.Enabled != nil && *pc.Enabled {
+				cfg.Inference.Chat.Provider = p
+				// Attempt to pick a sensible model
+				if cfg.Inference.Chat.Model == "" {
+					// Hardcoded sensible defaults for known providers
+					switch p {
+					case "openrouter":
+						cfg.Inference.Chat.Model = "anthropic/claude-haiku-4.5"
+					case "anthropic", "claude-code":
+						cfg.Inference.Chat.Model = "claude-haiku-4-5"
+					case "openai":
+						cfg.Inference.Chat.Model = "gpt-5-mini"
+					case "gemini":
+						cfg.Inference.Chat.Model = "gemini-2.5-flash-lite"
+					}
+				}
+				found = true
+				break
+			}
+		}
+
+		// If no priority provider found, check custom providers
+		if !found && cfg.CustomProviders != nil {
+			for name := range cfg.CustomProviders {
+				cfg.Inference.Chat.Provider = name
+				found = true
+				break
+			}
+		}
+
+		// Only check local providers as last resort
+		if !found {
+			localProviders := []string{"ollama", "lmstudio"}
+			for _, p := range localProviders {
+				if pc, ok := cfg.Providers[p]; ok && pc.Enabled != nil && *pc.Enabled {
+					cfg.Inference.Chat.Provider = p
+					found = true
+					break
+				}
+			}
+		}
+
+		if found {
+			// Save again with the new defaults
+			_ = config.SaveConfig(cfg)
+		}
+	}
+
+	// Transition onboarding agents if a real provider is now available
+	if cfg.Inference.Chat.Provider != "" {
+		agents, _ := s.db.ListAgents(nil, nil)
+		for _, a := range agents {
+			if a.ModelConfig.Provider == "onboarding" {
+				newConfig := types.ModelConfig{
+					Provider: cfg.Inference.Chat.Provider,
+					Model:    s.getChatModel(cfg),
+				}
+				slog.Info("Transitioning onboarding agent to real provider", "agent_id", a.ID, "provider", newConfig.Provider)
+				s.db.UpdateAgentModelConfig(a.ID, newConfig)
+
+				// Mark onboarding as completed
+				s.db.SetSetting("onboarding_completed", "true")
+
+				// Nudge the agent to start the LLM conversation
+				nudge := "I see you've set up a provider! I'm now powered by " + newConfig.Provider + ". Let's get to know each other.\n\nFamiliar is designed to be your personal agent that can not only chat, but also use tools on your computer, schedule background tasks, and more.\n\nTo help me find the best ways to assist you, could you tell me a bit about what you do? For example, do you work on coding projects, manage a lot of research, or have complex daily schedules you'd like to automate?"
+				logID, _ := s.db.AppendAgentLog(a.ID, "model_responded", map[string]interface{}{
+					"content": nudge,
+				})
+
+				s.globalBroadcast(map[string]interface{}{
+					"type":         "agent_config_updated",
+					"agent_id":     a.ID,
+					"model_config": newConfig,
+				})
+				s.globalBroadcast(map[string]interface{}{
+					"type":       "execution_log",
+					"agent_id":   a.ID,
+					"event_type": "model_responded",
+					"payload":    map[string]interface{}{"id": logID, "content": nudge},
+				})
+
+				s.mu.Lock()
+				if sa, ok := s.statefulAgents[a.ID]; ok {
+					prov, _ := s.createProvider(newConfig.Provider)
+					sa.UpdateModelConfig(newConfig, prov)
+				}
+				s.mu.Unlock()
+			}
+		}
+	}
+
+	// Update running agents with new config
+	s.mu.Lock()
+	for id, sa := range s.statefulAgents {
+		if cfg.Agent.AutoCompactionEnabled != nil {
+			sa.AutoCompactionEnabled = *cfg.Agent.AutoCompactionEnabled
+			// Also update the runtime agent
+			sa.RuntimeAgent.AutoCompactionEnabled = *cfg.Agent.AutoCompactionEnabled
+		}
+		sa.AlwaysAllowAll = cfg.Security.AlwaysAllowAll
+
+		// Update shell permission mode
+		if st, ok := sa.RuntimeAgent.Registry.GetTool("system_shell"); ok {
+			if shellTool, ok := st.(*tools.ShellTool); ok {
+				shellTool.PermissionMode = cfg.Security.ShellPermissionMode
+			}
+		}
+
+		// Check if provider is still enabled
+		a, err := s.db.GetAgent(id)
+		if err == nil {
+			if _, err := s.createProvider(a.ModelConfig.Provider); err != nil {
+				slog.Warn("Stopping agent because its provider was disabled", "agent_id", id, "provider", a.ModelConfig.Provider)
+				sa.Cancel()
+				delete(s.statefulAgents, id)
+			}
+		}
+	}
+
+	// Update global tool registry
+	if st, ok := s.toolRegistry.GetTool("system_shell"); ok {
+		if shellTool, ok := st.(*tools.ShellTool); ok {
+			shellTool.PermissionMode = cfg.Security.ShellPermissionMode
+		}
+	}
+
+	s.mu.Unlock()
+
+	return nil
+}
+
+func (s *Server) recoverRuns() {
+	agents, err := s.db.ListAgents(nil, nil)
+	if err != nil {
+		slog.Error("Failed to list agents for run recovery", "error", err)
+		return
+	}
+
+	for _, a := range agents {
+		if a.State == types.AgentStateRunning {
+			// Check if agent is actually running in memory
+			s.mu.RLock()
+			sa, exists := s.statefulAgents[a.ID]
+			s.mu.RUnlock()
+
+			// If agent doesn't exist in memory or isn't actually running, it's a stale state
+			if !exists || (exists && !sa.IsRunning()) {
+				slog.Info("Recovering stale running state", "agent_id", a.ID, "agent_name", a.Name)
+				// Reset to idle state
+				s.db.UpdateAgentState(a.ID, types.AgentStateIdle, nil)
+				s.globalBroadcast(map[string]interface{}{
+					"type":      "agent_state_changed",
+					"agent_id":  a.ID,
+					"new_state": types.AgentStateIdle,
+				})
+			}
+		}
+	}
+}
+
+func getProgramDataPath() string {
+	if env := os.Getenv("FAMILIAR_WORKSPACE"); env != "" {
+		return env
+	}
+	return config.GetConfigDir()
+}
+
+func checkCLI(name string) string {
+	_, err := exec.LookPath(name)
+	if err == nil {
+		return "ok"
+	}
+	return "missing"
+}
+
+func checkCLIAuth(name string) string {
+	if name == "claude" {
+		// Use a harmless command to check if we are logged in
+		cmd := exec.Command("claude", "--print", "status", "--max-budget-usd", "0.01")
+		// Inject key if available to see if it works with injection
+		if apiKey := config.GetKeychainPassword("anthropic-api-key"); apiKey != "" {
+			cmd.Env = append(os.Environ(), "ANTHROPIC_API_KEY="+apiKey)
+		} else {
+			cmd.Env = os.Environ()
+		}
+
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		cmd.Stderr = &out
+		err := cmd.Run()
+
+		// If it's already logged in, it might fail because of budget (exit 1)
+		// but if it's NOT logged in, it will say "Please run /login"
+		if err != nil {
+			output := out.String()
+			if strings.Contains(output, "login") || strings.Contains(output, "API key") {
+				return "unauthorized"
+			}
+		}
+
+		// If it works (or fails with budget), it's "ok".
+		// Now we want to know if it's using the injected key or native auth.
+		if apiKey := config.GetKeychainPassword("anthropic-api-key"); apiKey != "" {
+			return "ok-injected"
+		}
+		return "ok-native"
+	}
+	if name == "codex" {
+		// Codex has a status command
+		cmd := exec.Command("codex", "login", "status")
+		// Inject key if available
+		if apiKey := config.GetKeychainPassword("openai-api-key"); apiKey != "" {
+			cmd.Env = append(os.Environ(), "OPENAI_API_KEY="+apiKey)
+		} else {
+			cmd.Env = os.Environ()
+		}
+
+		err := cmd.Run()
+		if err != nil {
+			return "unauthorized"
+		}
+
+		if apiKey := config.GetKeychainPassword("openai-api-key"); apiKey != "" {
+			return "ok-injected"
+		}
+		return "ok-native"
+	}
+	return "ok"
+}
+
+func runInstall(command string, args ...string) error {
+	cmd := exec.Command(command, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}

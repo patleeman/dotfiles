@@ -1,0 +1,93 @@
+import React, { useState } from 'react';
+import { useAgents } from '../../context/AgentContext';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Plus, ArrowLeft } from 'lucide-react';
+import { Button } from '../ui';
+
+export const SkillsSidebar: React.FC = () => {
+    const { listSkills, agents, selectAgent, createAgent, setSidebarCollapsed, activeAgentId } = useAgents();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [isCreatingSkill, setIsCreatingSkill] = useState(false);
+
+    const isMainSkillsPage = location.pathname === '/skills';
+    const activeAgent = activeAgentId ? agents[activeAgentId] : null;
+    const isSkillArchitect = activeAgent?.name?.toLowerCase().includes('skill architect') || activeAgent?.initial_prompt?.includes('Skill Architect');
+
+    const { data: config } = useQuery({
+        queryKey: ['config'],
+        queryFn: () => api.getConfig(),
+    });
+
+    const { data: skillsData } = useQuery({
+        queryKey: ['skills'],
+        queryFn: async () => {
+            const resp = await listSkills();
+            return Array.isArray(resp?.skills) ? resp.skills : [];
+        }
+    });
+
+    const handleCreateSkill = async () => {
+        const architect = Object.values(agents).find(a =>
+            a.name === 'Skill Architect' &&
+            !a.is_internal
+        );
+
+        if (architect) {
+            setSidebarCollapsed(true);
+            selectAgent(architect.id);
+            navigate(`/agent/${architect.id}`);
+            return;
+        }
+
+        setIsCreatingSkill(true);
+        try {
+            const response = await createAgent(
+                { provider: config?.inference?.chat?.provider, model: config?.inference?.chat?.model },
+                "",
+                { is_skill_creator: true }
+            );
+            if (response && response.id) {
+                setSidebarCollapsed(true);
+                selectAgent(response.id);
+                navigate(`/agent/${response.id}`);
+            }
+        } catch (err) {
+            console.error('Failed to create skill agent:', err);
+        } finally {
+            setIsCreatingSkill(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-[#0f1117] select-none">
+            <div className="p-3 border-b border-[#1e293b]">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-[12px] font-medium text-[#e2e8f0]">Agent Skills</span>
+                    <span className="text-[10px] font-mono text-[#64748b]">
+                        {skillsData?.length || 0}
+                    </span>
+                </div>
+                <p className="text-[11px] text-[#64748b] leading-tight mb-3">
+                    Create and manage agent capabilities
+                </p>
+
+                {isMainSkillsPage ? (
+                    <Button variant="primary" onClick={handleCreateSkill} disabled={isCreatingSkill}>
+                        <Plus size={12} />
+                        {isCreatingSkill ? 'Creating...' : 'New Skill'}
+                    </Button>
+                ) : isSkillArchitect ? (
+                    <Button onClick={() => navigate('/skills')}>
+                        <ArrowLeft size={12} />
+                        Back to Skills
+                    </Button>
+                ) : null}
+            </div>
+
+            <div className="flex-1" />
+        </div>
+    );
+};

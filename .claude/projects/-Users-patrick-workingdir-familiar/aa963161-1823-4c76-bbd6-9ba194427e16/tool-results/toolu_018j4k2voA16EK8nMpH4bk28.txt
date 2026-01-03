@@ -1,0 +1,676 @@
+     1→import React, { useState } from 'react';
+     2→import { ChevronRight, ChevronDown, Circle, AlertTriangle, Clock, Zap, Search, Plus, Settings, Filter, RefreshCw, MoreVertical, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+     3→
+     4→// Mini sparkline component
+     5→const Sparkline = ({ data, color = '#8b5cf6', height = 20, width = 60 }) => {
+     6→  const max = Math.max(...data);
+     7→  const min = Math.min(...data);
+     8→  const range = max - min || 1;
+     9→  
+    10→  const points = data.map((val, i) => {
+    11→    const x = (i / (data.length - 1)) * width;
+    12→    const y = height - ((val - min) / range) * height;
+    13→    return `${x},${y}`;
+    14→  }).join(' ');
+    15→  
+    16→  return (
+    17→    <svg width={width} height={height} style={{ display: 'block' }}>
+    18→      <polyline
+    19→        points={points}
+    20→        fill="none"
+    21→        stroke={color}
+    22→        strokeWidth="1.5"
+    23→        strokeLinecap="round"
+    24→        strokeLinejoin="round"
+    25→      />
+    26→    </svg>
+    27→  );
+    28→};
+    29→
+    30→// Compact status indicator
+    31→const Status = ({ status }) => {
+    32→  const config = {
+    33→    running: { color: '#22c55e', label: 'RUN' },
+    34→    waiting: { color: '#f59e0b', label: 'WAI' },
+    35→    paused: { color: '#6b7280', label: 'PAU' },
+    36→    idle: { color: '#3b82f6', label: 'IDL' },
+    37→    error: { color: '#ef4444', label: 'ERR' },
+    38→  }[status] || { color: '#6b7280', label: 'UNK' };
+    39→  
+    40→  return (
+    41→    <span style={{ 
+    42→      display: 'inline-flex', 
+    43→      alignItems: 'center', 
+    44→      gap: '4px',
+    45→      fontFamily: 'monospace',
+    46→      fontSize: '11px',
+    47→      color: config.color,
+    48→    }}>
+    49→      <Circle size={6} fill={config.color} stroke="none" />
+    50→      {config.label}
+    51→    </span>
+    52→  );
+    53→};
+    54→
+    55→// Tag component
+    56→const Tag = ({ children, color = '#475569' }) => (
+    57→  <span style={{
+    58→    display: 'inline-block',
+    59→    padding: '1px 5px',
+    60→    fontSize: '10px',
+    61→    fontFamily: 'monospace',
+    62→    backgroundColor: `${color}22`,
+    63→    color: color,
+    64→    borderRadius: '2px',
+    65→    border: `1px solid ${color}44`,
+    66→  }}>
+    67→    {children}
+    68→  </span>
+    69→);
+    70→
+    71→// Metric with trend
+    72→const Metric = ({ value, unit, trend, sparkData }) => {
+    73→  const trendColor = trend > 0 ? '#22c55e' : trend < 0 ? '#ef4444' : '#6b7280';
+    74→  const TrendIcon = trend > 0 ? ArrowUpRight : trend < 0 ? ArrowDownRight : Minus;
+    75→  
+    76→  return (
+    77→    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    78→      {sparkData && <Sparkline data={sparkData} color="#6366f1" height={16} width={40} />}
+    79→      <span style={{ 
+    80→        fontFamily: 'monospace', 
+    81→        fontSize: '12px', 
+    82→        color: '#e2e8f0',
+    83→        fontVariantNumeric: 'tabular-nums'
+    84→      }}>
+    85→        {value}
+    86→        <span style={{ color: '#64748b', fontSize: '10px' }}>{unit}</span>
+    87→      </span>
+    88→      {trend !== undefined && (
+    89→        <TrendIcon size={12} color={trendColor} />
+    90→      )}
+    91→    </div>
+    92→  );
+    93→};
+    94→
+    95→// Compact load bar
+    96→const LoadBar = ({ value, width = 40 }) => (
+    97→  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+    98→    <div style={{ 
+    99→      width: `${width}px`, 
+   100→      height: '3px', 
+   101→      backgroundColor: '#1e293b', 
+   102→      borderRadius: '1px',
+   103→      overflow: 'hidden'
+   104→    }}>
+   105→      <div style={{ 
+   106→        width: `${value}%`, 
+   107→        height: '100%', 
+   108→        backgroundColor: value > 80 ? '#ef4444' : value > 50 ? '#f59e0b' : '#22c55e',
+   109→      }} />
+   110→    </div>
+   111→    <span style={{ 
+   112→      fontSize: '11px', 
+   113→      fontFamily: 'monospace',
+   114→      color: '#94a3b8',
+   115→      minWidth: '28px'
+   116→    }}>
+   117→      {value}%
+   118→    </span>
+   119→  </div>
+   120→);
+   121→
+   122→const AgentRow = ({ agent, depth = 0, isExpanded, onToggle }) => {
+   123→  const hasChildren = agent.children && agent.children.length > 0;
+   124→  const isParent = depth === 0;
+   125→  
+   126→  return (
+   127→    <>
+   128→      <tr 
+   129→        style={{ 
+   130→          backgroundColor: isParent ? 'rgba(255,255,255,0.02)' : 'transparent',
+   131→          borderLeft: isParent ? '2px solid #6366f1' : '2px solid transparent',
+   132→          cursor: hasChildren ? 'pointer' : 'default',
+   133→        }}
+   134→        onClick={() => hasChildren && onToggle(agent.id)}
+   135→        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+   136→        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isParent ? 'rgba(255,255,255,0.02)' : 'transparent'}
+   137→      >
+   138→        {/* Expand + Name */}
+   139→        <td style={{ 
+   140→          padding: '6px 8px', 
+   141→          borderBottom: '1px solid #1e293b',
+   142→          whiteSpace: 'nowrap'
+   143→        }}>
+   144→          <div style={{ 
+   145→            display: 'flex', 
+   146→            alignItems: 'center', 
+   147→            gap: '4px',
+   148→            paddingLeft: `${depth * 16}px` 
+   149→          }}>
+   150→            {hasChildren ? (
+   151→              <span style={{ color: '#64748b', display: 'flex' }}>
+   152→                {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+   153→              </span>
+   154→            ) : (
+   155→              <span style={{ width: '12px' }} />
+   156→            )}
+   157→            <span style={{ 
+   158→              fontSize: '12px', 
+   159→              color: isParent ? '#f1f5f9' : '#94a3b8',
+   160→              fontWeight: isParent ? '500' : '400',
+   161→            }}>
+   162→              {agent.name}
+   163→            </span>
+   164→          </div>
+   165→        </td>
+   166→        
+   167→        {/* Status */}
+   168→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b' }}>
+   169→          <Status status={agent.status} />
+   170→        </td>
+   171→        
+   172→        {/* Model + Provider */}
+   173→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b' }}>
+   174→          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+   175→            <Tag color="#8b5cf6">{agent.model}</Tag>
+   176→            <span style={{ fontSize: '10px', color: '#475569' }}>via</span>
+   177→            <span style={{ fontSize: '11px', color: '#64748b' }}>{agent.provider}</span>
+   178→          </div>
+   179→        </td>
+   180→        
+   181→        {/* Load + Sparkline */}
+   182→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b' }}>
+   183→          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+   184→            <Sparkline data={agent.loadHistory || [10,15,12,18,14,16,agent.load]} color={agent.load > 50 ? '#f59e0b' : '#22c55e'} height={14} width={36} />
+   185→            <LoadBar value={agent.load} width={32} />
+   186→          </div>
+   187→        </td>
+   188→        
+   189→        {/* Requests */}
+   190→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b' }}>
+   191→          <Metric value={agent.requests || '0'} unit="/m" trend={agent.requestTrend} />
+   192→        </td>
+   193→        
+   194→        {/* Latency */}
+   195→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b' }}>
+   196→          <span style={{ 
+   197→            fontFamily: 'monospace', 
+   198→            fontSize: '11px', 
+   199→            color: agent.latency > 500 ? '#f59e0b' : '#94a3b8' 
+   200→          }}>
+   201→            {agent.latency || '—'}
+   202→            <span style={{ color: '#475569', fontSize: '10px' }}>ms</span>
+   203→          </span>
+   204→        </td>
+   205→        
+   206→        {/* Tokens */}
+   207→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b' }}>
+   208→          <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#94a3b8' }}>
+   209→            {agent.tokens ? `${(agent.tokens / 1000).toFixed(1)}k` : '—'}
+   210→          </span>
+   211→        </td>
+   212→        
+   213→        {/* Scheduled */}
+   214→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b', textAlign: 'center' }}>
+   215→          {agent.scheduled > 0 ? (
+   216→            <span style={{ 
+   217→              fontFamily: 'monospace', 
+   218→              fontSize: '11px', 
+   219→              color: '#a78bfa',
+   220→              display: 'inline-flex',
+   221→              alignItems: 'center',
+   222→              gap: '2px'
+   223→            }}>
+   224→              <Clock size={10} />
+   225→              {agent.scheduled}
+   226→            </span>
+   227→          ) : (
+   228→            <span style={{ color: '#374151', fontSize: '11px' }}>—</span>
+   229→          )}
+   230→        </td>
+   231→        
+   232→        {/* Errors */}
+   233→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b', textAlign: 'center' }}>
+   234→          {agent.errors > 0 ? (
+   235→            <span style={{ 
+   236→              fontFamily: 'monospace', 
+   237→              fontSize: '11px', 
+   238→              color: '#ef4444',
+   239→              backgroundColor: '#ef444420',
+   240→              padding: '1px 4px',
+   241→              borderRadius: '2px',
+   242→              display: 'inline-flex',
+   243→              alignItems: 'center',
+   244→              gap: '2px'
+   245→            }}>
+   246→              <AlertTriangle size={10} />
+   247→              {agent.errors}
+   248→            </span>
+   249→          ) : (
+   250→            <span style={{ color: '#374151', fontSize: '11px' }}>0</span>
+   251→          )}
+   252→        </td>
+   253→        
+   254→        {/* Last Active */}
+   255→        <td style={{ padding: '6px 8px', borderBottom: '1px solid #1e293b' }}>
+   256→          <span style={{ fontSize: '10px', color: '#475569', fontFamily: 'monospace' }}>
+   257→            {agent.lastActive || '—'}
+   258→          </span>
+   259→        </td>
+   260→        
+   261→        {/* Actions */}
+   262→        <td style={{ padding: '6px 4px', borderBottom: '1px solid #1e293b' }}>
+   263→          <button style={{
+   264→            background: 'none',
+   265→            border: 'none',
+   266→            color: '#475569',
+   267→            cursor: 'pointer',
+   268→            padding: '2px',
+   269→            display: 'flex',
+   270→            alignItems: 'center',
+   271→            justifyContent: 'center',
+   272→            borderRadius: '2px',
+   273→          }}
+   274→          onMouseEnter={(e) => e.currentTarget.style.color = '#94a3b8'}
+   275→          onMouseLeave={(e) => e.currentTarget.style.color = '#475569'}
+   276→          >
+   277→            <MoreVertical size={14} />
+   278→          </button>
+   279→        </td>
+   280→      </tr>
+   281→      {isExpanded && agent.children?.map((child) => (
+   282→        <AgentRow 
+   283→          key={child.id} 
+   284→          agent={child} 
+   285→          depth={depth + 1} 
+   286→          isExpanded={false}
+   287→          onToggle={onToggle}
+   288→        />
+   289→      ))}
+   290→    </>
+   291→  );
+   292→};
+   293→
+   294→const SidebarSection = ({ title, children, defaultOpen = true }) => {
+   295→  const [open, setOpen] = useState(defaultOpen);
+   296→  return (
+   297→    <div style={{ marginBottom: '4px' }}>
+   298→      <button 
+   299→        onClick={() => setOpen(!open)}
+   300→        style={{
+   301→          display: 'flex',
+   302→          alignItems: 'center',
+   303→          gap: '4px',
+   304→          width: '100%',
+   305→          padding: '4px 8px',
+   306→          background: 'none',
+   307→          border: 'none',
+   308→          color: '#64748b',
+   309→          fontSize: '10px',
+   310→          fontWeight: '600',
+   311→          textTransform: 'uppercase',
+   312→          letterSpacing: '0.5px',
+   313→          cursor: 'pointer',
+   314→          textAlign: 'left'
+   315→        }}
+   316→      >
+   317→        {open ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+   318→        {title}
+   319→      </button>
+   320→      {open && <div style={{ paddingLeft: '4px' }}>{children}</div>}
+   321→    </div>
+   322→  );
+   323→};
+   324→
+   325→const SidebarItem = ({ label, count, active, color, indent = false }) => (
+   326→  <button style={{
+   327→    display: 'flex',
+   328→    alignItems: 'center',
+   329→    gap: '6px',
+   330→    width: '100%',
+   331→    padding: '3px 8px',
+   332→    paddingLeft: indent ? '20px' : '8px',
+   333→    background: active ? 'rgba(99, 102, 241, 0.15)' : 'none',
+   334→    border: 'none',
+   335→    borderRadius: '2px',
+   336→    color: active ? '#a5b4fc' : '#94a3b8',
+   337→    fontSize: '12px',
+   338→    cursor: 'pointer',
+   339→    textAlign: 'left'
+   340→  }}>
+   341→    {color && <Circle size={6} fill={color} stroke="none" />}
+   342→    <span style={{ flex: 1 }}>{label}</span>
+   343→    {count !== undefined && (
+   344→      <span style={{ 
+   345→        fontSize: '10px', 
+   346→        fontFamily: 'monospace',
+   347→        color: active ? '#a5b4fc' : '#64748b' 
+   348→      }}>
+   349→        {count}
+   350→      </span>
+   351→    )}
+   352→  </button>
+   353→);
+   354→
+   355→export default function FamiliarDense() {
+   356→  const [expandedAgents, setExpandedAgents] = useState(['1', '3']);
+   357→  const [selectedView, setSelectedView] = useState('fleet');
+   358→  
+   359→  const agents = [
+   360→    { 
+   361→      id: '1', 
+   362→      name: 'Executive Summary Agent', 
+   363→      status: 'waiting', 
+   364→      model: 'qwen3-30b', 
+   365→      provider: 'OpenRouter', 
+   366→      load: 18,
+   367→      loadHistory: [12, 15, 14, 18, 16, 19, 18],
+   368→      requests: 24,
+   369→      requestTrend: 1,
+   370→      latency: 342,
+   371→      tokens: 48200,
+   372→      scheduled: 1, 
+   373→      errors: 0,
+   374→      lastActive: '2m ago',
+   375→      children: [
+   376→        { id: '1a', name: 'exec-summary-gen', status: 'paused', model: 'qwen3-30b', provider: 'OpenRouter', load: 13, requests: 0, latency: 285, tokens: 12400, scheduled: 0, errors: 0, lastActive: '5m ago' },
+   377→        { id: '1b', name: 'tech-news-scan', status: 'paused', model: 'qwen3-30b', provider: 'OpenRouter', load: 48, requests: 12, latency: 567, tokens: 24100, scheduled: 0, errors: 0, lastActive: '1m ago' },
+   378→        { id: '1c', name: 'social-media-batcher', status: 'paused', model: 'qwen3-30b', provider: 'OpenRouter', load: 28, requests: 8, latency: 234, tokens: 8900, scheduled: 0, errors: 0, lastActive: '3m ago' },
+   379→        { id: '1d', name: 'content-architect', status: 'paused', model: 'qwen3-30b', provider: 'OpenRouter', load: 24, requests: 4, latency: 445, tokens: 15600, scheduled: 0, errors: 0, lastActive: '8m ago' },
+   380→      ]
+   381→    },
+   382→    { id: '2', name: 'Code Reviewer', status: 'error', model: 'qwen3-30b', provider: 'OpenRouter', load: 11, loadHistory: [8, 12, 15, 11, 9, 10, 11], requests: 2, requestTrend: -1, latency: 892, tokens: 5200, scheduled: 0, errors: 1, lastActive: '12m ago' },
+   383→    { 
+   384→      id: '3', 
+   385→      name: 'QA Automator', 
+   386→      status: 'waiting', 
+   387→      model: 'qwen3-30b', 
+   388→      provider: 'OpenRouter', 
+   389→      load: 16,
+   390→      loadHistory: [20, 18, 15, 14, 16, 17, 16],
+   391→      requests: 18,
+   392→      requestTrend: 0,
+   393→      latency: 423,
+   394→      tokens: 32100,
+   395→      scheduled: 2, 
+   396→      errors: 0,
+   397→      lastActive: '30s ago',
+   398→      children: [
+   399→        { id: '3a', name: 'test-executor', status: 'running', model: 'qwen3-30b', provider: 'OpenRouter', load: 67, requests: 45, latency: 234, tokens: 28400, scheduled: 0, errors: 0, lastActive: 'now' },
+   400→        { id: '3b', name: 'pr-reviewer', status: 'paused', model: 'qwen3-30b', provider: 'OpenRouter', load: 23, requests: 6, latency: 512, tokens: 9800, scheduled: 0, errors: 0, lastActive: '4m ago' },
+   401→      ]
+   402→    },
+   403→    { id: '4', name: 'Content Creator', status: 'waiting', model: 'qwen3-30b', provider: 'OpenRouter', load: 23, loadHistory: [18, 22, 25, 21, 24, 22, 23], requests: 15, requestTrend: 1, latency: 356, tokens: 41200, scheduled: 4, errors: 0, lastActive: '1m ago' },
+   404→    { id: '5', name: 'Data Cruncher', status: 'waiting', model: 'qwen3-30b', provider: 'OpenRouter', load: 16, loadHistory: [12, 14, 18, 15, 13, 16, 16], requests: 8, requestTrend: 0, latency: 678, tokens: 18900, scheduled: 4, errors: 0, lastActive: '2m ago' },
+   405→    { id: '6', name: 'Researcher', status: 'running', model: 'qwen3-30b', provider: 'OpenRouter', load: 72, loadHistory: [45, 52, 58, 65, 70, 71, 72], requests: 67, requestTrend: 1, latency: 234, tokens: 89200, scheduled: 1, errors: 0, lastActive: 'now' },
+   406→  ];
+   407→
+   408→  const toggleAgent = (id) => {
+   409→    setExpandedAgents(prev => 
+   410→      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+   411→    );
+   412→  };
+   413→
+   414→  const totalRequests = agents.reduce((sum, a) => sum + (a.requests || 0), 0);
+   415→  const totalTokens = agents.reduce((sum, a) => sum + (a.tokens || 0), 0);
+   416→  const avgLoad = Math.round(agents.reduce((sum, a) => sum + a.load, 0) / agents.length);
+   417→
+   418→  return (
+   419→    <div style={{
+   420→      minHeight: '100vh',
+   421→      backgroundColor: '#0f1117',
+   422→      color: '#e2e8f0',
+   423→      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+   424→      fontSize: '13px',
+   425→    }}>
+   426→      <style>{`
+   427→        * { box-sizing: border-box; margin: 0; padding: 0; }
+   428→        ::-webkit-scrollbar { width: 6px; height: 6px; }
+   429→        ::-webkit-scrollbar-track { background: transparent; }
+   430→        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+   431→      `}</style>
+   432→      
+   433→      {/* Top Bar */}
+   434→      <header style={{
+   435→        height: '36px',
+   436→        backgroundColor: '#0a0b0f',
+   437→        borderBottom: '1px solid #1e293b',
+   438→        display: 'flex',
+   439→        alignItems: 'center',
+   440→        padding: '0 12px',
+   441→        gap: '16px',
+   442→      }}>
+   443→        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+   444→          <Zap size={14} color="#8b5cf6" />
+   445→          <span style={{ fontWeight: '600', fontSize: '13px' }}>Familiar</span>
+   446→          <Tag color="#f59e0b">DEV</Tag>
+   447→        </div>
+   448→        
+   449→        <nav style={{ display: 'flex', gap: '2px' }}>
+   450→          {['Fleet', 'Skills', 'Triggers', 'Usage', 'Settings'].map(item => (
+   451→            <button key={item} style={{
+   452→              padding: '6px 10px',
+   453→              background: item === 'Fleet' ? 'rgba(99, 102, 241, 0.15)' : 'none',
+   454→              border: 'none',
+   455→              borderRadius: '3px',
+   456→              color: item === 'Fleet' ? '#a5b4fc' : '#64748b',
+   457→              fontSize: '12px',
+   458→              cursor: 'pointer',
+   459→            }}>
+   460→              {item}
+   461→            </button>
+   462→          ))}
+   463→        </nav>
+   464→        
+   465→        <div style={{ flex: 1 }} />
+   466→        
+   467→        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+   468→          <div style={{ 
+   469→            display: 'flex', 
+   470→            alignItems: 'center', 
+   471→            gap: '4px',
+   472→            padding: '4px 8px',
+   473→            backgroundColor: '#1e293b',
+   474→            borderRadius: '3px',
+   475→          }}>
+   476→            <Search size={12} color="#64748b" />
+   477→            <input 
+   478→              placeholder="Search..." 
+   479→              style={{
+   480→                background: 'none',
+   481→                border: 'none',
+   482→                color: '#e2e8f0',
+   483→                fontSize: '12px',
+   484→                width: '120px',
+   485→                outline: 'none',
+   486→              }}
+   487→            />
+   488→            <span style={{ fontSize: '10px', color: '#475569', fontFamily: 'monospace' }}>⌘K</span>
+   489→          </div>
+   490→        </div>
+   491→      </header>
+   492→      
+   493→      <div style={{ display: 'flex', height: 'calc(100vh - 36px)' }}>
+   494→        {/* Sidebar */}
+   495→        <aside style={{
+   496→          width: '180px',
+   497→          borderRight: '1px solid #1e293b',
+   498→          padding: '8px 4px',
+   499→          backgroundColor: '#0a0b0f',
+   500→          overflow: 'auto',
+   501→        }}>
+   502→          <SidebarSection title="Views">
+   503→            <SidebarItem label="All Agents" count={24} active />
+   504→            <SidebarItem label="Tree View" />
+   505→            <SidebarItem label="Graph View" />
+   506→          </SidebarSection>
+   507→          
+   508→          <SidebarSection title="Status">
+   509→            <SidebarItem label="Running" count={2} color="#22c55e" />
+   510→            <SidebarItem label="Waiting" count={4} color="#f59e0b" />
+   511→            <SidebarItem label="Paused" count={15} color="#6b7280" />
+   512→            <SidebarItem label="Idle" count={2} color="#3b82f6" />
+   513→            <SidebarItem label="Error" count={1} color="#ef4444" />
+   514→          </SidebarSection>
+   515→          
+   516→          <SidebarSection title="Groups">
+   517→            <SidebarItem label="Ungrouped" count={3} />
+   518→            <SidebarItem label="content-pipeline" count={8} indent />
+   519→            <SidebarItem label="dev-automation" count={6} indent />
+   520→            <SidebarItem label="research" count={4} indent />
+   521→          </SidebarSection>
+   522→          
+   523→          <SidebarSection title="Providers">
+   524→            <SidebarItem label="OpenRouter" count={24} />
+   525→            <SidebarItem label="Anthropic" count={0} />
+   526→            <SidebarItem label="OpenAI" count={0} />
+   527→          </SidebarSection>
+   528→        </aside>
+   529→        
+   530→        {/* Main Content */}
+   531→        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+   532→          {/* Toolbar */}
+   533→          <div style={{
+   534→            padding: '8px 12px',
+   535→            borderBottom: '1px solid #1e293b',
+   536→            display: 'flex',
+   537→            alignItems: 'center',
+   538→            gap: '12px',
+   539→            backgroundColor: '#0f1117',
+   540→          }}>
+   541→            <span style={{ fontSize: '13px', fontWeight: '500' }}>Agent Fleet</span>
+   542→            <span style={{ fontSize: '11px', color: '#64748b' }}>24 agents</span>
+   543→            
+   544→            <div style={{ flex: 1 }} />
+   545→            
+   546→            {/* Quick Stats */}
+   547→            <div style={{ display: 'flex', gap: '16px', marginRight: '16px' }}>
+   548→              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+   549→                <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Req/m</span>
+   550→                <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#22c55e' }}>{totalRequests}</span>
+   551→              </div>
+   552→              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+   553→                <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Tokens</span>
+   554→                <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#94a3b8' }}>{(totalTokens/1000).toFixed(0)}k</span>
+   555→              </div>
+   556→              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+   557→                <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Avg Load</span>
+   558→                <span style={{ fontFamily: 'monospace', fontSize: '12px', color: avgLoad > 50 ? '#f59e0b' : '#94a3b8' }}>{avgLoad}%</span>
+   559→              </div>
+   560→            </div>
+   561→            
+   562→            <button style={{
+   563→              display: 'flex',
+   564→              alignItems: 'center',
+   565→              gap: '4px',
+   566→              padding: '4px 8px',
+   567→              background: 'none',
+   568→              border: '1px solid #334155',
+   569→              borderRadius: '3px',
+   570→              color: '#94a3b8',
+   571→              fontSize: '11px',
+   572→              cursor: 'pointer',
+   573→            }}>
+   574→              <Filter size={12} />
+   575→              Filter
+   576→            </button>
+   577→            
+   578→            <button style={{
+   579→              display: 'flex',
+   580→              alignItems: 'center',
+   581→              gap: '4px',
+   582→              padding: '4px 8px',
+   583→              background: 'none',
+   584→              border: '1px solid #334155',
+   585→              borderRadius: '3px',
+   586→              color: '#94a3b8',
+   587→              fontSize: '11px',
+   588→              cursor: 'pointer',
+   589→            }}>
+   590→              <RefreshCw size={12} />
+   591→              <span style={{ fontFamily: 'monospace' }}>5s</span>
+   592→            </button>
+   593→            
+   594→            <button style={{
+   595→              display: 'flex',
+   596→              alignItems: 'center',
+   597→              gap: '4px',
+   598→              padding: '4px 10px',
+   599→              background: '#6366f1',
+   600→              border: 'none',
+   601→              borderRadius: '3px',
+   602→              color: 'white',
+   603→              fontSize: '11px',
+   604→              fontWeight: '500',
+   605→              cursor: 'pointer',
+   606→            }}>
+   607→              <Plus size={12} />
+   608→              New Agent
+   609→            </button>
+   610→          </div>
+   611→          
+   612→          {/* Table */}
+   613→          <div style={{ flex: 1, overflow: 'auto' }}>
+   614→            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+   615→              <thead style={{ position: 'sticky', top: 0, backgroundColor: '#0f1117', zIndex: 10 }}>
+   616→                <tr>
+   617→                  {['Agent', 'Status', 'Model / Provider', 'Load', 'Req/m', 'Latency', 'Tokens', 'Sched', 'Err', 'Last Active', ''].map(col => (
+   618→                    <th key={col} style={{
+   619→                      padding: '6px 8px',
+   620→                      textAlign: 'left',
+   621→                      fontSize: '10px',
+   622→                      fontWeight: '600',
+   623→                      color: '#64748b',
+   624→                      textTransform: 'uppercase',
+   625→                      letterSpacing: '0.3px',
+   626→                      borderBottom: '1px solid #334155',
+   627→                      whiteSpace: 'nowrap',
+   628→                    }}>
+   629→                      {col}
+   630→                    </th>
+   631→                  ))}
+   632→                </tr>
+   633→              </thead>
+   634→              <tbody>
+   635→                {agents.map((agent) => (
+   636→                  <AgentRow 
+   637→                    key={agent.id} 
+   638→                    agent={agent} 
+   639→                    isExpanded={expandedAgents.includes(agent.id)}
+   640→                    onToggle={toggleAgent}
+   641→                  />
+   642→                ))}
+   643→              </tbody>
+   644→            </table>
+   645→          </div>
+   646→          
+   647→          {/* Status Bar */}
+   648→          <footer style={{
+   649→            height: '24px',
+   650→            borderTop: '1px solid #1e293b',
+   651→            backgroundColor: '#0a0b0f',
+   652→            display: 'flex',
+   653→            alignItems: 'center',
+   654→            padding: '0 12px',
+   655→            gap: '16px',
+   656→            fontSize: '10px',
+   657→            color: '#64748b',
+   658→            fontFamily: 'monospace',
+   659→          }}>
+   660→            <span><Circle size={6} fill="#22c55e" stroke="none" style={{ marginRight: '4px' }} />Connected</span>
+   661→            <span>OpenRouter: <span style={{ color: '#94a3b8' }}>qwen3-30b-a3b</span></span>
+   662→            <span>CTX: <span style={{ color: '#94a3b8' }}>18%</span></span>
+   663→            <div style={{ flex: 1 }} />
+   664→            <span>1 trigger active</span>
+   665→            <span>Last sync: <span style={{ color: '#94a3b8' }}>3s ago</span></span>
+   666→          </footer>
+   667→        </main>
+   668→      </div>
+   669→    </div>
+   670→  );
+   671→}
+   672→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

@@ -1,0 +1,107 @@
+package auth
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+)
+
+const (
+	ClaudeCodeUsageURL = "https://api.anthropic.com/api/oauth/usage"
+)
+
+// UsageWindow represents a usage limit window
+type UsageWindow struct {
+	Utilization float64    `json:"utilization"`
+	ResetsAt    *time.Time `json:"resets_at"`
+}
+
+// ClaudeCodeUsage represents the usage data from Anthropic
+type ClaudeCodeUsage struct {
+	FiveHour     UsageWindow `json:"five_hour"`
+	SevenDay     UsageWindow `json:"seven_day"`
+	SevenDayOpus UsageWindow `json:"seven_day_opus"`
+}
+
+// GetClaudeCodeUsage fetches the current usage from Anthropic API
+func GetClaudeCodeUsage() (*ClaudeCodeUsage, error) {
+	accessToken, err := GetValidAccessToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	req, err := http.NewRequest("GET", ClaudeCodeUsageURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("anthropic-beta", "oauth-2025-04-20")
+	req.Header.Set("User-Agent", "familiar/1.0")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch usage: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("usage request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse the response - handle the resets_at format
+	var rawResp struct {
+		FiveHour struct {
+			Utilization float64 `json:"utilization"`
+			ResetsAt    string  `json:"resets_at"`
+		} `json:"five_hour"`
+		SevenDay struct {
+			Utilization float64 `json:"utilization"`
+			ResetsAt    string  `json:"resets_at"`
+		} `json:"seven_day"`
+		SevenDayOpus struct {
+			Utilization float64 `json:"utilization"`
+			ResetsAt    *string `json:"resets_at"`
+		} `json:"seven_day_opus"`
+	}
+
+	if err := json.Unmarshal(body, &rawResp); err != nil {
+		return nil, fmt.Errorf("failed to parse usage response: %w", err)
+	}
+
+	usage := &ClaudeCodeUsage{}
+
+	// Parse five_hour
+	usage.FiveHour.Utilization = rawResp.FiveHour.Utilization
+	if rawResp.FiveHour.ResetsAt != "" {
+		t, err := time.Parse(time.RFC3339, rawResp.FiveHour.ResetsAt)
+		if err == nil {
+			usage.FiveHour.ResetsAt = &t
+		}
+	}
+
+	// Parse seven_day
+	usage.SevenDay.Utilization = rawResp.SevenDay.Utilization
+	if rawResp.SevenDay.ResetsAt != "" {
+		t, err := time.Parse(time.RFC3339, rawResp.SevenDay.ResetsAt)
+		if err == nil {
+			usage.SevenDay.ResetsAt = &t
+		}
+	}
+
+	// Parse seven_day_opus
+	usage.SevenDayOpus.Utilization = rawResp.SevenDayOpus.Utilization
+	if rawResp.SevenDayOpus.ResetsAt != nil && *rawResp.SevenDayOpus.ResetsAt != "" {
+		t, err := time.Parse(time.RFC3339, *rawResp.SevenDayOpus.ResetsAt)
+		if err == nil {
+			usage.SevenDayOpus.ResetsAt = &t
+		}
+	}
+
+	return usage, nil
+}

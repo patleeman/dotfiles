@@ -1,0 +1,10 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/SkillsView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    90→          }
+    91→        }
+    92→        break;
+    93→      case 'delete':
+    94→        const confirmed = await ask(`Are you sure you want to delete the skill "${name}"? This will permanently remove the skill files from your library. This cannot be undone.`, {
+    95→          title: 'Delete Skill',
+    96→          kind: 'warning',
+    97→        });
+    98→        if (confirmed) {

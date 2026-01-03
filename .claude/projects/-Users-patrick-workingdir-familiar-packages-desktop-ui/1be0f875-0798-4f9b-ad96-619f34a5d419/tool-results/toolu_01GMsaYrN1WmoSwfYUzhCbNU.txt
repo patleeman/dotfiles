@@ -1,0 +1,167 @@
+     1→import React, { useState } from 'react';
+     2→import { clsx } from 'clsx';
+     3→
+     4→interface ToolApprovalProps {
+     5→    agentId: string;
+     6→    toolCallId: string;
+     7→    toolName: string;
+     8→    args: any;
+     9→    translation: string;
+    10→    onApprove: (decision: 'allow' | 'reject' | 'always_allow', pattern?: string) => Promise<void>;
+    11→    isProcessed?: boolean;
+    12→    decision?: 'allow' | 'reject' | 'always_allow';
+    13→}
+    14→
+    15→export const ToolApproval: React.FC<ToolApprovalProps> = ({
+    16→    toolName,
+    17→    args,
+    18→    translation,
+    19→    onApprove,
+    20→    isProcessed,
+    21→    decision
+    22→}) => {
+    23→    const [isProcessing, setIsProcessing] = useState(false);
+    24→
+    25→    // For system_shell and system_browser, suggest a pattern
+    26→    const getSuggestedPattern = () => {
+    27→        if (!args) return '';
+    28→        if (toolName === 'system_shell') {
+    29→            const cmd = args.command || args.input || '';
+    30→            const words = cmd.trim().split(/\s+/);
+    31→            return words[0] || '';
+    32→        }
+    33→        if (toolName === 'system_browser' && args.url) {
+    34→            try {
+    35→                const url = new URL(args.url);
+    36→                return `${url.protocol}//${url.hostname}`;
+    37→            } catch (e) {
+    38→                return args.url;
+    39→            }
+    40→        }
+    41→        return '';
+    42→    };
+    43→
+    44→    const pattern = getSuggestedPattern();
+    45→
+    46→    const handleDecision = async (decision: 'allow' | 'reject' | 'always_allow') => {
+    47→        setIsProcessing(true);
+    48→        try {
+    49→            await onApprove(decision, decision === 'always_allow' ? pattern : undefined);
+    50→        } catch (err) {
+    51→            console.error('Failed to submit tool approval:', err);
+    52→        } finally {
+    53→            setIsProcessing(false);
+    54→        }
+    55→    };
+    56→
+    57→    if (isProcessed) {
+    58→        const cmd = args?.command || args?.input || '';
+    59→        const statusText = decision === 'allow' || decision === 'always_allow' ? 'GRANTED' : 'DENIED';
+    60→        const statusColor = decision === 'allow' || decision === 'always_allow' ? 'text-status-success' : 'text-status-error';
+    61→
+    62→        return (
+    63→            <div className="flex flex-row items-baseline gap-2 opacity-40 font-mono text-[10px] pl-2">
+    64→                <span className={clsx(statusColor, "font-black")}>{decision === 'allow' || decision === 'always_allow' ? '[@]' : '[!]'}</span>
+    65→                <span className="italic uppercase">Permission {statusText}:</span>
+    66→                <span className="text-accent">{toolName}</span>
+    67→                {cmd && <span className="truncate max-w-[400px] opacity-70">/ {cmd}</span>}
+    68→            </div>
+    69→        );
+    70→    }
+    71→
+    72→    const parseTranslation = (): { description: string; danger: string; dangerLevel: 'Safe' | 'Caution' | 'Dangerous' | 'Unknown' } => {
+    73→        const lines = translation.split('\n');
+    74→        let description = '';
+    75→        let danger = '';
+    76→        let dangerLevel: 'Safe' | 'Caution' | 'Dangerous' | 'Unknown' = 'Safe';
+    77→
+    78→        lines.forEach(line => {
+    79→            const upperLine = line.toUpperCase();
+    80→            if (upperLine.startsWith('DESCRIPTION:')) {
+    81→                description = line.substring(12).trim();
+    82→            } else if (upperLine.startsWith('RISK:') || upperLine.startsWith('DANGER:')) {
+    83→                danger = line.substring(line.indexOf(':') + 1).trim();
+    84→                const upperDanger = danger.toUpperCase();
+    85→                if (upperDanger.includes('DANGEROUS') || upperDanger.includes('HIGH')) dangerLevel = 'Dangerous';
+    86→                else if (upperDanger.includes('CAUTION') || upperDanger.includes('MEDIUM')) dangerLevel = 'Caution';
+    87→                else if (upperDanger.includes('SAFE') || upperDanger.includes('LOW')) dangerLevel = 'Safe';
+    88→            }
+    89→        });
+    90→
+    91→        if (!description && !danger) {
+    92→            return { description: translation, danger: '', dangerLevel: 'Unknown' };
+    93→        }
+    94→
+    95→        return { description, danger, dangerLevel };
+    96→    };
+    97→
+    98→    const { description, danger, dangerLevel } = parseTranslation();
+    99→    const rawCommand = args?.command || args?.input || (args ? JSON.stringify(args) : 'Unknown');
+   100→
+   101→    return (
+   102→        <div className="flex flex-col gap-2 py-2 px-3 my-2 border-l border-border/10 bg-surface/5 font-mono text-[11px] animate-in fade-in slide-in-from-left-1 duration-200">
+   103→            <div className="flex items-center gap-2 text-accent/80 font-black tracking-widest uppercase text-[10px]">
+   104→                <span>/PERMISSION_REQUIRED</span>
+   105→                <span className="opacity-20">//</span>
+   106→                <span className="text-text-primary/60">TOOL:{toolName}</span>
+   107→            </div>
+   108→
+   109→            <div className="flex flex-col gap-1 pl-4 opacity-90">
+   110→                <div className="flex items-start gap-2">
+   111→                    <span className="text-accent/40 shrink-0">{'>'}</span>
+   112→                    <span className="text-accent break-all font-bold uppercase tracking-tight">{rawCommand}</span>
+   113→                </div>
+   114→
+   115→                <div className="flex items-start gap-2 mt-1">
+   116→                    <span className="text-text-tertiary/40 shrink-0 mt-0.5">#</span>
+   117→                    <span className="text-text-secondary leading-normal italic">{description}</span>
+   118→                </div>
+   119→
+   120→                {danger && (
+   121→                    <div className={clsx(
+   122→                        "flex items-start gap-2 mt-0.5 font-bold",
+   123→                        dangerLevel === 'Dangerous' ? "text-status-error" :
+   124→                            dangerLevel === 'Caution' ? "text-status-warning" :
+   125→                                "text-status-success"
+   126→                    )}>
+   127→                        <span className="shrink-0 mt-0.5">[!]</span>
+   128→                        <span className="tracking-tight uppercase text-[9px]">{danger}</span>
+   129→                    </div>
+   130→                )}
+   131→            </div>
+   132→
+   133→            <div className="flex flex-wrap items-center gap-3 mt-2 pl-4">
+   134→                <button
+   135→                    onClick={() => handleDecision('allow')}
+   136→                    disabled={isProcessing}
+   137→                    className="text-accent hover:text-accent-hover transition-all uppercase font-black text-[10px] tracking-widest disabled:opacity-20 active:scale-95"
+   138→                >
+   139→                    [ ALLOW ]
+   140→                </button>
+   141→
+   142→                {(toolName === 'system_shell' || toolName === 'system_browser') && pattern && (
+   143→                    <button
+   144→                        onClick={() => handleDecision('always_allow')}
+   145→                        disabled={isProcessing}
+   146→                        className="text-accent/60 hover:text-accent transition-all uppercase font-black text-[9px] tracking-widest disabled:opacity-20 active:scale-95"
+   147→                    >
+   148→                        [ ALWAYS_ALLOW:{pattern} ]
+   149→                    </button>
+   150→                )}
+   151→
+   152→                <button
+   153→                    onClick={() => handleDecision('reject')}
+   154→                    disabled={isProcessing}
+   155→                    className="text-status-error/60 hover:text-status-error transition-all uppercase font-black text-[10px] tracking-widest disabled:opacity-20 ml-auto active:scale-95"
+   156→                >
+   157→                    [ REJECT ]
+   158→                </button>
+   159→            </div>
+   160→        </div>
+   161→    );
+   162→};
+   163→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

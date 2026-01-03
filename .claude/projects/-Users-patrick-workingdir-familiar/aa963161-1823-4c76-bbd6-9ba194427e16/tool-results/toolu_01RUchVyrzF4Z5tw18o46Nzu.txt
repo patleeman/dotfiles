@@ -1,0 +1,34 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/index.css has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    15→  --color-status-warning: rgb(var(--status-warning));
+    16→  --color-status-error: rgb(var(--status-error));
+    17→}
+    18→
+    19→@layer base {
+    20→  :root {
+    21→    --background: 15 17 23;
+    22→    --surface: 10 11 15;
+    23→    --surface-hover: 30 41 59;
+    24→    --border: 30 41 59;
+    25→    --text-primary: 226 232 240;
+    26→    --text-secondary: 148 163 184;
+    27→    --text-tertiary: 100 116 139;
+    28→    --accent: 99 102 241;
+    29→    --accent-hover: 139 92 246;
+    30→
+    31→    --status-success: 34 197 94;
+    32→    --status-warning: 245 158 11;
+    33→    --status-error: 239 68 68;
+    34→  }
+    35→
+    36→  body {
+    37→    background-color: rgb(var(--background));
+    38→    color: rgb(var(--text-primary));
+    39→    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    40→    font-size: 13px;
+    41→    -webkit-font-smoothing: antialiased;
+    42→    -moz-osx-font-smoothing: grayscale;
+    43→  }
+    44→
+    45→  .modal-overlay {
+    46→    background-color: rgb(var(--background) / 0.95);
+    47→  }

@@ -1,0 +1,708 @@
+package inference
+
+import (
+	"encoding/base64"
+	"testing"
+
+	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+)
+
+func TestParseThinkingModel(t *testing.T) {
+	tests := []struct {
+		name       string
+		model      string
+		wantBase   string
+		wantLevel  ReasoningLevel
+	}{
+		{
+			name:      "no thinking suffix",
+			model:     "gemini-1.5-pro",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningNone,
+		},
+		{
+			name:      "thinking-low suffix",
+			model:     "gemini-1.5-pro:thinking-low",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningLow,
+		},
+		{
+			name:      "thinking-medium suffix",
+			model:     "gemini-1.5-pro:thinking-medium",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningMedium,
+		},
+		{
+			name:      "thinking-high suffix",
+			model:     "gemini-1.5-pro:thinking-high",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningHigh,
+		},
+		{
+			name:      "legacy :thinking suffix",
+			model:     "gemini-1.5-pro:thinking",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningHigh,
+		},
+		{
+			name:      "legacy :thinking-number low",
+			model:     "gemini-1.5-pro:thinking-5000",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningLow,
+		},
+		{
+			name:      "legacy :thinking-number medium",
+			model:     "gemini-1.5-pro:thinking-30000",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningMedium,
+		},
+		{
+			name:      "legacy :thinking-number high",
+			model:     "gemini-1.5-pro:thinking-100000",
+			wantBase:  "gemini-1.5-pro",
+			wantLevel: ReasoningHigh,
+		},
+		{
+			name:      "with provider prefix",
+			model:     "google/gemini-1.5-pro:thinking-high",
+			wantBase:  "google/gemini-1.5-pro",
+			wantLevel: ReasoningHigh,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotBase, gotLevel := ParseThinkingModel(tt.model)
+			if gotBase != tt.wantBase {
+				t.Errorf("ParseThinkingModel() base = %v, want %v", gotBase, tt.wantBase)
+			}
+			if gotLevel != tt.wantLevel {
+				t.Errorf("ParseThinkingModel() level = %v, want %v", gotLevel, tt.wantLevel)
+			}
+		})
+	}
+}
+
+func TestGeminiProvider_GetContextLimit(t *testing.T) {
+	// Note: This test requires actual API key or mocking the genai client
+	// For now, we'll test the hardcoded limits
+	provider := &GeminiProvider{
+		defaultContext: 1048576,
+		contextLimits: map[string]int{
+			"gemini-1.5-flash": 1048576,
+			"gemini-1.5-pro":    1048576,
+			"gemini-2.0":        1048576,
+			"gemini-2.5":        1048576,
+		},
+	}
+
+	tests := []struct {
+		name  string
+		model string
+		want  int
+	}{
+		{
+			name:  "gemini-1.5-flash",
+			model: "gemini-1.5-flash",
+			want:  1048576,
+		},
+		{
+			name:  "gemini-1.5-pro",
+			model: "gemini-1.5-pro",
+			want:  1048576,
+		},
+		{
+			name:  "gemini-2.0",
+			model: "gemini-2.0",
+			want:  1048576,
+		},
+		{
+			name:  "unknown model",
+			model: "gemini-unknown",
+			want:  1048576, // default
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := provider.GetContextLimit(tt.model)
+			if got != tt.want {
+				t.Errorf("GetContextLimit() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGeminiProvider_getSystemInstruction(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	tests := []struct {
+		name     string
+		messages []types.Message
+		want     string
+	}{
+		{
+			name: "single system message",
+			messages: []types.Message{
+				{Role: "system", Content: "You are a helpful assistant."},
+			},
+			want: "You are a helpful assistant.",
+		},
+		{
+			name: "multiple system messages",
+			messages: []types.Message{
+				{Role: "system", Content: "First instruction."},
+				{Role: "system", Content: "Second instruction."},
+			},
+			want: "First instruction.\n\nSecond instruction.",
+		},
+		{
+			name: "system and user messages",
+			messages: []types.Message{
+				{Role: "system", Content: "System instruction."},
+				{Role: "user", Content: "User message."},
+			},
+			want: "System instruction.",
+		},
+		{
+			name: "no system messages",
+			messages: []types.Message{
+				{Role: "user", Content: "User message."},
+			},
+			want: "",
+		},
+		{
+			name:     "empty messages",
+			messages: []types.Message{},
+			want:     "",
+		},
+		{
+			name: "system message with non-string content",
+			messages: []types.Message{
+				{Role: "system", Content: []interface{}{"not a string"}},
+			},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := provider.getSystemInstruction(tt.messages)
+			if got != tt.want {
+				t.Errorf("getSystemInstruction() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGeminiProvider_convertSchema(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	tests := []struct {
+		name   string
+		params map[string]interface{}
+		// We can't easily test the genai.Schema structure without importing it,
+		// so we'll just test that it doesn't panic and returns non-nil
+	}{
+		{
+			name: "object type",
+			params: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type": "string",
+					},
+				},
+			},
+		},
+		{
+			name: "array type",
+			params: map[string]interface{}{
+				"type": "array",
+				"items": map[string]interface{}{
+					"type": "string",
+				},
+			},
+		},
+		{
+			name: "string type",
+			params: map[string]interface{}{
+				"type": "string",
+			},
+		},
+		{
+			name: "number type",
+			params: map[string]interface{}{
+				"type": "number",
+			},
+		},
+		{
+			name: "integer type",
+			params: map[string]interface{}{
+				"type": "integer",
+			},
+		},
+		{
+			name: "boolean type",
+			params: map[string]interface{}{
+				"type": "boolean",
+			},
+		},
+		{
+			name: "with required fields",
+			params: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"name": map[string]interface{}{
+						"type": "string",
+					},
+					"age": map[string]interface{}{
+						"type": "integer",
+					},
+				},
+				"required": []interface{}{"name"},
+			},
+		},
+		{
+			name:   "nil params",
+			params: nil,
+		},
+		{
+			name:   "empty params",
+			params: map[string]interface{}{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Just verify it doesn't panic
+			result := provider.convertSchema(tt.params)
+			_ = result // Use result to avoid unused variable
+		})
+	}
+}
+
+func TestGeminiProvider_convertTools(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	tests := []struct {
+		name  string
+		tools []interface{}
+		// We can't easily test the genai.Tool structure without importing it,
+		// so we'll just test that it doesn't panic
+	}{
+		{
+			name: "empty tools",
+			tools: []interface{}{},
+		},
+		{
+			name: "single tool",
+			tools: []interface{}{
+				map[string]interface{}{
+					"function": map[string]interface{}{
+						"name":        "test_tool",
+						"description": "A test tool",
+						"parameters": map[string]interface{}{
+							"type": "object",
+							"properties": map[string]interface{}{
+								"arg1": map[string]interface{}{
+									"type": "string",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "multiple tools",
+			tools: []interface{}{
+				map[string]interface{}{
+					"function": map[string]interface{}{
+						"name":        "tool1",
+						"description": "Tool 1",
+						"parameters": map[string]interface{}{
+							"type": "object",
+						},
+					},
+				},
+				map[string]interface{}{
+					"function": map[string]interface{}{
+						"name":        "tool2",
+						"description": "Tool 2",
+						"parameters": map[string]interface{}{
+							"type": "object",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "tool with invalid structure",
+			tools: []interface{}{
+				map[string]interface{}{
+					"not_function": "invalid",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Just verify it doesn't panic
+			result := provider.convertTools(tt.tools)
+			_ = result // Use result to avoid unused variable
+		})
+	}
+}
+
+func TestGeminiProvider_convertMessages_StringContent(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	messages := []types.Message{
+		{Role: "user", Content: "Hello"},
+		{Role: "assistant", Content: "Hi there"},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	// We can't easily test genai.Content without importing it,
+	// but we can verify it doesn't panic and returns non-empty
+	if len(contents) == 0 {
+		t.Error("expected non-empty contents")
+	}
+}
+
+func TestGeminiProvider_convertMessages_ArrayContent(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	messages := []types.Message{
+		{
+			Role: "user",
+			Content: []interface{}{
+				map[string]interface{}{
+					"type": "text",
+					"text": "Hello with text part",
+				},
+			},
+		},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	if len(contents) == 0 {
+		t.Error("expected non-empty contents")
+	}
+}
+
+func TestGeminiProvider_convertMessages_ImageContent(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	// Create a base64 encoded image data URL
+	testImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+	dataURL := "data:image/png;base64," + testImageData
+
+	messages := []types.Message{
+		{
+			Role: "user",
+			Content: []interface{}{
+				map[string]interface{}{
+					"type": "image_url",
+					"image_url": map[string]interface{}{
+						"url": dataURL,
+					},
+				},
+			},
+		},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	if len(contents) == 0 {
+		t.Error("expected non-empty contents for image message")
+	}
+}
+
+func TestGeminiProvider_convertMessages_ImageContentJPEG(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	testImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+	dataURL := "data:image/jpeg;base64," + testImageData
+
+	messages := []types.Message{
+		{
+			Role: "user",
+			Content: []interface{}{
+				map[string]interface{}{
+					"type": "image_url",
+					"image_url": map[string]interface{}{
+						"url": dataURL,
+					},
+				},
+			},
+		},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	if len(contents) == 0 {
+		t.Error("expected non-empty contents for JPEG image")
+	}
+}
+
+func TestGeminiProvider_convertMessages_Attachments(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	// Create base64 encoded image
+	testImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+	messages := []types.Message{
+		{
+			Role:  "user",
+			Content: "Check this image",
+			Attachments: []types.Attachment{
+				{
+					Type:     "image",
+					Data:     testImageData,
+					MimeType: "image/png",
+				},
+			},
+		},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	if len(contents) == 0 {
+		t.Error("expected non-empty contents for message with attachment")
+	}
+}
+
+func TestGeminiProvider_convertMessages_SystemMessage(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	messages := []types.Message{
+		{Role: "system", Content: "System instruction"},
+		{Role: "user", Content: "User message"},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	// System messages should be skipped (handled separately)
+	// Should only have user message
+	if len(contents) != 1 {
+		t.Errorf("expected 1 content (system skipped), got %d", len(contents))
+	}
+}
+
+func TestGeminiProvider_convertMessages_EmptyContent(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	messages := []types.Message{
+		{Role: "user", Content: ""},
+		{Role: "assistant", Content: "Response"},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	// Empty content should be skipped
+	if len(contents) != 1 {
+		t.Errorf("expected 1 content (empty skipped), got %d", len(contents))
+	}
+}
+
+func TestGeminiProvider_convertMessages_InvalidBase64(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	// Invalid base64 data
+	dataURL := "data:image/png;base64,invalid-base64!!!"
+
+	messages := []types.Message{
+		{
+			Role: "user",
+			Content: []interface{}{
+				map[string]interface{}{
+					"type": "image_url",
+					"image_url": map[string]interface{}{
+						"url": dataURL,
+					},
+				},
+			},
+		},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	// Invalid base64 should be skipped (no parts added)
+	// Should result in empty contents or contents without image part
+	_ = contents // Just verify it doesn't panic
+}
+
+func TestGeminiProvider_convertMessages_RoleMapping(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	tests := []struct {
+		name    string
+		role    string
+		wantRole string // Expected genai role (we can't easily verify without importing genai)
+	}{
+		{"user role", "user", "user"},
+		{"assistant role", "assistant", "model"},
+		{"model role", "model", "model"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			messages := []types.Message{
+				{Role: tt.role, Content: "Test message"},
+			}
+
+			contents := provider.convertMessages(messages)
+
+			if len(contents) == 0 {
+				t.Error("expected non-empty contents")
+			}
+			// We can't easily verify the role without importing genai,
+			// but we can verify it doesn't panic
+		})
+	}
+}
+
+func TestGeminiProvider_convertMessages_MultipleImageFormats(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	testImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+	formats := []struct {
+		name     string
+		mimeType string
+	}{
+		{"PNG", "image/png"},
+		{"JPEG", "image/jpeg"},
+		{"GIF", "image/gif"},
+		{"WebP", "image/webp"},
+	}
+
+	for _, format := range formats {
+		t.Run(format.name, func(t *testing.T) {
+			dataURL := "data:" + format.mimeType + ";base64," + testImageData
+
+			messages := []types.Message{
+				{
+					Role: "user",
+					Content: []interface{}{
+						map[string]interface{}{
+							"type": "image_url",
+							"image_url": map[string]interface{}{
+								"url": dataURL,
+							},
+						},
+					},
+				},
+			}
+
+			contents := provider.convertMessages(messages)
+
+			if len(contents) == 0 {
+				t.Errorf("expected non-empty contents for %s image", format.name)
+			}
+		})
+	}
+}
+
+func TestGeminiProvider_convertMessages_Base64Decoding(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	// Test with valid base64
+	validBase64 := base64.StdEncoding.EncodeToString([]byte("test image data"))
+	dataURL := "data:image/png;base64," + validBase64
+
+	messages := []types.Message{
+		{
+			Role: "user",
+			Content: []interface{}{
+				map[string]interface{}{
+					"type": "image_url",
+					"image_url": map[string]interface{}{
+						"url": dataURL,
+					},
+				},
+			},
+		},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	if len(contents) == 0 {
+		t.Error("expected non-empty contents for valid base64 image")
+	}
+}
+
+func TestGeminiProvider_convertMessages_DataURLParsing(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	testImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+	tests := []struct {
+		name    string
+		dataURL string
+	}{
+		{"standard format", "data:image/png;base64," + testImageData},
+		{"with charset", "data:image/png;charset=utf-8;base64," + testImageData},
+		{"no comma", "data:image/png;base64"}, // Invalid, should handle gracefully
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			messages := []types.Message{
+				{
+					Role: "user",
+					Content: []interface{}{
+						map[string]interface{}{
+							"type": "image_url",
+							"image_url": map[string]interface{}{
+								"url": tt.dataURL,
+							},
+						},
+					},
+				},
+			}
+
+			// Should not panic
+			contents := provider.convertMessages(messages)
+			_ = contents
+		})
+	}
+}
+
+func TestGeminiProvider_convertMessages_NonDataURL(t *testing.T) {
+	provider := &GeminiProvider{}
+
+	// URL that's not a data URL
+	regularURL := "https://example.com/image.png"
+
+	messages := []types.Message{
+		{
+			Role: "user",
+			Content: []interface{}{
+				map[string]interface{}{
+					"type": "image_url",
+					"image_url": map[string]interface{}{
+						"url": regularURL,
+					},
+				},
+			},
+		},
+	}
+
+	contents := provider.convertMessages(messages)
+
+	// Non-data URLs should be skipped (no parts added)
+	_ = contents // Just verify it doesn't panic
+}
+
+
+
+
+
+
+

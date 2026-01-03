@@ -1,0 +1,37 @@
+[
+  {
+    "content": "Create automation.go with automation_create tool (schedule support)",
+    "status": "in_progress",
+    "activeForm": "Creating automation_create tool"
+  },
+  {
+    "content": "Add automation_list tool",
+    "status": "pending",
+    "activeForm": "Adding automation_list tool"
+  },
+  {
+    "content": "Create schedule_parser.go for natural language parsing",
+    "status": "pending",
+    "activeForm": "Creating schedule parser"
+  },
+  {
+    "content": "Register automation tools in handlers.go",
+    "status": "pending",
+    "activeForm": "Registering automation tools"
+  },
+  {
+    "content": "Create AutomationsTab.tsx component",
+    "status": "pending",
+    "activeForm": "Creating AutomationsTab component"
+  },
+  {
+    "content": "Add Automations tab to AgentWorkspace.tsx",
+    "status": "pending",
+    "activeForm": "Adding Automations tab"
+  },
+  {
+    "content": "De-emphasize triggers/skills pages in App.tsx",
+    "status": "pending",
+    "activeForm": "De-emphasizing triggers/skills pages"
+  }
+]

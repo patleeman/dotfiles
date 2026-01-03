@@ -1,0 +1,93 @@
+import React, { useState, useMemo, memo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { clsx } from 'clsx';
+import { diffWordsWithSpace } from 'diff';
+import type { ScopeDocument } from '../../lib/api';
+
+interface InlineScopeProposalProps {
+  proposal: ScopeDocument;
+  previousContent?: string;
+  onUpdate?: (content: string) => void;
+}
+
+export const InlineScopeProposal: React.FC<InlineScopeProposalProps> = memo(({
+  proposal,
+  previousContent,
+}) => {
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const highlightedContent = useMemo(() => {
+    if (!previousContent) return proposal.content;
+
+    const diff = diffWordsWithSpace(previousContent, proposal.content);
+    return diff
+      .filter(part => !part.removed)
+      .map(part => {
+        if (part.added) {
+          // Wrap added parts in a special link that we'll render as a highlight
+          // We allow spaces but avoid characters that have structural meaning in markdown
+          // to prevent breaking headers, lists, and formatting.
+          return part.value.replace(/([^#*_\-`<>\[\]().\n]+)/g, '[$1](#highlight)');
+        }
+        return part.value;
+      })
+      .join('');
+  }, [previousContent, proposal.content]);
+
+  return (
+    <div className="my-0.5 border-l border-border/10 bg-surface/5 font-mono text-[11px] animate-in fade-in slide-in-from-left-1 duration-200 overflow-hidden">
+      <div
+        className={clsx(
+          "flex items-center justify-between px-3 py-1 bg-surface/10 cursor-pointer select-none hover:bg-surface/20 transition-all active:bg-surface/30",
+          !isCollapsed && "border-b border-border/10 shadow-[0_4px_10px_rgba(0,0,0,0.05)]"
+        )}
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-text-tertiary/40 text-[9px] w-2 font-black">{isCollapsed ? '+' : '-'}</span>
+          <span className="text-[10px] font-black text-accent/80 uppercase tracking-[0.2em]">
+            Plan Update {proposal.version > 1 && `(v${proposal.version})`}
+          </span>
+        </div>
+      </div>
+
+      {!isCollapsed && (
+        <div className="p-3">
+          <div className="text-text-primary/80 leading-relaxed font-mono text-[11px]">
+            <ReactMarkdown
+              components={{
+                h1: ({ children }) => <h1 className="text-accent/60 font-black uppercase tracking-widest mt-4 mb-2 border-b border-border/10 pb-1 text-[10px]"># {children}</h1>,
+                h2: ({ children }) => <h2 className="text-accent/60 font-black uppercase tracking-widest mt-3 mb-1 text-[10px]">## {children}</h2>,
+                h3: ({ children }) => <h3 className="text-accent/60 font-black uppercase tracking-widest mt-2 mb-1 text-[10px]">### {children}</h3>,
+                p: ({ children }) => <p className="mb-2 last:mb-0 whitespace-pre-wrap">{children}</p>,
+                ul: ({ children }) => <ul className="list-none pl-4 mb-2 space-y-0.5 text-text-secondary">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-0.5 text-text-secondary">{children}</ol>,
+                li: ({ children }) => <li className="pl-1"><span className="text-text-tertiary/40 mr-2">*</span>{children}</li>,
+                code: ({ children }) => <code className="bg-background/40 px-1 text-accent font-mono uppercase">{children}</code>,
+                blockquote: ({ children }) => <blockquote className="border-l border-border/20 pl-3 italic my-2 text-text-secondary/40 font-black uppercase">{children}</blockquote>,
+                // Custom link renderer to handle highlights
+                a: ({ href, children }) => {
+                  if (href === '#highlight') {
+                    return (
+                      <span className="text-accent font-black border-b border-accent/40">
+                        {children}
+                      </span>
+                    );
+                  }
+                  return (
+                    <a href={href} className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  );
+                },
+              }}
+            >
+              {highlightedContent}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+});

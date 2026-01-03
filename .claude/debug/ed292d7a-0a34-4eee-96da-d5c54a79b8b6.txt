@@ -1,0 +1,147 @@
+2025-12-28T21:10:15.546Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (19.8ms): security find-generic-password -a $USER -w -s "Claude Code"
+2025-12-28T21:10:15.563Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (16.5ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-28T21:10:15.581Z [ERROR] Failed to save config with lock: Error: ENOENT: no such file or directory, lstat '/Users/patrick/.claude.json'
+2025-12-28T21:10:15.581Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956215581
+2025-12-28T21:10:15.581Z [DEBUG] Setting permissions for new file: 600
+2025-12-28T21:10:15.586Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.4ms)
+2025-12-28T21:10:15.586Z [DEBUG] Temp file written successfully, size: 82 bytes
+2025-12-28T21:10:15.586Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956215581 to /Users/patrick/.claude.json
+2025-12-28T21:10:15.586Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:15.591Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956215591
+2025-12-28T21:10:15.591Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:15.595Z [DEBUG] Temp file written successfully, size: 130 bytes
+2025-12-28T21:10:15.595Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:15.595Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956215591 to /Users/patrick/.claude.json
+2025-12-28T21:10:15.596Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:15.600Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956215600
+2025-12-28T21:10:15.600Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:15.604Z [DEBUG] Temp file written successfully, size: 167 bytes
+2025-12-28T21:10:15.604Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:15.604Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956215600 to /Users/patrick/.claude.json
+2025-12-28T21:10:15.604Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:15.605Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956215605
+2025-12-28T21:10:15.605Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:15.609Z [DEBUG] Temp file written successfully, size: 202 bytes
+2025-12-28T21:10:15.609Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:15.609Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956215605 to /Users/patrick/.claude.json
+2025-12-28T21:10:15.609Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:15.610Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956215610
+2025-12-28T21:10:15.610Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:15.614Z [DEBUG] Temp file written successfully, size: 239 bytes
+2025-12-28T21:10:15.614Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:15.614Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956215610 to /Users/patrick/.claude.json
+2025-12-28T21:10:15.614Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:15.618Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-28T21:10:15.618Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-28T21:10:15.618Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-28T21:10:15.630Z [DEBUG] LSP server manager initialized successfully
+2025-12-28T21:10:15.630Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-28T21:10:15.631Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-28T21:10:15.634Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-28T21:10:15.872Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (235.1ms): cursor --version
+2025-12-28T21:10:15.872Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-28T21:10:15.883Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-28T21:10:15.883Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-28T21:10:15.883Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-28T21:10:15.884Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1766956215883-vul0zs.sh
+2025-12-28T21:10:15.884Z [DEBUG] Shell binary exists: true
+2025-12-28T21:10:15.884Z [DEBUG] Execution timeout: 10000ms
+2025-12-28T21:10:15.884Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/ed292d7a-0a34-4eee-96da-d5c54a79b8b6-agent-ed292d7a-0a34-4eee-96da-d5c54a79b8b6.json.tmp.75274.1766956215884
+2025-12-28T21:10:15.889Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-28T21:10:15.889Z [DEBUG] Renaming /Users/patrick/.claude/todos/ed292d7a-0a34-4eee-96da-d5c54a79b8b6-agent-ed292d7a-0a34-4eee-96da-d5c54a79b8b6.json.tmp.75274.1766956215884 to /Users/patrick/.claude/todos/ed292d7a-0a34-4eee-96da-d5c54a79b8b6-agent-ed292d7a-0a34-4eee-96da-d5c54a79b8b6.json
+2025-12-28T21:10:15.889Z [DEBUG] File /Users/patrick/.claude/todos/ed292d7a-0a34-4eee-96da-d5c54a79b8b6-agent-ed292d7a-0a34-4eee-96da-d5c54a79b8b6.json written atomically
+2025-12-28T21:10:15.896Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-28T21:10:15.896Z [DEBUG] Total plugin skills loaded: 0
+2025-12-28T21:10:15.896Z [DEBUG] Total plugin commands loaded: 0
+2025-12-28T21:10:15.896Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-28T21:10:15.900Z [DEBUG] Total plugin agents loaded: 0
+2025-12-28T21:10:15.900Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-28T21:10:15.900Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-28T21:10:15.912Z [DEBUG] Git remote URL: git@github.com:patleeman/personal-agent.git
+2025-12-28T21:10:15.912Z [DEBUG] Parsed repository: patleeman/personal-agent from git@github.com:patleeman/personal-agent.git
+2025-12-28T21:10:15.912Z [DEBUG] Parsed repository: patleeman/personal-agent from URL: git@github.com:patleeman/personal-agent.git
+2025-12-28T21:10:15.916Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956215916
+2025-12-28T21:10:15.916Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:15.920Z [DEBUG] Temp file written successfully, size: 356 bytes
+2025-12-28T21:10:15.920Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:15.920Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956215916 to /Users/patrick/.claude.json
+2025-12-28T21:10:15.921Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:15.921Z [DEBUG] Added /Users/patrick/workingdir/personal-agent to tracked paths for repo patleeman/personal-agent
+2025-12-28T21:10:16.001Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216001
+2025-12-28T21:10:16.001Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.006Z [DEBUG] Temp file written successfully, size: 52004 bytes
+2025-12-28T21:10:16.006Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.006Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216001 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.007Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.019Z [DEBUG] Shell snapshot created successfully (42711 bytes)
+2025-12-28T21:10:16.037Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216037
+2025-12-28T21:10:16.037Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.042Z [DEBUG] Temp file written successfully, size: 52176 bytes
+2025-12-28T21:10:16.042Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.042Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216037 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.042Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.044Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216044
+2025-12-28T21:10:16.044Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.048Z [DEBUG] Temp file written successfully, size: 52243 bytes
+2025-12-28T21:10:16.048Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.048Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216044 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.048Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.125Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-28T21:10:16.367Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216367
+2025-12-28T21:10:16.367Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.372Z [DEBUG] Temp file written successfully, size: 52315 bytes
+2025-12-28T21:10:16.372Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.372Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216367 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.372Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.375Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216375
+2025-12-28T21:10:16.375Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.380Z [DEBUG] Temp file written successfully, size: 52367 bytes
+2025-12-28T21:10:16.380Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.380Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216375 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.382Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.384Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216384
+2025-12-28T21:10:16.384Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.389Z [DEBUG] Temp file written successfully, size: 52405 bytes
+2025-12-28T21:10:16.389Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.389Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216384 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.389Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.391Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216391
+2025-12-28T21:10:16.391Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.396Z [DEBUG] Temp file written successfully, size: 52441 bytes
+2025-12-28T21:10:16.396Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.396Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216391 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.396Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.398Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216398
+2025-12-28T21:10:16.398Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.404Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.4ms)
+2025-12-28T21:10:16.404Z [DEBUG] Temp file written successfully, size: 52471 bytes
+2025-12-28T21:10:16.404Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.404Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216398 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.404Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.406Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216406
+2025-12-28T21:10:16.406Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.412Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.3ms)
+2025-12-28T21:10:16.412Z [DEBUG] Temp file written successfully, size: 52501 bytes
+2025-12-28T21:10:16.412Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.412Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216406 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.412Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:16.414Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956216414
+2025-12-28T21:10:16.414Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:16.419Z [DEBUG] Temp file written successfully, size: 52526 bytes
+2025-12-28T21:10:16.419Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:16.419Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956216414 to /Users/patrick/.claude.json
+2025-12-28T21:10:16.419Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:20.996Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956220996
+2025-12-28T21:10:20.996Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:21.001Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.1ms)
+2025-12-28T21:10:21.001Z [DEBUG] Temp file written successfully, size: 52526 bytes
+2025-12-28T21:10:21.001Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:21.001Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956220996 to /Users/patrick/.claude.json
+2025-12-28T21:10:21.002Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:21.004Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.75274.1766956221004
+2025-12-28T21:10:21.004Z [DEBUG] Preserving file permissions: 100600
+2025-12-28T21:10:21.009Z [DEBUG] Temp file written successfully, size: 52526 bytes
+2025-12-28T21:10:21.009Z [DEBUG] Applied original permissions to temp file
+2025-12-28T21:10:21.009Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.75274.1766956221004 to /Users/patrick/.claude.json
+2025-12-28T21:10:21.010Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-28T21:10:29.105Z [DEBUG] Skipping SessionEnd:other hook execution - workspace trust not accepted

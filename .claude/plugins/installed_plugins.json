@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "plugins": {
+    "ralph-wiggum@claude-plugins-official": [
+      {
+        "scope": "project",
+        "projectPath": "/Users/patrick/workingdir/familiar",
+        "installPath": "/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2",
+        "version": "6d3752c000e2",
+        "installedAt": "2026-01-03T01:11:54.881Z",
+        "lastUpdated": "2026-01-03T01:12:01.427Z",
+        "isLocal": true
+      }
+    ]
+  }
+}

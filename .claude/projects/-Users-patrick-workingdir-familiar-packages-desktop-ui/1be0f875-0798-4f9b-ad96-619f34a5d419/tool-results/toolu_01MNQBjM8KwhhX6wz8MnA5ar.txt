@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/SkillsView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   107→    <div className="flex flex-col h-full bg-background font-mono text-[12px] relative overflow-hidden select-none">
+   108→      {/* ... Skills Header ... */}
+   109→      <div className="flex items-center justify-between px-4 py-2 border-b border-border/20 bg-surface/5 shrink-0 font-mono">
+   110→        <div className="flex items-center gap-3">
+   111→          <h1 className="text-[11px] font-black text-accent uppercase tracking-[0.25em]">
+   112→            {isExplorerCollapsed ? 'Skills ' : null}
+   113→            <span className={clsx("text-text-tertiary opacity-30 font-black", isExplorerCollapsed ? "ml-1" : "ml-0")}>
+   114→              {skillsData?.length || 0} skills
+   115→            </span>
+   116→          </h1>
+   117→        </div>
+   118→
+   119→        <div className="flex items-center gap-4">
+   120→        </div>

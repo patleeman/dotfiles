@@ -1,0 +1,17 @@
+The file /Users/patrick/workingdir/familiar/packages/go-backend/cmd/server/server.go has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   584→		cfg.CustomProviders = newCustomProviders
+   585→		delete(updates, "custom_providers")
+   586→	}
+   587→
+   588→	// Apply sub_agent updates explicitly if present
+   589→	if sa, ok := updates["sub_agent"].(map[string]interface{}); ok {
+   590→		if saEnabled, ok := sa["enabled"].(bool); ok {
+   591→			cfg.SubAgent.Enabled = &saEnabled
+   592→		}
+   593→		// Remove sub_agent from generic update to avoid double processing
+   594→		delete(updates, "sub_agent")
+   595→	}
+   596→
+   597→	// Apply other updates via JSON trick
+   598→	if len(updates) > 0 {
+   599→		b, err := json.Marshal(updates)

@@ -1,0 +1,135 @@
+package config
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"sync"
+	"time"
+)
+
+// ClaudeCodeOAuthToken represents the OAuth token structure for Claude Code
+type ClaudeCodeOAuthToken struct {
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	TokenType    string    `json:"token_type"`
+	Scopes       []string  `json:"scopes,omitempty"`
+}
+
+var (
+	oauthTokenCache *ClaudeCodeOAuthToken
+	oauthMu         sync.RWMutex
+)
+
+// GetClaudeCodeTokenPath returns the path where OAuth tokens are stored
+func GetClaudeCodeTokenPath() string {
+	return filepath.Join(GetConfigDir(), "claude_code_oauth.json")
+}
+
+// LoadClaudeCodeToken loads the OAuth token from disk and keychain
+func LoadClaudeCodeToken() (*ClaudeCodeOAuthToken, error) {
+	oauthMu.RLock()
+	if oauthTokenCache != nil {
+		defer oauthMu.RUnlock()
+		return oauthTokenCache, nil
+	}
+	oauthMu.RUnlock()
+
+	oauthMu.Lock()
+	defer oauthMu.Unlock()
+
+	// Double check after acquiring lock
+	if oauthTokenCache != nil {
+		return oauthTokenCache, nil
+	}
+
+	data, err := os.ReadFile(GetClaudeCodeTokenPath())
+	if err != nil {
+		return nil, err
+	}
+
+	var token ClaudeCodeOAuthToken
+	if err := json.Unmarshal(data, &token); err != nil {
+		return nil, err
+	}
+
+	// Load refresh token from keychain for extra security
+	if refreshToken := GetKeychainPassword("claude-code-refresh-token"); refreshToken != "" {
+		token.RefreshToken = refreshToken
+	}
+
+	oauthTokenCache = &token
+	return &token, nil
+}
+
+// SaveClaudeCodeToken saves the OAuth token to disk (with refresh token in keychain)
+func SaveClaudeCodeToken(token *ClaudeCodeOAuthToken) error {
+	oauthMu.Lock()
+	defer oauthMu.Unlock()
+
+	// Store refresh token in keychain for extra security
+	if token.RefreshToken != "" {
+		if err := SetKeychainPassword("claude-code-refresh-token", token.RefreshToken); err != nil {
+			return err
+		}
+	}
+
+	// Create a copy without refresh token for file storage
+	tokenForFile := ClaudeCodeOAuthToken{
+		AccessToken: token.AccessToken,
+		ExpiresAt:   token.ExpiresAt,
+		TokenType:   token.TokenType,
+		Scopes:      token.Scopes,
+	}
+
+	data, err := json.MarshalIndent(tokenForFile, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// Ensure directory exists
+	if err := os.MkdirAll(filepath.Dir(GetClaudeCodeTokenPath()), 0755); err != nil {
+		return err
+	}
+
+	// Write with restrictive permissions (owner read/write only)
+	if err := os.WriteFile(GetClaudeCodeTokenPath(), data, 0600); err != nil {
+		return err
+	}
+
+	oauthTokenCache = token
+	return nil
+}
+
+// IsClaudeCodeTokenValid checks if current token exists and is not expired
+func IsClaudeCodeTokenValid() bool {
+	token, err := LoadClaudeCodeToken()
+	if err != nil || token == nil {
+		return false
+	}
+	// Consider token expired if it expires within 5 minutes
+	return time.Now().Add(5 * time.Minute).Before(token.ExpiresAt)
+}
+
+// ClearClaudeCodeToken removes the OAuth token
+func ClearClaudeCodeToken() error {
+	oauthMu.Lock()
+	defer oauthMu.Unlock()
+
+	oauthTokenCache = nil
+	DeleteKeychainPassword("claude-code-refresh-token")
+
+	tokenPath := GetClaudeCodeTokenPath()
+	if _, err := os.Stat(tokenPath); err == nil {
+		return os.Remove(tokenPath)
+	}
+	return nil
+}
+
+// InvalidateClaudeCodeTokenCache clears the in-memory cache
+func InvalidateClaudeCodeTokenCache() {
+	oauthMu.Lock()
+	defer oauthMu.Unlock()
+	oauthTokenCache = nil
+}

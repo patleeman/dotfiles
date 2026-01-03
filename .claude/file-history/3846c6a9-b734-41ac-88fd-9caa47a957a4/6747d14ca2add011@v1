@@ -1,0 +1,1580 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"github.com/patrick/familiar/packages/go-backend/internal/agent"
+	"github.com/patrick/familiar/packages/go-backend/internal/config"
+	"github.com/patrick/familiar/packages/go-backend/internal/scheduler"
+	"github.com/patrick/familiar/packages/go-backend/internal/tools"
+	"github.com/patrick/familiar/packages/go-backend/internal/utils"
+	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+)
+
+func (s *Server) handleGlobalWebSocket(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		slog.Error("Failed to upgrade global websocket", "error", err)
+		return
+	}
+	defer conn.Close()
+
+	s.mu.Lock()
+	s.globalClients = append(s.globalClients, conn)
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		for i, v := range s.globalClients {
+			if v == conn {
+				s.globalClients = append(s.globalClients[:i], s.globalClients[i+1:]...)
+				break
+			}
+		}
+		delete(s.connLocks, conn)
+		s.mu.Unlock()
+	}()
+
+	for {
+		var req types.WebSocketRequest
+		err := conn.ReadJSON(&req)
+		if err != nil {
+			break
+		}
+		s.handleWSRequest(conn, &req)
+	}
+}
+
+func (s *Server) handleWSRequest(conn *websocket.Conn, req *types.WebSocketRequest) {
+	slog.Debug("WS Request received", "type", req.Type)
+	resp := types.WebSocketResponse{
+		Type:      req.Type,
+		RequestID: req.RequestID,
+		Status:    "ok",
+	}
+
+	switch req.Type {
+	case "submit_feedback_manual":
+		message, _ := req.Payload["message"].(string)
+		agentID, _ := req.Payload["agent_id"].(string)
+		if message == "" {
+			resp.Status = "error"
+			resp.Error = "Message is required"
+			s.safeWriteJSON(conn, resp)
+			return
+		}
+
+		tool := tools.NewFeedbackTool()
+		result, err := tool.Execute(context.Background(), map[string]interface{}{"message": message}, nil)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "submitted", "content": result.Content}
+			if agentID != "" {
+				s.db.AppendAgentLog(agentID, "model_responded", map[string]interface{}{
+					"content": "Manual feedback submitted successfully. Thank you!",
+				})
+				s.globalBroadcast(map[string]interface{}{
+					"type":       "execution_log",
+					"agent_id":   agentID,
+					"event_type": "model_responded",
+					"payload": map[string]interface{}{
+						"content": "Manual feedback submitted successfully. Thank you!",
+					},
+				})
+			}
+		}
+
+	case "restart_onboarding":
+		err := s.BootstrapOnboarding()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "restarted"}
+		}
+
+	case "resolve_missed_tasks":
+		resolutions, _ := req.Payload["resolutions"].(map[string]interface{})
+		for taskID, res := range resolutions {
+			if resStr, ok := res.(string); ok {
+				s.scheduler.ResolveMissedTask(taskID, resStr)
+			}
+		}
+		s.safeWriteJSON(conn, resp)
+
+	case "create_agent":
+		modelConfig, _ := req.Payload["model_config"].(map[string]interface{})
+		initialPrompt, _ := req.Payload["initial_prompt"].(string)
+		planEnabled, ok := req.Payload["plan_enabled"].(bool)
+		if !ok {
+			planEnabled = true // Default to enabled
+		}
+		initialPrompt = strings.TrimSpace(initialPrompt)
+		cfg, _ := config.LoadConfig()
+
+		// Get provider and model, using validated defaults if not specified
+		provider, _ := modelConfig["provider"].(string)
+		model, _ := modelConfig["model"].(string)
+		if provider == "" || model == "" {
+			defaultProvider, defaultModel := s.getDefaultChatConfig(cfg)
+			if provider == "" {
+				provider = defaultProvider
+			}
+			if model == "" {
+				model = defaultModel
+			}
+		}
+
+		// Provider and model will be validated during messaging or resumption.
+		// If they remain empty, the agent will simply be created with empty model config.
+
+		agentID := uuid.New().String()
+		name := utils.GetRandomName()
+
+		// Determine max context tokens
+		contextLimit := 128000
+		if prov, err := s.createProvider(provider); err == nil {
+			contextLimit = prov.GetContextLimit(model)
+		}
+
+		// Set defaults from global config
+		subAgentsEnabled := true
+		if cfg.SubAgent.Enabled != nil {
+			subAgentsEnabled = *cfg.SubAgent.Enabled
+		}
+
+		parentID, _ := req.Payload["parent_id"].(string)
+		var parentIDPtr *string
+		if parentID != "" {
+			parentIDPtr = &parentID
+		}
+
+		isSkillCreator, _ := req.Payload["is_skill_creator"].(bool)
+		isTriggerArchitect, _ := req.Payload["is_trigger_architect"].(bool)
+		isFeedbackCollector, _ := req.Payload["is_feedback_collector"].(bool)
+		isInternal := false
+		workingDir := ""
+		if isSkillCreator {
+			isInternal = true
+			name = "Skill Architect"
+			if skillID, ok := req.Payload["skill_id"].(string); ok && skillID != "" {
+				name = "Skill Architect: " + skillID
+			}
+			workingDir = filepath.Join(config.GetConfigDir(), "skills")
+			planEnabled = false // Skill Architect doesn't need a formal plan
+		} else if isTriggerArchitect {
+			isInternal = true
+			name = "Trigger Architect"
+			if triggerID, ok := req.Payload["trigger_id"].(string); ok && triggerID != "" {
+				name = "Trigger Architect: " + triggerID
+			}
+			workingDir = filepath.Join(config.GetConfigDir(), "triggers")
+			planEnabled = false
+		} else if isFeedbackCollector {
+			isInternal = true
+			name = "Feedback Collector"
+			planEnabled = false
+			provider = "onboarding"
+			model = "scripted"
+		}
+
+		a := types.Agent{
+			ID:               agentID,
+			ParentID:         parentIDPtr,
+			Type:             types.AgentTypeStandard,
+			Name:             name,
+			State:            types.AgentStateIdle,
+			InitialPrompt:    initialPrompt,
+			PlanEnabled:      planEnabled,
+			SubAgentsEnabled: subAgentsEnabled,
+			IsInternal:       isInternal,
+			WorkingDirectory: workingDir,
+			ModelConfig: types.ModelConfig{
+				Provider: provider,
+				Model:    model,
+			},
+			MaxContextTokens: contextLimit,
+			CreatedAt:        time.Now().UTC(),
+			UpdatedAt:        time.Now().UTC(),
+		}
+
+		if err := s.db.CreateAgent(a); err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			// Mark onboarding as completed if this is a real agent and provider exists
+			if !isInternal && provider != "onboarding" {
+				s.db.SetSetting("onboarding_completed", "true")
+			}
+
+			resp.Payload = a
+			s.globalBroadcast(map[string]interface{}{
+				"type":  "agent_created",
+				"agent": a,
+			})
+			if initialPrompt != "" {
+				logID, _ := s.db.AppendAgentLog(agentID, "user_interaction", map[string]interface{}{
+					"content": initialPrompt,
+				})
+				s.globalBroadcast(map[string]interface{}{
+					"type":       "execution_log",
+					"agent_id":   agentID,
+					"event_type": "user_interaction",
+					"payload":    map[string]interface{}{"id": logID, "content": initialPrompt},
+				})
+				go s.handleAgentScopeSetup(agentID)
+			} else {
+				// Add initial greeting
+				greeting := "What can I help you accomplish today?"
+				if isSkillCreator {
+					skillID, _ := req.Payload["skill_id"].(string)
+					if skillID != "" {
+						greeting = fmt.Sprintf("Hi there! I'm the Skill Architect. I see you want to improve the **%s** skill. I'm here to help you design, implement, and test new capabilities for your personal agent. How would you like to proceed?\n\n**Note**: Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them if needed.", skillID)
+					} else {
+						greeting = "Hi there! I'm the Skill Architect. Familiar Skills are specialized tools and capabilities that you can create to extend my functionality. I'm here to help you design, implement, and test new skills for your personal agent. What would you like to accomplish today?\n\n**Note**: Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them if needed."
+					}
+				} else if isTriggerArchitect {
+					triggerID, _ := req.Payload["trigger_id"].(string)
+					if triggerID != "" {
+						greeting = fmt.Sprintf("Hi! I'm the Trigger Architect. I see you want to configure the **%s** trigger. I can help you set up a subscription with a prompt template or explain how it works. How would you like to proceed?\n\n**Note**: Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them if needed.", triggerID)
+					} else {
+						greeting = "Hi! I'm the Trigger Architect. I help you connect your personal agent to the outside world through automations and system events. I can help you create scripts that monitor your clipboard, watch files, poll external APIs, or react to schedule-based events. What kind of trigger would you like to set up today?\n\n**Note**: Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them if needed."
+					}
+				} else if isFeedbackCollector {
+					greeting = "Hi! I'm here to collect your feedback. Would you like my help in gathering details (which uses your AI credits), or would you prefer to just type it out manually?\n\n**Please type one of the following:**\n- **\"Yes\"**: I'll switch to an AI provider to help you. (Credits will be used)\n- **\"No\"**: You can type your feedback directly and I'll send it."
+				}
+				logID, _ := s.db.AppendAgentLog(agentID, "model_responded", map[string]interface{}{
+					"content": greeting,
+				})
+				s.globalBroadcast(map[string]interface{}{
+					"type":       "execution_log",
+					"agent_id":   agentID,
+					"event_type": "model_responded",
+					"payload":    map[string]interface{}{"id": logID, "content": greeting},
+				})
+			}
+		}
+
+	case "update_scope":
+		agentID, _ := req.Payload["agent_id"].(string)
+		content, _ := req.Payload["content"].(string)
+
+		var fmOverride *types.ScopeFrontmatter
+		if fmData, ok := req.Payload["frontmatter"].(map[string]interface{}); ok {
+			b, _ := json.Marshal(fmData)
+			json.Unmarshal(b, &fmOverride)
+		}
+
+		sa, err := s.getOrCreateStatefulAgent(agentID)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			var parentScope *types.ScopeDocument
+			if sa.ParentID != nil {
+				parentScope, _ = s.db.GetCurrentScope(*sa.ParentID)
+			}
+			doc, err := sa.ParseScopeDocument(content, fmOverride, parentScope)
+			if err != nil {
+				resp.Status = "error"
+				resp.Error = "Invalid scope format: " + err.Error()
+			} else {
+				// Maintain version if it was already set in the document or by the sa
+				if sa.CurrentScope != nil && doc.Version <= sa.CurrentScope.Version {
+					doc.Version = sa.CurrentScope.Version + 1
+					doc.Frontmatter.Version = doc.Version
+				}
+
+				now := time.Now().UTC()
+				doc.ApprovedAt = &now
+
+				if err := s.db.CreateScopeDocument(*doc); err != nil {
+					resp.Status = "error"
+					resp.Error = "Failed to save scope: " + err.Error()
+				} else {
+					if err := s.db.ApproveScope(agentID, doc.ID); err != nil {
+						slog.Error("Failed to mark scope as approved", "agent_id", agentID, "error", err)
+					}
+
+					sa.SetScope(doc)
+
+					resp.Payload = doc
+					s.globalBroadcast(map[string]interface{}{
+						"type":     "scope_updated",
+						"agent_id": agentID,
+						"scope":    doc,
+					})
+
+					if updatedAgent, err := s.db.GetAgent(agentID); err == nil {
+						s.globalBroadcast(map[string]interface{}{
+							"type":  "agent_updated",
+							"agent": updatedAgent,
+						})
+					}
+				}
+			}
+		}
+
+	case "approve_scope":
+		agentID, _ := req.Payload["agent_id"].(string)
+		scopeID, _ := req.Payload["scope_id"].(string)
+
+		// Parse no_resume robustly
+		noResume := false
+		if nr, ok := req.Payload["no_resume"].(bool); ok {
+			noResume = nr
+		}
+
+		slog.Info("Approving scope", "agent_id", agentID, "scope_id", scopeID, "no_resume", noResume)
+		err := s.db.ApproveScope(agentID, scopeID)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			s.db.UpdateAgentState(agentID, types.AgentStateWaiting, nil)
+
+			// Fetch updated agent
+			updatedAgent, err := s.db.GetAgent(agentID)
+			if err != nil {
+				slog.Error("Failed to fetch updated agent", "agent_id", agentID, "error", err)
+				return
+			}
+
+			resp.Payload = map[string]string{"status": "approved", "scope_id": scopeID}
+
+			// Broadcast updated agent and state change
+			s.globalBroadcast(map[string]interface{}{
+				"type":      "agent_state_changed",
+				"agent":     updatedAgent,
+				"agent_id":  agentID,
+				"new_state": types.AgentStateWaiting,
+			})
+
+			// Broadcast scope_approved
+			s.globalBroadcast(map[string]interface{}{
+				"type":     "scope_approved",
+				"agent_id": agentID,
+				"scope_id": scopeID,
+			})
+
+			// Update the stateful agent's scope if it exists
+			sa, errSa := s.getOrCreateStatefulAgent(agentID)
+			if errSa == nil && sa != nil {
+				scope, _ := s.db.GetCurrentScope(agentID)
+				sa.SetScope(scope)
+				sa.SetState(types.AgentStateWaiting)
+			}
+
+			// Automatically start running the task unless no_resume is requested
+			if !noResume {
+				slog.Info("Resuming agent after scope approval", "agent_id", agentID)
+				s.resumeAgent(agentID, "")
+			} else {
+				slog.Info("Skipping agent resume as requested", "agent_id", agentID)
+			}
+		}
+
+	case "reject_scope":
+		agentID, _ := req.Payload["agent_id"].(string)
+		scopeID, _ := req.Payload["scope_id"].(string)
+		feedback, _ := req.Payload["feedback"].(string)
+
+		slog.Info("Scope rejected", "agent_id", agentID, "scope_id", scopeID, "feedback", feedback)
+
+		err := s.db.UpdateAgentState(agentID, types.AgentStateIdle, nil)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			s.db.AppendAgentLog(agentID, "scope_rejected", map[string]string{
+				"scope_id": scopeID,
+				"feedback": feedback,
+			})
+
+			resp.Payload = map[string]string{"status": "rejected", "agent_id": agentID}
+
+			s.globalBroadcast(map[string]interface{}{
+				"type":     "scope_rejected",
+				"agent_id": agentID,
+				"scope_id": scopeID,
+				"feedback": feedback,
+			})
+		}
+
+	case "update_agent_state":
+		agentID, _ := req.Payload["agent_id"].(string)
+		action, _ := req.Payload["action"].(string)
+		sa, err := s.getOrCreateStatefulAgent(agentID)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+		switch action {
+		case "pause":
+			sa.Pause()
+			// Broadcast state change immediately so UI updates even if agent is stuck
+			updatedAgent, _ := s.db.GetAgent(agentID)
+			if updatedAgent != nil {
+				s.globalBroadcast(map[string]interface{}{
+					"type":      "agent_state_changed",
+					"agent":     updatedAgent,
+					"agent_id":  agentID,
+					"new_state": types.AgentStatePaused,
+				})
+			}
+		case "pause_tree":
+			s.pauseAgentRecursive(agentID)
+		case "resume":
+			if err := s.resumeAgent(agentID, ""); err != nil {
+				resp.Status = "error"
+				resp.Error = err.Error()
+			}
+		case "resume_tree":
+			s.resumeAgentRecursive(agentID)
+			case "cancel":
+				sa.Cancel()
+			case "repair":
+				slog.Info("Repairing agent history via forced compaction", "agent_id", agentID)
+
+				history, _ := s.db.ListAgentLogs(agentID)
+				a, _ := s.db.GetAgent(agentID)
+				var parentScope *types.ScopeDocument
+				if a != nil && a.ParentID != nil {
+					parentScope, _ = s.db.GetCurrentScope(*a.ParentID)
+				}
+
+				if !sa.CanCompact(history, parentScope) {
+					slog.Info("Compaction skipped: not enough history to compact", "agent_id", agentID)
+					resp.Payload = map[string]string{"status": "skipped", "reason": "not_enough_history"}
+					s.safeWriteJSON(conn, resp)
+					return
+				}
+
+				if sa.IsRunning() {
+					// Ensure the agent stops after its current turn if it's running.
+					sa.Pause()
+					// Set the flag so it compacts at the start of its next turn (or when resumed).
+					sa.ForceCompaction("user_request", "")
+					slog.Info("Agent is running; set to pause and compact on next turn", "agent_id", agentID)
+				} else {
+					// Log the request
+					sa.OnLog(agentID, "compaction_requested", map[string]interface{}{"requested_by": "user_request"})
+					if err := sa.PerformCompaction(context.Background(), history, parentScope, true, ""); err != nil {
+						slog.Error("Failed manual compaction", "agent_id", agentID, "error", err)
+						resp.Status = "error"
+						resp.Error = "Compaction failed: " + err.Error()
+					}
+				}
+			}
+			resp.Payload = map[string]string{"status": action, "agent_id": agentID}
+		}
+
+	case "update_agent_config":
+		agentID, _ := req.Payload["agent_id"].(string)
+		configData, _ := req.Payload["model_config"].(map[string]interface{})
+
+		// Load existing agent to merge config
+		existingAgent, err := s.db.GetAgent(agentID)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = "Agent not found: " + err.Error()
+			s.safeWriteJSON(conn, resp)
+			return
+		}
+
+		// Handle plan_enabled if present
+		if planEnabled, ok := req.Payload["plan_enabled"].(bool); ok {
+			if err := s.db.UpdateAgentPlanEnabled(agentID, planEnabled); err != nil {
+				resp.Status = "error"
+				resp.Error = "Failed to update planning mode: " + err.Error()
+				s.safeWriteJSON(conn, resp)
+				return
+			}
+		}
+
+		// Handle sub_agents_enabled if present
+		if subAgentsEnabled, ok := req.Payload["sub_agents_enabled"].(bool); ok {
+			if err := s.db.UpdateAgentSubAgentsEnabled(agentID, subAgentsEnabled); err != nil {
+				resp.Status = "error"
+				resp.Error = "Failed to update sub-agents mode: " + err.Error()
+				s.safeWriteJSON(conn, resp)
+				return
+			}
+		}
+
+		// Merge model config
+		modelConfig := existingAgent.ModelConfig
+		// Safely merge partial model config from frontend
+		if configBytes, err := json.Marshal(configData); err == nil {
+			if err := json.Unmarshal(configBytes, &modelConfig); err != nil {
+				slog.Error("Failed to unmarshal partial model config", "error", err)
+			}
+		}
+
+		if err := s.db.UpdateAgentModelConfig(agentID, modelConfig); err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			// Update in-memory stateful agent if it exists
+			// This will also validate the provider if getOrCreateStatefulAgent is called
+			sa, err := s.getOrCreateStatefulAgent(agentID)
+			if err != nil {
+				// Provider is likely disabled or invalid
+				resp.Status = "error"
+				resp.Error = err.Error()
+				s.safeWriteJSON(conn, resp)
+				return
+			}
+			if sa != nil {
+				newProvider, err := s.createProvider(modelConfig.Provider)
+				if err == nil {
+					sa.UpdateModelConfig(modelConfig, newProvider)
+				} else {
+					slog.Error("Failed to create new provider during config update", "error", err)
+					// Fallback: update model only
+					sa.UpdateModelConfig(modelConfig, nil)
+				}
+				// Update max_context_tokens in database when model changes
+				maxContextTokens := sa.MaxContextTokens
+				agent, _ := s.db.GetAgent(agentID)
+				if agent != nil {
+					s.db.UpdateAgentContextUsage(agentID, agent.ContextTokens, maxContextTokens)
+				}
+			}
+
+			resp.Payload = map[string]string{"status": "updated", "agent_id": agentID}
+
+			// Broadcast updated agent
+			updatedAgent, err := s.db.GetAgent(agentID)
+			if err == nil {
+				s.globalBroadcast(map[string]interface{}{
+					"type":  "agent_updated",
+					"agent": updatedAgent,
+				})
+			}
+		}
+
+	case "send_message":
+		agentID, _ := req.Payload["agent_id"].(string)
+		content, _ := req.Payload["content"].(string)
+		attachments, _ := req.Payload["attachments"].([]interface{})
+
+		slog.Info("Message sent to agent", "agent_id", agentID, "content", content, "attachments", len(attachments))
+
+		logID, _ := s.db.AppendAgentLog(agentID, "user_interaction", map[string]interface{}{
+			"content":     content,
+			"attachments": attachments,
+		})
+
+		resp.Payload = map[string]string{"status": "received", "agent_id": agentID}
+
+		s.globalBroadcast(map[string]interface{}{
+			"type":       "execution_log",
+			"agent_id":   agentID,
+			"event_type": "user_interaction",
+			"payload":    map[string]interface{}{"id": logID, "content": content, "attachments": attachments},
+		})
+
+		// Enqueue message if agent is already running to avoid missing it in the current loop
+		sa, err := s.getOrCreateStatefulAgent(agentID)
+		if err != nil {
+			slog.Error("Failed to get agent for message", "agent_id", agentID, "error", err)
+			errDetail := &types.ErrorDetail{
+				Category:    types.ErrorInitialization,
+				Message:     err.Error(),
+				Recoverable: true,
+			}
+			payload := map[string]interface{}{
+				"message": err.Error(),
+			}
+			logID, _ := s.db.AppendAgentLog(agentID, "agent_error", payload)
+			payload["id"] = logID
+
+			s.db.UpdateAgentState(agentID, types.AgentStateError, errDetail)
+			s.globalBroadcast(map[string]interface{}{
+				"type":         "agent_state_changed",
+				"agent_id":     agentID,
+				"new_state":    types.AgentStateError,
+				"error_detail": errDetail,
+			})
+			s.globalBroadcast(map[string]interface{}{
+				"type":       "execution_log",
+				"agent_id":   agentID,
+				"event_type": "agent_error",
+				"payload":    payload,
+			})
+			return
+		}
+		if sa != nil {
+			var parsedAttachments []types.Attachment
+			for _, att := range attachments {
+				if a, ok := att.(map[string]interface{}); ok {
+					id, _ := a["id"].(string)
+					tp, _ := a["type"].(string)
+					name, _ := a["name"].(string)
+					mime, _ := a["mimeType"].(string)
+					data, _ := a["data"].(string)
+					size, _ := a["size"].(float64)
+					path, _ := a["path"].(string)
+					parsedAttachments = append(parsedAttachments, types.Attachment{
+						ID:       id,
+						Type:     tp,
+						Name:     name,
+						MimeType: mime,
+						Data:     data,
+						Size:     int64(size),
+						Path:     path,
+					})
+				}
+			}
+			sa.EnqueueUserInteraction(content, parsedAttachments)
+		}
+
+		// If agent is idle, this is a planning interaction
+		a, err := s.db.GetAgent(agentID)
+		if err == nil {
+			if a.State == types.AgentStateIdle {
+				// Only sub-agents use the first message as a "Mission" (InitialPrompt)
+				// Top-level agents are governed by their evolving Plan.
+				if a.ParentID != nil && a.InitialPrompt == "" {
+					s.db.UpdateAgentPrompt(agentID, content)
+				}
+				go s.handleAgentScopeSetup(agentID)
+			} else {
+				// For any other state (completed, waiting, running, error), trigger the loop
+				if err := s.resumeAgent(agentID, ""); err != nil {
+					slog.Error("Failed to resume agent from send_message", "agent_id", agentID, "error", err)
+				}
+			}
+		}
+
+	case "list_agents":
+		agents, err := s.db.ListAgents(nil, nil)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = agents
+		}
+
+	case "list_tasks":
+		tasks, err := s.getTasksWithNextRun()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = tasks
+		}
+
+	case "delete_task":
+		taskID, _ := req.Payload["id"].(string)
+		s.scheduler.RemoveTask(taskID)
+		if err := s.db.DeleteTask(taskID); err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "deleted", "id": taskID}
+			tasks, _ := s.getTasksWithNextRun()
+			s.globalBroadcast(map[string]interface{}{
+				"type":  "tasks_updated",
+				"tasks": tasks,
+			})
+		}
+
+	case "get_agent":
+		id, _ := req.Payload["agent_id"].(string)
+		a, err := s.db.GetAgent(id)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = a
+		}
+
+	case "list_agent_logs":
+		agentID, _ := req.Payload["agent_id"].(string)
+		logs, err := s.db.ListAgentLogs(agentID)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = logs
+		}
+
+	case "rename_agent":
+		id, _ := req.Payload["agent_id"].(string)
+		name, _ := req.Payload["name"].(string)
+		if err := s.db.UpdateAgentName(id, name); err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "renamed", "agent_id": id, "name": name}
+			s.globalBroadcast(map[string]interface{}{
+				"type":     "agent_renamed",
+				"agent_id": id,
+				"name":     name,
+			})
+		}
+
+	case "delete_agent":
+		id, _ := req.Payload["agent_id"].(string)
+
+		// 1. Database cleanup (collects all child IDs within transaction to avoid race conditions)
+		deletedIDs, err := s.db.DeleteAgent(id)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			// 2. Recursive memory/scheduler cleanup (using IDs from DB deletion)
+			for _, deletedID := range deletedIDs {
+				s.cleanupAgentRecursive(deletedID)
+			}
+
+			resp.Payload = map[string]string{"status": "deleted", "agent_id": id}
+
+			// Broadcast for each deleted agent (recursive)
+			for _, deletedID := range deletedIDs {
+				s.globalBroadcast(map[string]interface{}{
+					"type":     "agent_deleted",
+					"agent_id": deletedID,
+				})
+			}
+		}
+
+	case "toggle_skill":
+		name, _ := req.Payload["name"].(string)
+		// Placeholder for toggle logic
+		resp.Payload = map[string]string{"status": "toggled", "name": name}
+
+	case "get_config":
+		cfg, _ := config.LoadConfig()
+		resp.Payload = s.formatConfigResponse(cfg)
+
+	case "fetch_models":
+		providerName, _ := req.Payload["provider"].(string)
+		if providerName == "" {
+			resp.Status = "error"
+			resp.Error = "provider name required"
+			s.safeWriteJSON(conn, resp)
+			return
+		}
+
+		prov, err := s.createProvider(providerName)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+			s.safeWriteJSON(conn, resp)
+			return
+		}
+
+		models, err := prov.ListModels(context.Background())
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]interface{}{
+				"models": models,
+			}
+		}
+
+	case "update_config":
+		updates, _ := req.Payload["updates"].(map[string]interface{})
+		err := s.performConfigUpdate(updates)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "updated"}
+		}
+
+	case "list_skills":
+		workspacePath := getProgramDataPath()
+		loader := utils.NewSkillLoader(workspacePath)
+		skills, err := loader.LoadSkills()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]interface{}{"skills": skills, "total": len(skills)}
+		}
+
+	case "list_triggers":
+		triggers := s.triggerManager.ListAvailableTriggers()
+		resp.Payload = map[string]interface{}{"triggers": triggers}
+
+	case "list_agent_subscriptions":
+		agentID, _ := req.Payload["agent_id"].(string)
+		subs, err := s.db.ListTriggerSubscriptions(agentID)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]interface{}{"subscriptions": subs}
+		}
+
+	case "save_trigger_subscription":
+		var sub types.TriggerSubscription
+		b, _ := json.Marshal(req.Payload["subscription"])
+		json.Unmarshal(b, &sub)
+		if err := s.db.SaveTriggerSubscription(sub); err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "saved", "id": sub.ID}
+		}
+
+	case "delete_trigger_subscription":
+		id, _ := req.Payload["id"].(string)
+		if err := s.db.DeleteTriggerSubscription(id); err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "deleted"}
+		}
+
+	case "delete_trigger":
+		id, _ := req.Payload["id"].(string)
+		s.triggerManager.Unregister(id)
+		// Also delete from disk if it's a script trigger
+		triggerDir := filepath.Join(config.GetConfigDir(), "triggers", id)
+		if _, err := os.Stat(triggerDir); err == nil {
+			os.RemoveAll(triggerDir)
+		}
+		resp.Payload = map[string]string{"status": "deleted", "id": id}
+
+	case "rename_trigger":
+		id, _ := req.Payload["id"].(string)
+		newName, _ := req.Payload["new_name"].(string)
+		// This is tricky because we'd need to reload the trigger.
+		// For now, let's just rename on disk if it exists.
+		oldDir := filepath.Join(config.GetConfigDir(), "triggers", id)
+		newDir := filepath.Join(config.GetConfigDir(), "triggers", newName)
+		if _, err := os.Stat(oldDir); err == nil {
+			os.Rename(oldDir, newDir)
+			// TODO: Reload trigger manager
+		}
+		resp.Payload = map[string]string{"status": "renamed", "id": id, "new_name": newName}
+
+	case "delete_skill":
+		name, _ := req.Payload["name"].(string)
+		workspacePath := getProgramDataPath()
+		skillDir := filepath.Join(workspacePath, "skills", name)
+		if _, err := os.Stat(skillDir); err == nil {
+			os.RemoveAll(skillDir)
+		} else {
+			// Try single file if directory doesn't exist
+			skillFile := filepath.Join(workspacePath, "skills", name+".md")
+			os.Remove(skillFile)
+		}
+		resp.Payload = map[string]string{"status": "deleted", "name": name}
+
+	case "rename_skill":
+		name, _ := req.Payload["name"].(string)
+		newName, _ := req.Payload["new_name"].(string)
+		workspacePath := getProgramDataPath()
+		oldDir := filepath.Join(workspacePath, "skills", name)
+		newDir := filepath.Join(workspacePath, "skills", newName)
+		if _, err := os.Stat(oldDir); err == nil {
+			os.Rename(oldDir, newDir)
+		}
+		resp.Payload = map[string]string{"status": "renamed", "name": name, "new_name": newName}
+
+	case "restore_default_skills":
+		backupPath, err := config.RestoreDefaultSkills()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			payload := map[string]string{"status": "restored"}
+			if backupPath != "" {
+				payload["backup_path"] = backupPath
+			}
+			resp.Payload = payload
+		}
+
+	case "restore_default_triggers":
+		backupPath, err := config.RestoreDefaultTriggers()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			cronEnabled, cronErr := config.IsCronTriggerEnabled()
+			if cronErr != nil {
+				slog.Warn("Failed to read cron trigger config after restore", "error", cronErr)
+			}
+			s.triggerManager.Clear()
+			if cronEnabled {
+				s.scheduler = scheduler.NewScheduler(s.db, func(agentID string, prompt string) error {
+					return s.resumeAgent(agentID, prompt)
+				})
+				s.scheduler.OnEvent = func(event map[string]interface{}) {
+					s.globalBroadcast(event)
+				}
+				s.triggerManager.Register(s.scheduler)
+			} else if s.scheduler != nil {
+				s.scheduler.Stop()
+				s.scheduler = nil
+			}
+
+			triggerDir := filepath.Join(config.GetConfigDir(), "triggers")
+			loader := agent.NewTriggerLoader(triggerDir)
+			scripts, loadErr := loader.Load()
+			if loadErr != nil {
+				slog.Warn("Failed to reload triggers after restore", "error", loadErr)
+			} else {
+				for _, st := range scripts {
+					s.triggerManager.Register(st)
+				}
+			}
+			s.triggerManager.Start(context.Background())
+			if s.scheduler != nil {
+				s.scheduler.Start(context.Background(), func(payload types.TriggerPayload) {
+					s.triggerManager.Emit(payload)
+				})
+				if err := s.scheduler.LoadTasks(); err != nil {
+					slog.Warn("Failed to reload tasks after trigger restore", "error", err)
+				}
+			}
+			payload := map[string]string{"status": "restored"}
+			if backupPath != "" {
+				payload["backup_path"] = backupPath
+			}
+			resp.Payload = payload
+		}
+
+	case "list_tools":
+		resp.Payload = map[string]interface{}{"tools": s.toolRegistry.ListTools()}
+
+	case "sync_skills":
+		workspacePath := getProgramDataPath()
+		loader := utils.NewSkillLoader(workspacePath)
+		skills, err := loader.LoadSkills()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]interface{}{"synced": len(skills), "results": map[string]bool{"all": true}}
+		}
+
+	case "get_usage":
+		days := 30
+		if d, ok := req.Payload["days"].(float64); ok {
+			days = int(d)
+		}
+		end := time.Now().UTC()
+		start := end.AddDate(0, 0, -days)
+		totals, _ := s.db.GetUsageTotals(start, end)
+		byModel, _ := s.db.GetUsageSummary(start, end)
+		byAgent, _ := s.db.GetUsageByAgentSummary(start, end)
+		byTool, _ := s.db.GetUsageByToolSummary(start, end)
+		bySkill, _ := s.db.GetUsageBySkillSummary(start, end)
+		daily, _ := s.db.GetDailyUsage(days)
+		resp.Payload = map[string]interface{}{
+			"totals":   totals,
+			"by_model": byModel,
+			"by_agent": byAgent,
+			"by_tool":  byTool,
+			"by_skill": bySkill,
+			"daily":    daily,
+		}
+
+	case "get_usage_history":
+		limit := 50
+		offset := 0
+		if l, ok := req.Payload["limit"].(float64); ok {
+			limit = int(l)
+		}
+		if o, ok := req.Payload["offset"].(float64); ok {
+			offset = int(o)
+		}
+		agentID, _ := req.Payload["agent_id"].(string)
+		provider, _ := req.Payload["provider"].(string)
+		model, _ := req.Payload["model"].(string)
+
+		records, err := s.db.GetUsageHistory(limit, offset, agentID, provider, model)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]interface{}{
+				"records": records,
+				"limit":   limit,
+				"offset":  offset,
+			}
+		}
+
+	case "get_api_keys":
+		cfg, _ := config.LoadConfig()
+		providers := []string{"openrouter", "anthropic", "claude-code", "openai", "gemini", "ollama", "lmstudio"}
+		if cfg != nil && cfg.CustomProviders != nil {
+			for name := range cfg.CustomProviders {
+				providers = append(providers, name)
+			}
+		}
+		results := make([]map[string]interface{}, 0)
+		for _, p := range providers {
+			var configured bool
+			if config.MockMode {
+				// In mock mode, never access keychain or env vars - always return false
+				configured = false
+			} else {
+				switch p {
+				case "ollama":
+					configured = true // Local provider typically does not require a key
+				case "lmstudio":
+					configured = true // Local provider typically does not require a key
+				case "claude-code":
+					configured = auth.IsClaudeCodeConnected() // OAuth-based authentication
+				default:
+					configured = config.GetKeychainPassword(p+"-api-key") != ""
+					if !configured && cfg != nil && cfg.CustomProviders != nil {
+						if cp, ok := cfg.CustomProviders[p]; ok {
+							configured = cp.BaseURL != ""
+						}
+					}
+				}
+			}
+
+			enabled := false
+			if cfg != nil && cfg.Providers != nil {
+				if pc, ok := cfg.Providers[p]; ok && pc.Enabled != nil {
+					enabled = *pc.Enabled
+				}
+			}
+
+			results = append(results, map[string]interface{}{
+				"provider":   p,
+				"configured": configured,
+				"enabled":    enabled,
+			})
+		}
+		resp.Payload = results
+
+	case "set_api_key":
+		provider, _ := req.Payload["provider"].(string)
+		key, _ := req.Payload["key"].(string)
+		if config.MockMode {
+			// In mock mode, don't actually store API keys - just return success
+			slog.Debug("Mock mode: skipping API key storage", "provider", provider)
+			resp.Payload = map[string]string{"status": "stored", "provider": provider}
+		} else {
+			err := config.SetKeychainPassword(provider+"-api-key", key)
+			if err != nil {
+				resp.Status = "error"
+				resp.Error = err.Error()
+			} else {
+				resp.Payload = map[string]string{"status": "stored", "provider": provider}
+			}
+		}
+
+	case "remove_api_key":
+		provider, _ := req.Payload["provider"].(string)
+		if config.MockMode {
+			// In mock mode, don't actually delete API keys - just return success
+			slog.Debug("Mock mode: skipping API key deletion", "provider", provider)
+			resp.Payload = map[string]string{"status": "deleted", "provider": provider}
+		} else {
+			err := config.DeleteKeychainPassword(provider + "-api-key")
+			if err != nil {
+				resp.Status = "error"
+				resp.Error = err.Error()
+			} else {
+				resp.Payload = map[string]string{"status": "deleted", "provider": provider}
+			}
+		}
+
+	case "approve_tool":
+		agentID, _ := req.Payload["agent_id"].(string)
+		toolCallID, _ := req.Payload["tool_call_id"].(string)
+		decision, _ := req.Payload["decision"].(string) // "allow", "reject", "always_allow"
+		toolName, _ := req.Payload["tool_name"].(string)
+		pattern, _ := req.Payload["pattern"].(string) // Only for "always_allow"
+
+		if decision == "always_allow" && pattern != "" && toolName != "" {
+			s.db.SaveToolApproval(toolName, pattern)
+		}
+
+		sa, err := s.getOrCreateStatefulAgent(agentID)
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+			s.safeWriteJSON(conn, resp)
+			return
+		}
+
+		if sa != nil {
+			sa.ApproveTool(toolCallID, decision)
+			resp.Payload = map[string]string{"status": "processed"}
+
+			// If the agent is not running, we need to resume it so it can process the approval
+			// (or at least start a new turn if the old loop was lost due to restart)
+			if !sa.IsRunning() {
+				slog.Info("Resuming agent after tool approval (agent was not running)", "agent_id", agentID)
+				s.resumeAgent(agentID, "")
+			}
+
+			// Log the resolution so the frontend can display the result in the history
+			payload := map[string]interface{}{
+				"tool_call_id": toolCallID,
+				"tool":         toolName,
+				"decision":     decision,
+			}
+			s.db.AppendAgentLog(agentID, "tool_approval_resolved", payload)
+
+			s.globalBroadcast(map[string]interface{}{
+				"type":       "execution_log",
+				"agent_id":   agentID,
+				"event_type": "tool_approval_resolved",
+				"payload":    payload,
+			})
+		} else {
+			resp.Status = "error"
+			resp.Error = "Agent not found"
+		}
+
+	case "list_tool_approvals":
+		approvals, err := s.db.ListToolApprovals()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = approvals
+		}
+
+	case "delete_tool_approval":
+		id, _ := req.Payload["id"].(string)
+		if err := s.db.DeleteToolApproval(id); err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "deleted"}
+		}
+
+	case "list_vault_secrets":
+		secrets, err := s.db.ListVaultSecrets()
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = secrets
+		}
+
+	case "set_vault_secret":
+		name, _ := req.Payload["name"].(string)
+		value, _ := req.Payload["value"].(string)
+		if name == "" || value == "" {
+			resp.Status = "error"
+			resp.Error = "name and value are required"
+		} else {
+			if config.MockMode {
+				slog.Debug("Mock mode: storing secret in memory", "name", name)
+				config.SetMockVaultSecret(name, value)
+				err := s.db.SaveVaultSecretName(name)
+				if err != nil {
+					resp.Status = "error"
+					resp.Error = err.Error()
+				} else {
+					resp.Payload = map[string]string{"status": "stored", "name": name}
+				}
+			} else {
+				err := config.SetKeychainPassword("vault-secret-"+name, value)
+				if err != nil {
+					resp.Status = "error"
+					resp.Error = err.Error()
+				} else {
+					err = s.db.SaveVaultSecretName(name)
+					if err != nil {
+						resp.Status = "error"
+						resp.Error = err.Error()
+					} else {
+						resp.Payload = map[string]string{"status": "stored", "name": name}
+					}
+				}
+			}
+
+			// Notify any agents waiting for this secret
+			s.mu.Lock()
+			for _, sa := range s.statefulAgents {
+				sa.SubmitSecret(name)
+			}
+			s.mu.Unlock()
+		}
+
+	case "remove_vault_secret":
+		name, _ := req.Payload["name"].(string)
+		if name == "" {
+			resp.Status = "error"
+			resp.Error = "name is required"
+		} else {
+			if config.MockMode {
+				slog.Debug("Mock mode: skipping vault secret deletion", "name", name)
+				err := s.db.DeleteVaultSecretName(name)
+				if err != nil {
+					resp.Status = "error"
+					resp.Error = err.Error()
+				} else {
+					resp.Payload = map[string]string{"status": "deleted", "name": name}
+				}
+			} else {
+				err := config.DeleteKeychainPassword("vault-secret-" + name)
+				if err != nil {
+					resp.Status = "error"
+					resp.Error = err.Error()
+				} else {
+					err = s.db.DeleteVaultSecretName(name)
+					if err != nil {
+						resp.Status = "error"
+						resp.Error = err.Error()
+					} else {
+						resp.Payload = map[string]string{"status": "deleted", "name": name}
+					}
+				}
+			}
+		}
+
+	case "get_version":
+		resp.Payload = map[string]string{"version": "0.1.0"}
+
+	case "list_workspace":
+		resp.Payload = map[string]string{"path": getProgramDataPath()}
+
+	case "open_workspace":
+		agentID, _ := req.Payload["agent_id"].(string)
+		path := s.getAgentWorkspacePath(agentID)
+		// Ensure it exists
+		os.MkdirAll(path, 0755)
+
+		var err error
+		if runtime.GOOS == "darwin" {
+			err = exec.Command("open", path).Run()
+		} else if runtime.GOOS == "windows" {
+			err = exec.Command("explorer", path).Run()
+		} else {
+			err = exec.Command("xdg-open", path).Run()
+		}
+
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "opened", "path": path}
+		}
+
+	case "open_folder":
+		name, _ := req.Payload["name"].(string)
+		if name == "" {
+			resp.Status = "error"
+			resp.Error = "folder name is required"
+			break
+		}
+
+		path := filepath.Join(config.GetConfigDir(), name)
+		// Ensure it exists
+		os.MkdirAll(path, 0755)
+
+		var err error
+		if runtime.GOOS == "darwin" {
+			err = exec.Command("open", path).Run()
+		} else if runtime.GOOS == "windows" {
+			err = exec.Command("explorer", path).Run()
+		} else {
+			err = exec.Command("xdg-open", path).Run()
+		}
+
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "opened", "path": path}
+		}
+
+	case "open_path":
+		path, _ := req.Payload["path"].(string)
+		if path == "" {
+			resp.Status = "error"
+			resp.Error = "path is required"
+			break
+		}
+
+		var err error
+		if runtime.GOOS == "darwin" {
+			err = exec.Command("open", path).Run()
+		} else if runtime.GOOS == "windows" {
+			err = exec.Command("explorer", path).Run()
+		} else {
+			err = exec.Command("xdg-open", path).Run()
+		}
+
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			resp.Payload = map[string]string{"status": "opened", "path": path}
+		}
+
+	case "get_status":
+		// Copy auth status for response
+		s.mu.RLock()
+		auth := make(map[string]string)
+		for k, v := range s.authStatus {
+			auth[k] = v
+		}
+		cli := make(map[string]string)
+		for k, v := range s.cliStatus {
+			cli[k] = v
+		}
+		s.mu.RUnlock()
+
+		resp.Payload = map[string]interface{}{
+			"status": "ok",
+			"components": map[string]string{
+				"database": "ok",
+				"server":   "ok",
+				"claude":   cli["claude"],
+				"codex":    cli["codex"],
+			},
+			"auth": auth,
+			"browser": map[string]interface{}{
+				"available_engines": utils.GetBrowserManager().GetAvailableEngines(),
+			},
+		}
+
+	case "login_cli":
+		cli, _ := req.Payload["cli"].(string)
+		var err error
+		if cli == "claude" {
+			if runtime.GOOS == "darwin" {
+				// On macOS, open a new Terminal window to run the login
+				script := `tell application "Terminal" to do script "claude"`
+				err = exec.Command("osascript", "-e", script).Run()
+			} else {
+				err = fmt.Errorf("login trigger not supported on this OS")
+			}
+		} else if cli == "codex" {
+			if runtime.GOOS == "darwin" {
+				script := `tell application "Terminal" to do script "codex login"`
+				err = exec.Command("osascript", "-e", script).Run()
+			} else {
+				err = fmt.Errorf("login trigger not supported on this OS")
+			}
+		} else {
+			err = fmt.Errorf("unknown CLI: %s", cli)
+		}
+
+		if err != nil {
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			// Clear auth cache to force re-check
+			s.mu.Lock()
+			s.lastAuthCheck = time.Time{}
+			s.mu.Unlock()
+			resp.Payload = map[string]string{"status": "triggered"}
+		}
+
+	case "install_cli":
+		cli, _ := req.Payload["cli"].(string)
+		if cli == "claude" {
+			err := runInstall("npm", "install", "-g", "@anthropic-ai/claude-code")
+			if err != nil {
+				resp.Status = "error"
+				resp.Error = err.Error()
+			}
+		} else if cli == "codex" {
+			// Replace with actual codex install command when known, assuming npm for now
+			err := runInstall("npm", "install", "-g", "codex-cli")
+			if err != nil {
+				resp.Status = "error"
+				resp.Error = err.Error()
+			}
+		} else {
+			resp.Status = "error"
+			resp.Error = "Unknown CLI: " + cli
+		}
+
+	case "clear_usage":
+		s.db.ClearUsage()
+		resp.Payload = map[string]string{"status": "cleared"}
+
+	case "clear_conversation":
+		agentID, _ := req.Payload["agent_id"].(string)
+		slog.Info("Clear conversation requested", "agent_id", agentID)
+
+		sa, err := s.getOrCreateStatefulAgent(agentID)
+		if err != nil {
+			slog.Error("Agent not found for clear conversation", "agent_id", agentID, "error", err)
+			resp.Status = "error"
+			resp.Error = err.Error()
+		} else {
+			// 0. Stop the agent loop completely if running
+			if sa.IsRunning() {
+				slog.Info("Stopping agent for conversation clear", "agent_id", agentID)
+				sa.Cancel()
+
+				// Wait for the loop to actually exit (up to 2 seconds)
+				for i := 0; i < 10; i++ {
+					if !sa.IsRunning() {
+						break
+					}
+					time.Sleep(200 * time.Millisecond)
+				}
+			}
+
+			// Also stop any active scope creation
+			if cancel, ok := s.proposing.Load(agentID); ok {
+				slog.Info("Cancelling active scope creation for conversation clear", "agent_id", agentID)
+				cancel.(context.CancelFunc)()
+				s.proposing.Delete(agentID)
+			}
+
+			// Wait a small amount of time for any pending DB operations to finish
+			time.Sleep(200 * time.Millisecond)
+
+			// 1. Clear files and internal state
+			archiveResults, err := sa.ClearConversation(context.Background())
+			if err != nil {
+				slog.Error("Failed to clear conversation files", "agent_id", agentID, "error", err)
+				resp.Status = "error"
+				resp.Error = "Failed to clear conversation files: " + err.Error()
+			} else {
+				// 2. Clear database logs and current scope
+				if err := s.db.ClearAgentLogs(agentID); err != nil {
+					slog.Error("Failed to clear conversation logs in DB", "agent_id", agentID, "error", err)
+					resp.Status = "error"
+					resp.Error = "Failed to clear conversation logs: " + err.Error()
+				} else {
+					if err := s.db.ClearAgentScope(agentID); err != nil {
+						slog.Error("Failed to clear agent scope in DB", "agent_id", agentID, "error", err)
+					}
+					slog.Info("Conversation logs cleared successfully", "agent_id", agentID)
+
+					// 3. Reset context usage
+					s.db.UpdateAgentContextUsage(agentID, 0, sa.MaxContextTokens)
+
+					// 4. Reset agent state to idle
+					s.db.UpdateAgentState(agentID, types.AgentStateIdle, nil)
+					sa.SetState(types.AgentStateIdle)
+
+					// 5. Add a "conversation_cleared" log entry so the UI shows something
+					hasArchivedFiles := false
+					logPayload := map[string]interface{}{}
+
+					if path, ok := archiveResults["archive_dir"]; ok {
+						logPayload["archive_dir"] = path
+					}
+					if path, ok := archiveResults["history_archive.md"]; ok {
+						logPayload["archive_path"] = path
+						logPayload["archive_file"] = filepath.Base(path)
+						hasArchivedFiles = true
+					}
+					if path, ok := archiveResults["full_history.jsonl"]; ok {
+						logPayload["history_path"] = path
+						logPayload["full_history"] = filepath.Base(path)
+						hasArchivedFiles = true
+					}
+
+					if hasArchivedFiles {
+						logPayload["message"] = "Conversation history has been cleared and archived to the workspace."
+					} else {
+						logPayload["message"] = "Conversation history has been cleared. (No previous history files were found to archive.)"
+					}
+					s.db.AppendAgentLog(agentID, "conversation_cleared", logPayload)
+
+					resp.Payload = map[string]string{"status": "cleared", "agent_id": agentID}
+
+					// 6. Broadcast updates
+					s.globalBroadcast(map[string]interface{}{
+						"type":     "conversation_cleared",
+						"agent_id": agentID,
+					})
+
+					s.globalBroadcast(map[string]interface{}{
+						"type":     "scope_approved",
+						"agent_id": agentID,
+						"scope_id": "",
+					})
+
+					// Refresh logs for all clients
+					logs, _ := s.db.ListAgentLogs(agentID)
+					slog.Info("Broadcasting logs_updated", "agent_id", agentID, "count", len(logs))
+					s.globalBroadcast(map[string]interface{}{
+						"type":     "logs_updated",
+						"agent_id": agentID,
+						"logs":     logs,
+					})
+
+					s.globalBroadcast(map[string]interface{}{
+						"type":               "agent_context_updated",
+						"agent_id":           agentID,
+						"context_tokens":     0,
+						"max_context_tokens": sa.MaxContextTokens,
+					})
+
+					s.globalBroadcast(map[string]interface{}{
+						"type":         "agent_state_changed",
+						"agent_id":     agentID,
+						"new_state":    types.AgentStateIdle,
+						"error_detail": nil,
+					})
+
+					// 7. Broadcast agent updated to clear scope in UI
+					updatedAgent, _ := s.db.GetAgent(agentID)
+					if updatedAgent != nil {
+						s.globalBroadcast(map[string]interface{}{
+							"type":     "agent_updated",
+							"agent_id": agentID,
+							"agent":    updatedAgent,
+						})
+					}
+				}
+			}
+		}
+
+	case "get_system_prompt":
+		prompt, _ := s.db.GetActiveSystemPrompt()
+		resp.Payload = map[string]interface{}{
+			"content":   prompt,
+			"is_custom": false,
+			"version":   nil,
+		}
+
+	case "get_system_prompt_versions":
+		prompt, _ := s.db.GetActiveSystemPrompt()
+		resp.Payload = map[string]interface{}{
+			"versions":        []interface{}{},
+			"default_content": prompt,
+		}
+
+	case "update_system_prompt":
+		// Placeholder for update system prompt
+		resp.Payload = map[string]interface{}{"status": "updated"}
+
+	case "revert_system_prompt":
+		// Placeholder for revert system prompt
+		resp.Payload = map[string]interface{}{"status": "reverted"}
+
+	case "reset_system_prompt":
+		// Placeholder for reset system prompt
+		resp.Payload = map[string]string{"status": "reset"}
+
+	default:
+		resp.Status = "error"
+		resp.Error = "Unknown request type: " + req.Type
+	}
+
+	s.safeWriteJSON(conn, resp)
+}

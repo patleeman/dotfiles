@@ -1,0 +1,154 @@
+2025-12-31T13:22:53.794Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (14.6ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-31T13:22:53.815Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-31T13:22:53.815Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-31T13:22:53.815Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-31T13:22:53.817Z [DEBUG] LSP server manager initialized successfully
+2025-12-31T13:22:53.817Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-31T13:22:53.817Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-31T13:22:53.827Z [DEBUG] Stats cache is up to date
+2025-12-31T13:22:53.830Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-31T13:22:53.974Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (141.9ms): cursor --version
+2025-12-31T13:22:53.974Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-31T13:22:53.986Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-31T13:22:53.986Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-31T13:22:53.986Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-31T13:22:53.987Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767187373986-cvwlat.sh
+2025-12-31T13:22:53.987Z [DEBUG] Shell binary exists: true
+2025-12-31T13:22:53.987Z [DEBUG] Execution timeout: 10000ms
+2025-12-31T13:22:53.988Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/165cf1ed-1da4-4760-a1cd-381ee390f119-agent-165cf1ed-1da4-4760-a1cd-381ee390f119.json.tmp.97237.1767187373988
+2025-12-31T13:22:53.995Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (7.4ms)
+2025-12-31T13:22:53.995Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-31T13:22:53.995Z [DEBUG] Renaming /Users/patrick/.claude/todos/165cf1ed-1da4-4760-a1cd-381ee390f119-agent-165cf1ed-1da4-4760-a1cd-381ee390f119.json.tmp.97237.1767187373988 to /Users/patrick/.claude/todos/165cf1ed-1da4-4760-a1cd-381ee390f119-agent-165cf1ed-1da4-4760-a1cd-381ee390f119.json
+2025-12-31T13:22:53.995Z [DEBUG] File /Users/patrick/.claude/todos/165cf1ed-1da4-4760-a1cd-381ee390f119-agent-165cf1ed-1da4-4760-a1cd-381ee390f119.json written atomically
+2025-12-31T13:22:54.014Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-31T13:22:54.014Z [DEBUG] Total plugin skills loaded: 0
+2025-12-31T13:22:54.014Z [DEBUG] Total plugin commands loaded: 0
+2025-12-31T13:22:54.015Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-31T13:22:54.018Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-31T13:22:54.018Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-31T13:22:54.039Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2025-12-31T13:22:54.039Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2025-12-31T13:22:54.039Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2025-12-31T13:22:54.039Z [DEBUG] Path /Users/patrick/workingdir/personal-agent/packages/desktop/src-tauri already tracked for repo patleeman/familiar
+2025-12-31T13:22:54.050Z [DEBUG] Total plugin agents loaded: 0
+2025-12-31T13:22:54.057Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2025-12-31T13:22:54.059Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2025-12-31T13:22:54.059Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:22:54.059Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2025-12-31T13:22:54.065Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.1ms)
+2025-12-31T13:22:54.067Z [DEBUG] Total plugin output styles loaded: 0
+2025-12-31T13:22:54.073Z [DEBUG] Remote settings: Retry 1/5 after 594.853068436553ms
+2025-12-31T13:22:54.074Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2025-12-31T13:22:54.074Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:22:54.074Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2025-12-31T13:22:54.074Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2025-12-31T13:22:54.074Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:22:54.074Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2025-12-31T13:22:54.078Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-31T13:22:54.078Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-31T13:22:54.078Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-31T13:22:54.078Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-31T13:22:54.079Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2025-12-31T13:22:54.079Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:22:54.079Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T13:22:54.081Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-31T13:22:54.084Z [DEBUG] Skills and commands included in Skill tool:
+2025-12-31T13:22:54.242Z [DEBUG] Shell snapshot created successfully (43571 bytes)
+2025-12-31T13:22:54.274Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97237.1767187374274
+2025-12-31T13:22:54.274Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T13:22:54.280Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.6ms)
+2025-12-31T13:22:54.280Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2025-12-31T13:22:54.280Z [DEBUG] Applied original permissions to temp file
+2025-12-31T13:22:54.280Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97237.1767187374274 to /Users/patrick/.claude.json
+2025-12-31T13:22:54.280Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T13:22:54.281Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97237.1767187374281
+2025-12-31T13:22:54.281Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T13:22:54.286Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.2ms)
+2025-12-31T13:22:54.286Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2025-12-31T13:22:54.286Z [DEBUG] Applied original permissions to temp file
+2025-12-31T13:22:54.286Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97237.1767187374281 to /Users/patrick/.claude.json
+2025-12-31T13:22:54.287Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T13:22:54.831Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97237.1767187374831
+2025-12-31T13:22:54.831Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T13:22:54.838Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (7.4ms)
+2025-12-31T13:22:54.838Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2025-12-31T13:22:54.838Z [DEBUG] Applied original permissions to temp file
+2025-12-31T13:22:54.838Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97237.1767187374831 to /Users/patrick/.claude.json
+2025-12-31T13:22:54.839Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T13:22:54.873Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97237.1767187374873
+2025-12-31T13:22:54.873Z [DEBUG] Preserving file permissions: 100600
+2025-12-31T13:22:54.878Z [DEBUG] Temp file written successfully, size: 53334 bytes
+2025-12-31T13:22:54.878Z [DEBUG] Applied original permissions to temp file
+2025-12-31T13:22:54.878Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97237.1767187374873 to /Users/patrick/.claude.json
+2025-12-31T13:22:54.878Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-31T13:22:55.156Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T13:22:55.160Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T13:22:55.162Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T13:22:55.699Z [DEBUG] Remote settings: No settings found (404)
+2025-12-31T13:22:55.699Z [DEBUG] Programmatic settings change notification for policySettings
+2025-12-31T13:22:55.699Z [DEBUG] Plugin hooks: reloading due to policySettings change
+2025-12-31T13:22:55.701Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-31T13:22:55.704Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-31T13:22:59.073Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-31T13:22:59.073Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:22:59.073Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T13:23:07.343Z [DEBUG] executePreToolHooks called for tool: Bash
+2025-12-31T13:23:07.344Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2025-12-31T13:23:07.344Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:23:07.344Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2025-12-31T13:23:07.349Z [DEBUG] tree-sitter: WASM files not found
+2025-12-31T13:23:07.353Z [DEBUG] No session environment scripts found
+2025-12-31T13:23:07.397Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2025-12-31T13:23:07.397Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:23:07.397Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2025-12-31T13:23:07.413Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-31T13:23:07.413Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-31T13:23:07.413Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-31T13:23:07.413Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-31T13:23:07.675Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-31T13:23:08.772Z [DEBUG] Stream started - received first chunk
+2025-12-31T13:23:09.290Z [ERROR] Error: Error: 1P event logging: 41 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T13:23:09.290Z [ERROR] Error: Error: {"stack":"Error: Failed to export 41 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 41 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T13:23:12.875Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-31T13:23:12.875Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:23:12.875Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T13:23:14.333Z [ERROR] AggregateError: AggregateError
+    at m3A.from (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:43:63985)
+    at VU.<anonymous> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:57:10016)
+    at VU.emit (node:events:531:35)
+    at VU.emit (node:domain:488:12)
+    at bw1.<computed> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:56:3432)
+    at ClientRequest.emit (node:events:531:35)
+    at ClientRequest.emit (node:domain:488:12)
+    at emitErrorEvent (node:_http_client:103:11)
+    at TLSSocket.socketErrorListener (node:_http_client:506:5)
+    at TLSSocket.emit (node:events:519:28)
+    at fzA.request (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:59:2130)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async zR0 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4868:4053)
+2025-12-31T13:23:15.066Z [ERROR] Error: Error: 1P event logging: 7 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T13:23:15.066Z [ERROR] Error: Error: {"stack":"Error: Failed to export 7 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 7 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-12-31T13:23:15.870Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2025-12-31T13:23:15.870Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:23:15.870Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-31T13:23:15.871Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2025-12-31T13:23:15.871Z [DEBUG] Found 0 hook matchers in settings
+2025-12-31T13:23:15.871Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

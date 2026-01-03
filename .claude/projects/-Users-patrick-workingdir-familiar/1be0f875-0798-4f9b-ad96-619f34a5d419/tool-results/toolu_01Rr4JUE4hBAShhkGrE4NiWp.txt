@@ -1,0 +1,12 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   123→
+   124→          <div className="space-y-8">
+   125→            {/* Provider Summary Table */}
+   126→            <section className="space-y-2">
+   127→              <div className="text-[10px] font-black text-accent uppercase tracking-widest px-1">
+   128→                Provider Summary
+   129→              </div>
+   130→              <div className="border border-border/20 bg-surface/5">
+   131→                <table className="w-full text-left border-collapse table-fixed">
+   132→                  <thead>
+   133→                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">

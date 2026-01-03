@@ -1,0 +1,169 @@
+     1→import { test, expect } from './fixtures/test-fixtures';
+     2→
+     3→test.describe('Usage View', () => {
+     4→  test.beforeEach(async ({ usagePage }) => {
+     5→    await usagePage.goto();
+     6→  });
+     7→
+     8→  test('should display usage page', async ({ page }) => {
+     9→    await expect(page).toHaveURL('/usage');
+    10→  });
+    11→
+    12→  test('should show resource usage header', async ({ page }) => {
+    13→    await expect(page.locator('text=Resource Usage')).toBeVisible();
+    14→  });
+    15→
+    16→  test('should display summary stats', async ({ page }) => {
+    17→    // Should show request count, tokens, cost
+    18→    await expect(page.locator('text=Requests')).toBeVisible();
+    19→  });
+    20→
+    21→  test('should show input token count', async ({ page }) => {
+    22→    await expect(page.locator('text=In')).toBeVisible();
+    23→  });
+    24→
+    25→  test('should show output token count', async ({ page }) => {
+    26→    await expect(page.locator('text=Out')).toBeVisible();
+    27→  });
+    28→
+    29→  test('should show cost', async ({ page }) => {
+    30→    await expect(page.locator('text=Cost')).toBeVisible();
+    31→  });
+    32→});
+    33→
+    34→test.describe('Usage - Provider Summary', () => {
+    35→  test.beforeEach(async ({ usagePage }) => {
+    36→    await usagePage.goto();
+    37→  });
+    38→
+    39→  test('should display provider summary section', async ({ page }) => {
+    40→    await expect(page.locator('text=Provider Summary')).toBeVisible();
+    41→  });
+    42→
+    43→  test('should show provider table headers', async ({ page }) => {
+    44→    await expect(page.locator('text=Provider')).toBeVisible();
+    45→    await expect(page.locator('text=Total Cost')).toBeVisible();
+    46→  });
+    47→
+    48→  test('should display provider data or empty state', async ({ page }) => {
+    49→    // Either show provider data or "No data available"
+    50→    const providerData = page.locator('table tbody tr');
+    51→    const emptyState = page.locator('text=No data available');
+    52→
+    53→    // One of these should be visible
+    54→    const hasData = await providerData.first().isVisible().catch(() => false);
+    55→    const hasEmpty = await emptyState.isVisible().catch(() => false);
+    56→
+    57→    expect(hasData || hasEmpty).toBe(true);
+    58→  });
+    59→});
+    60→
+    61→test.describe('Usage - Model Utilization', () => {
+    62→  test.beforeEach(async ({ usagePage }) => {
+    63→    await usagePage.goto();
+    64→  });
+    65→
+    66→  test('should display model utilization section', async ({ page }) => {
+    67→    await expect(page.locator('text=Model Utilization')).toBeVisible();
+    68→  });
+    69→
+    70→  test('should show model table headers', async ({ page }) => {
+    71→    await expect(page.locator('text=Model')).toBeVisible();
+    72→  });
+    73→
+    74→  test('should display model data or empty state', async ({ page }) => {
+    75→    // Look for model entries or empty state
+    76→    const modelData = page.locator('table').nth(1).locator('tbody tr');
+    77→    const emptyState = page.locator('text=No data available');
+    78→
+    79→    const hasData = await modelData.first().isVisible().catch(() => false);
+    80→    const hasEmpty = await emptyState.first().isVisible().catch(() => false);
+    81→
+    82→    expect(hasData || hasEmpty).toBe(true);
+    83→  });
+    84→});
+    85→
+    86→test.describe('Usage - Agent Usage', () => {
+    87→  test.beforeEach(async ({ usagePage }) => {
+    88→    await usagePage.goto();
+    89→  });
+    90→
+    91→  test('should display agent usage section', async ({ page }) => {
+    92→    await expect(page.locator('text=Agent Usage')).toBeVisible();
+    93→  });
+    94→
+    95→  test('should show agent table headers', async ({ page }) => {
+    96→    await expect(page.locator('text=Agent')).toBeVisible();
+    97→    await expect(page.locator('text=Calls')).toBeVisible();
+    98→  });
+    99→
+   100→  test('should display agent usage data or empty state', async ({ page }) => {
+   101→    // Look for agent entries or empty state
+   102→    const agentData = page.locator('table').nth(2).locator('tbody tr');
+   103→    const emptyState = page.locator('text=No data available');
+   104→
+   105→    const hasData = await agentData.first().isVisible().catch(() => false);
+   106→    const hasEmpty = await emptyState.first().isVisible().catch(() => false);
+   107→
+   108→    expect(hasData || hasEmpty).toBe(true);
+   109→  });
+   110→});
+   111→
+   112→test.describe('Usage - Tool Output Volume', () => {
+   113→  test.beforeEach(async ({ usagePage }) => {
+   114→    await usagePage.goto();
+   115→  });
+   116→
+   117→  test('should display tool output volume section', async ({ page }) => {
+   118→    await expect(page.locator('text=Tool Output Volume')).toBeVisible();
+   119→  });
+   120→
+   121→  test('should show description about token costs', async ({ page }) => {
+   122→    await expect(page.locator('text=Tracks the volume')).toBeVisible();
+   123→  });
+   124→
+   125→  test('should show tool table headers', async ({ page }) => {
+   126→    await expect(page.locator('text=Tool')).toBeVisible();
+   127→    await expect(page.locator('text=Est. Volume')).toBeVisible();
+   128→  });
+   129→});
+   130→
+   131→test.describe('Usage - Skill Output Volume', () => {
+   132→  test.beforeEach(async ({ usagePage }) => {
+   133→    await usagePage.goto();
+   134→  });
+   135→
+   136→  test('should display skill output volume section', async ({ page }) => {
+   137→    await expect(page.locator('text=Skill Output Volume')).toBeVisible();
+   138→  });
+   139→
+   140→  test('should show skill table headers', async ({ page }) => {
+   141→    // Look for skill-related headers in the last table
+   142→    await expect(page.locator('text=Skill').last()).toBeVisible();
+   143→  });
+   144→});
+   145→
+   146→test.describe('Usage - Data Formatting', () => {
+   147→  test.beforeEach(async ({ usagePage }) => {
+   148→    await usagePage.goto();
+   149→  });
+   150→
+   151→  test('should format token counts with commas', async ({ page }) => {
+   152→    // If there's data, check formatting
+   153→    await page.waitForTimeout(1000);
+   154→
+   155→    // Token counts should be formatted (e.g., "1,234" not "1234")
+   156→    // This is a visual check - actual assertion would depend on data
+   157→  });
+   158→
+   159→  test('should format costs with dollar sign', async ({ page }) => {
+   160→    // Cost values should have $ prefix
+   161→    const costValues = page.locator('text=$');
+   162→    expect(await costValues.count()).toBeGreaterThan(0);
+   163→  });
+   164→});
+   165→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

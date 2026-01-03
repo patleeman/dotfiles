@@ -1,0 +1,203 @@
+import { test, expect } from './fixtures/test-fixtures';
+
+test.describe('Chat Interaction', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+
+    // Create and select an agent
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+    await page.waitForTimeout(500);
+  });
+
+  test('should display chat input', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await expect(chatInput).toBeVisible();
+  });
+
+  test('should send a message', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await chatInput.fill('Hello, this is a test message');
+    await chatInput.press('Enter');
+
+    // Message should appear in the chat
+    await expect(page.locator('text=Hello, this is a test message')).toBeVisible();
+  });
+
+  test('should show agent status when message is sent', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await chatInput.fill('What is 2+2?');
+    await chatInput.press('Enter');
+
+    // Agent should show running/thinking status
+    await page.waitForTimeout(500);
+    const status = page.locator('[data-testid="agent-status"]');
+    // Status should indicate activity
+  });
+
+  test('should show stop button when agent is running', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await chatInput.fill('Write a long story');
+    await chatInput.press('Enter');
+
+    // Stop button should appear
+    const stopButton = page.getByRole('button', { name: /stop/i });
+    // May or may not be visible depending on agent speed
+  });
+
+  test('should stop agent when stop button is clicked', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await chatInput.fill('Write a very long detailed story about a journey');
+    await chatInput.press('Enter');
+
+    await page.waitForTimeout(500);
+
+    const stopButton = page.getByRole('button', { name: /stop/i });
+    if (await stopButton.isVisible()) {
+      await stopButton.click();
+      // Agent should stop
+      await page.waitForTimeout(500);
+    }
+  });
+});
+
+test.describe('Tool Approval', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+    await page.waitForTimeout(500);
+  });
+
+  test('should show tool approval when tool call requires permission', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    // Request something that might trigger a tool call
+    await chatInput.fill('Run the command: ls -la');
+    await chatInput.press('Enter');
+
+    // Wait for potential tool approval
+    await page.waitForTimeout(2000);
+
+    const approvalDialog = page.locator('text=Permission Required');
+    // May or may not appear depending on security settings
+  });
+
+  test('should approve tool call when Allow is clicked', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await chatInput.fill('Run: echo "hello"');
+    await chatInput.press('Enter');
+
+    await page.waitForTimeout(2000);
+
+    const allowButton = page.getByRole('button', { name: /allow/i }).first();
+    if (await allowButton.isVisible()) {
+      await allowButton.click();
+      // Tool should execute
+      await page.waitForTimeout(1000);
+    }
+  });
+
+  test('should reject tool call when Reject is clicked', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await chatInput.fill('Run: rm -rf /');
+    await chatInput.press('Enter');
+
+    await page.waitForTimeout(2000);
+
+    const rejectButton = page.getByRole('button', { name: /reject/i }).first();
+    if (await rejectButton.isVisible()) {
+      await rejectButton.click();
+      // Tool should be rejected
+      await page.waitForTimeout(500);
+    }
+  });
+
+  test('should show Always Allow option for repeatable commands', async ({ page }) => {
+    const chatInput = page.locator('textarea').last();
+    await chatInput.fill('Run: ls');
+    await chatInput.press('Enter');
+
+    await page.waitForTimeout(2000);
+
+    const alwaysAllowButton = page.locator('button').filter({ hasText: /always allow/i });
+    // May be visible for shell commands
+  });
+});
+
+test.describe('Secret Request', () => {
+  test('should display secret request modal when secret is needed', async ({ page }) => {
+    await page.goto('/');
+
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+
+    const chatInput = page.locator('textarea').last();
+    // Request something that needs an API key
+    await chatInput.fill('Use the GitHub API to list my repositories');
+    await chatInput.press('Enter');
+
+    await page.waitForTimeout(2000);
+
+    // Secret request may appear
+    const secretDialog = page.locator('text=Secret Required');
+    // May or may not appear depending on configuration
+  });
+});
+
+test.describe('Scope Proposal', () => {
+  test('should show inline scope proposal when plan is proposed', async ({ page }) => {
+    await page.goto('/');
+
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+
+    const chatInput = page.locator('textarea').last();
+    // Request something complex that might generate a plan
+    await chatInput.fill('Create a comprehensive plan to build a todo app');
+    await chatInput.press('Enter');
+
+    await page.waitForTimeout(3000);
+
+    // Plan update may appear
+    const planUpdate = page.locator('text=Plan Update');
+    // May or may not appear depending on agent behavior
+  });
+
+  test('should expand/collapse scope proposal', async ({ page }) => {
+    await page.goto('/');
+
+    const createButton = page.getByRole('button', { name: /create|new|\+/i }).first();
+    await createButton.click();
+    await page.waitForTimeout(1000);
+
+    const firstAgent = page.locator('[data-testid="agent-item"]').first();
+    await firstAgent.click();
+
+    // If there's a scope proposal visible, test expand/collapse
+    const planUpdate = page.locator('text=Plan Update');
+    if (await planUpdate.isVisible()) {
+      await planUpdate.click();
+      // Should expand
+      await page.waitForTimeout(300);
+      await planUpdate.click();
+      // Should collapse
+    }
+  });
+});

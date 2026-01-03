@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+    51→  if (isLoading) {
+    52→    return (
+    53→      <div className="flex flex-col items-center justify-center h-full bg-background font-mono space-y-6">
+    54→        <div className="flex flex-col items-center gap-2">
+    55→          <span className="text-accent font-black uppercase tracking-[0.2em] text-[11px] animate-pulse">
+    56→            Loading usage data...
+    57→          </span>
+    58→          <span className="text-text-primary/30 text-[9px] uppercase tracking-[0.2em] font-black">
+    59→            Fetching metrics
+    60→          </span>
+    61→        </div>
+    62→        <div className="text-accent/20 animate-pulse font-black text-xl">_</div>
+    63→      </div>
+    64→    );

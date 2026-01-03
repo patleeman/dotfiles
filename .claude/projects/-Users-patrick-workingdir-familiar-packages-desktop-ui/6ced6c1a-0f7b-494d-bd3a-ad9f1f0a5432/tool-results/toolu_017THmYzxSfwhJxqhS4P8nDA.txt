@@ -1,0 +1,16 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/SkillsView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   166→          </div>
+   167→        </div>
+   168→      </div>
+   169→
+   170→      <DropdownMenu
+   171→        data-testid="context-menu"
+   172→        isOpen={!!contextMenu}
+   173→        onClose={() => setContextMenu(null)}
+   174→        position={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : { x: 0, y: 0 }}
+   175→        title={contextMenu?.skillName}
+   176→      >
+   177→        <DropdownMenuItem
+   178→          onClick={() => {
+   179→            if (contextMenu) handleAction(contextMenu.skillName, 'edit');
+   180→            setContextMenu(null);

@@ -1,0 +1,195 @@
+2026-01-01T16:20:36.364Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (16.8ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-01T16:20:36.386Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-01T16:20:36.386Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-01T16:20:36.386Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-01T16:20:36.389Z [DEBUG] LSP server manager initialized successfully
+2026-01-01T16:20:36.389Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-01T16:20:36.389Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-01T16:20:36.400Z [DEBUG] Stats cache is up to date
+2026-01-01T16:20:36.402Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-01T16:20:36.558Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (149.5ms): cursor --version
+2026-01-01T16:20:36.559Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-01-01T16:20:36.572Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-01T16:20:36.572Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-01T16:20:36.572Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-01T16:20:36.573Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767284436572-2xe5tt.sh
+2026-01-01T16:20:36.573Z [DEBUG] Shell binary exists: true
+2026-01-01T16:20:36.573Z [DEBUG] Execution timeout: 10000ms
+2026-01-01T16:20:36.574Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/a20e24d2-73f2-4b2b-995d-a082c5988d29-agent-a20e24d2-73f2-4b2b-995d-a082c5988d29.json.tmp.97099.1767284436574
+2026-01-01T16:20:36.582Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (8.4ms)
+2026-01-01T16:20:36.582Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-01T16:20:36.582Z [DEBUG] Renaming /Users/patrick/.claude/todos/a20e24d2-73f2-4b2b-995d-a082c5988d29-agent-a20e24d2-73f2-4b2b-995d-a082c5988d29.json.tmp.97099.1767284436574 to /Users/patrick/.claude/todos/a20e24d2-73f2-4b2b-995d-a082c5988d29-agent-a20e24d2-73f2-4b2b-995d-a082c5988d29.json
+2026-01-01T16:20:36.582Z [DEBUG] File /Users/patrick/.claude/todos/a20e24d2-73f2-4b2b-995d-a082c5988d29-agent-a20e24d2-73f2-4b2b-995d-a082c5988d29.json written atomically
+2026-01-01T16:20:36.657Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-01-01T16:20:36.657Z [DEBUG] Total plugin skills loaded: 0
+2026-01-01T16:20:36.657Z [DEBUG] Total plugin commands loaded: 0
+2026-01-01T16:20:36.657Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-01T16:20:36.660Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2026-01-01T16:20:36.661Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2026-01-01T16:20:36.688Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-01T16:20:36.688Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-01T16:20:36.688Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-01T16:20:36.688Z [DEBUG] Path /Users/patrick/workingdir/personal-agent/packages/desktop/src-tauri already tracked for repo patleeman/familiar
+2026-01-01T16:20:36.701Z [DEBUG] Total plugin agents loaded: 0
+2026-01-01T16:20:36.708Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-01-01T16:20:36.709Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-01T16:20:36.709Z [DEBUG] Found 0 hook matchers in settings
+2026-01-01T16:20:36.709Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-01T16:20:36.718Z [DEBUG] Total plugin output styles loaded: 0
+2026-01-01T16:20:36.723Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-01T16:20:36.723Z [DEBUG] Found 0 hook matchers in settings
+2026-01-01T16:20:36.723Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-01T16:20:36.723Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-01T16:20:36.723Z [DEBUG] Found 0 hook matchers in settings
+2026-01-01T16:20:36.723Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-01T16:20:36.728Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-01T16:20:36.728Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-01T16:20:36.728Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-01T16:20:36.728Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-01T16:20:36.729Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-01T16:20:36.729Z [DEBUG] Found 0 hook matchers in settings
+2026-01-01T16:20:36.729Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-01T16:20:36.731Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2026-01-01T16:20:36.734Z [DEBUG] Skills and commands included in Skill tool:
+2026-01-01T16:20:36.749Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.3ms)
+2026-01-01T16:20:36.849Z [DEBUG] Shell snapshot created successfully (43571 bytes)
+2026-01-01T16:20:40.408Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97099.1767284440408
+2026-01-01T16:20:40.408Z [DEBUG] Preserving file permissions: 100600
+2026-01-01T16:20:40.415Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (7.1ms)
+2026-01-01T16:20:40.415Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2026-01-01T16:20:40.416Z [DEBUG] Applied original permissions to temp file
+2026-01-01T16:20:40.416Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97099.1767284440408 to /Users/patrick/.claude.json
+2026-01-01T16:20:40.416Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-01T16:20:40.419Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97099.1767284440419
+2026-01-01T16:20:40.419Z [DEBUG] Preserving file permissions: 100600
+2026-01-01T16:20:40.423Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2026-01-01T16:20:40.423Z [DEBUG] Applied original permissions to temp file
+2026-01-01T16:20:40.423Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97099.1767284440419 to /Users/patrick/.claude.json
+2026-01-01T16:20:40.424Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-01T16:20:40.427Z [DEBUG] Remote settings: Retry 1/5 after 592.3042910781263ms
+2026-01-01T16:20:41.163Z [ERROR] Error: Error: Connection error.
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:4542)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:4211
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2262
+    at async gT3 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1006:16947)
+    at async bmB (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2195)
+    at async RyA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:52)
+    at async _yA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:261)
+    at async py2 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2171:530)
+2026-01-01T16:20:41.280Z [DEBUG] Remote settings: Retry 2/5 after 1163.3440662663209ms
+2026-01-01T16:20:41.923Z [ERROR] Error: Error: 1P event logging: 20 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:20:42.701Z [DEBUG] Remote settings: Retry 3/5 after 2248.0015375311773ms
+2026-01-01T16:20:45.206Z [DEBUG] Remote settings: Retry 4/5 after 4807.376094111817ms
+2026-01-01T16:20:47.428Z [ERROR] Error: Error: 1P event logging: 1 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:20:50.267Z [DEBUG] Remote settings: Retry 5/5 after 8512.588249367018ms
+2026-01-01T16:20:50.464Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97099.1767284450464
+2026-01-01T16:20:50.464Z [DEBUG] Preserving file permissions: 100600
+2026-01-01T16:20:50.470Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.6ms)
+2026-01-01T16:20:50.470Z [DEBUG] Temp file written successfully, size: 53333 bytes
+2026-01-01T16:20:50.470Z [DEBUG] Applied original permissions to temp file
+2026-01-01T16:20:50.470Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97099.1767284450464 to /Users/patrick/.claude.json
+2026-01-01T16:20:50.471Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-01T16:20:50.489Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.97099.1767284450489
+2026-01-01T16:20:50.489Z [DEBUG] Preserving file permissions: 100600
+2026-01-01T16:20:50.494Z [DEBUG] Temp file written successfully, size: 53334 bytes
+2026-01-01T16:20:50.494Z [DEBUG] Applied original permissions to temp file
+2026-01-01T16:20:50.494Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.97099.1767284450489 to /Users/patrick/.claude.json
+2026-01-01T16:20:50.494Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-01T16:20:50.764Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2026-01-01T16:20:50.767Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2026-01-01T16:20:50.770Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2026-01-01T16:20:55.739Z [ERROR] Error: Error: 1P event logging: 54 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:21:01.001Z [ERROR] Error: Error: 1P event logging: 14 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:21:01.002Z [ERROR] Error: Error: {"stack":"Error: Failed to export 14 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 14 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:21:14.308Z [ERROR] Error: Error: 1P event logging: 9 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:21:14.308Z [ERROR] Error: Error: {"stack":"Error: Failed to export 9 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 9 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:21:32.838Z [ERROR] Error: Error: 1P event logging: 9 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:21:32.838Z [ERROR] Error: Error: {"stack":"Error: Failed to export 9 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 9 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:22:08.600Z [ERROR] Error: Error: 1P event logging: 6 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:22:08.600Z [ERROR] Error: Error: {"stack":"Error: Failed to export 6 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 6 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:22:13.860Z [ERROR] Error: Error: 1P event logging: 3 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:22:13.860Z [ERROR] Error: Error: {"stack":"Error: Failed to export 3 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 3 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:22:41.295Z [ERROR] Error: Error: 1P event logging: 3 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:22:41.295Z [ERROR] Error: Error: {"stack":"Error: Failed to export 3 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","message":"Failed to export 3 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-01-01T16:22:47.936Z [ERROR] Error in non-streaming fallback: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWgxzvREPp5tyhWnQo2Ug"}
+2026-01-01T16:22:47.937Z [ERROR] Error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CWgxzvREPp5tyhWnQo2Ug"}
+    at F9.generate (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:510:11051)
+    at OT.makeStatusError (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:2195)
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:5420)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async SW9.d71.model (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6345)
+    at async d71 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1346:19540)
+    at async SW9 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4593:6499)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3799
+    at async d00 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2037)
+    at async zHA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4591:3769)
+2026-01-01T16:22:47.954Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-01T16:22:47.954Z [DEBUG] Found 0 hook matchers in settings
+2026-01-01T16:22:47.954Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-01T16:22:47.954Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2026-01-01T16:22:47.954Z [DEBUG] Found 0 hook matchers in settings
+2026-01-01T16:22:47.954Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

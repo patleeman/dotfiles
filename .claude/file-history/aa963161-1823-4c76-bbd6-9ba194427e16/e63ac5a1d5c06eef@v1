@@ -1,0 +1,42 @@
+import React from 'react';
+import { Settings, Cpu, Shield, Keyboard } from 'lucide-react';
+import { SidebarSection, SidebarItem } from '../ui';
+
+interface SettingsSidebarProps {
+  activeTab: string;
+  onTabChange: (tab: any) => void;
+}
+
+export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeTab, onTabChange }) => {
+  const navItems = [
+    { id: 'general', label: 'General', icon: <Settings size={12} /> },
+    { id: 'models', label: 'Models', icon: <Cpu size={12} /> },
+    { id: 'security', label: 'Security', icon: <Shield size={12} /> },
+    { id: 'shortcuts', label: 'Shortcuts', icon: <Keyboard size={12} /> },
+  ];
+
+  return (
+    <div className="flex flex-col h-full bg-[#0f1117] select-none">
+      <div className="p-3 border-b border-[#1e293b]">
+        <span className="text-[12px] font-medium text-[#e2e8f0]">Settings</span>
+        <p className="text-[11px] text-[#64748b] mt-1">
+          Configure application settings
+        </p>
+      </div>
+
+      <nav className="flex-1 p-2 overflow-y-auto">
+        <SidebarSection title="Configuration">
+          {navItems.map((item) => (
+            <SidebarItem
+              key={item.id}
+              label={item.label}
+              icon={item.icon}
+              active={activeTab === item.id}
+              onClick={() => onTabChange(item.id)}
+            />
+          ))}
+        </SidebarSection>
+      </nav>
+    </div>
+  );
+};

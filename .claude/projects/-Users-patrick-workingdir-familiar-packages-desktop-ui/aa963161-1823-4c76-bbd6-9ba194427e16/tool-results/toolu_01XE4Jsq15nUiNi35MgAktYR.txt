@@ -1,0 +1,731 @@
+     1→import React, { useState, useEffect, useRef } from 'react';
+     2→import { useAgents } from '../../context/AgentContext';
+     3→import { useNavigate } from 'react-router-dom';
+     4→import { ChevronRight, ClipboardList, Edit2, Check, Play, Pause, Zap, Folder, X, Trash2, PanelRight, PanelLeft, MoreHorizontal, Target, Compass, Cpu, Loader2, Settings } from 'lucide-react';
+     5→import { clsx } from 'clsx';
+     6→import { AgentSettings } from './AgentSettings';
+     7→import { api, type Attachment, isSubAgentManagedCLI } from '../../lib/api';
+     8→import { Command, open } from '@tauri-apps/plugin-shell';
+     9→import { ask, message } from '@tauri-apps/plugin-dialog';
+    10→import { useQuery } from '@tanstack/react-query';
+    11→import ReactMarkdown from 'react-markdown';
+    12→import { ChatInput } from './ChatInput';
+    13→import { LogViewer } from './LogViewer';
+    14→import { SecretRequest } from './SecretRequest';
+    15→import { isHotkey } from '../../lib/hotkeys';
+    16→
+    17→export const AgentWorkspace: React.FC = () => {
+    18→  const { agents, tasks, activeAgentId, updateAgentState, sendMessage, updateScope, logs, clearConversation, isSidebarCollapsed, toggleSidebar, setSidebarCollapsed, isExplorerCollapsed, toggleExplorer, activeTab, setActiveTab, approveTool, openWorkspace } = useAgents();
+    19→  const navigate = useNavigate();
+    20→  const [isIntentCollapsed, setIsIntentCollapsed] = useState(() => {
+    21→    const visited = localStorage.getItem(`visited-${activeAgentId}`);
+    22→    return !!visited;
+    23→  });
+    24→  const [isPlanCollapsed, setIsPlanCollapsed] = useState(false);
+    25→
+    26→  useEffect(() => {
+    27→    if (activeAgentId) {
+    28→      localStorage.setItem(`visited-${activeAgentId}`, 'true');
+    29→    }
+    30→  }, [activeAgentId]);
+    31→  const [isSavingSettings, setIsSavingSettings] = useState(false);
+    32→  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+    33→  const [isEditingPlan, setIsEditingPlan] = useState(false);
+    34→  const [editPlanContent, setEditPlanContent] = useState('');
+    35→  const [isProcessing, setIsProcessing] = useState(false);
+    36→  const [pendingState, setPendingState] = useState<'running' | 'paused' | null>(null);
+    37→
+    38→  const agent = activeAgentId ? agents[activeAgentId] : null;
+    39→  const parentAgent = (agent && agent.parent_id) ? agents[agent.parent_id] : null;
+    40→
+    41→  useEffect(() => {
+    42→    if (agent && pendingState === (agent.state === 'running' ? 'running' : 'paused')) {
+    43→      setPendingState(null);
+    44→    }
+    45→  }, [agent?.state, pendingState]);
+    46→
+    47→  // Panel sizing state
+    48→  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    49→    const saved = localStorage.getItem('agent-sidebar-width');
+    50→    return saved ? parseInt(saved, 10) : 300;
+    51→  });
+    52→  const [planHeight, setPlanHeight] = useState(() => {
+    53→    const saved = localStorage.getItem('agent-plan-height');
+    54→    return saved ? parseInt(saved, 10) : 300;
+    55→  });
+    56→
+    57→  useEffect(() => {
+    58→    localStorage.setItem('agent-sidebar-width', sidebarWidth.toString());
+    59→  }, [sidebarWidth]);
+    60→
+    61→  useEffect(() => {
+    62→    localStorage.setItem('agent-plan-height', planHeight.toString());
+    63→  }, [planHeight]);
+    64→
+    65→  const isResizingSidebar = useRef(false);
+    66→  const isResizingPlan = useRef(false);
+    67→
+    68→  useEffect(() => {
+    69→    const handleMouseMove = (e: MouseEvent) => {
+    70→      if (isResizingSidebar.current) {
+    71→        const newWidth = window.innerWidth - e.clientX;
+    72→        setSidebarWidth(Math.max(200, Math.min(600, newWidth)));
+    73→      } else if (isResizingPlan.current) {
+    74→        const planElement = document.getElementById('plan-section');
+    75→        if (planElement) {
+    76→          const rect = planElement.getBoundingClientRect();
+    77→          const newHeight = e.clientY - rect.top;
+    78→          setPlanHeight(Math.max(100, Math.min(window.innerHeight * 0.7, newHeight)));
+    79→        }
+    80→      }
+    81→    };
+    82→
+    83→    const handleMouseUp = () => {
+    84→      isResizingSidebar.current = false;
+    85→      isResizingPlan.current = false;
+    86→      document.body.style.cursor = 'default';
+    87→      document.body.style.userSelect = 'auto';
+    88→    };
+    89→
+    90→    window.addEventListener('mousemove', handleMouseMove);
+    91→    window.addEventListener('mouseup', handleMouseUp);
+    92→    return () => {
+    93→      window.removeEventListener('mousemove', handleMouseMove);
+    94→      window.removeEventListener('mouseup', handleMouseUp);
+    95→    };
+    96→  }, []);
+    97→
+    98→  // Reset state on agent change
+    99→  useEffect(() => {
+   100→    if (activeAgentId) {
+   101→      setIsEditingPlan(false);
+   102→      setEditPlanContent('');
+   103→    }
+   104→  }, [activeAgentId]);
+   105→
+   106→  const [logSearch] = useState('');
+   107→  const chatEndRef = useRef<HTMLDivElement>(null);
+   108→  const scrollRef = useRef<HTMLDivElement>(null);
+   109→  const shouldAutoScrollRef = useRef(true);
+   110→
+   111→  const handleScroll = () => {
+   112→    const container = scrollRef.current;
+   113→    if (!container) return;
+   114→    // Classic IRC behavior: if we're within 30px of the bottom, we auto-scroll.
+   115→    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 30;
+   116→    shouldAutoScrollRef.current = isAtBottom;
+   117→  };
+   118→
+   119→  const subAgentCount = agent ? Object.values(agents).filter(a => a.parent_id?.toLowerCase() === agent.id.toLowerCase() && !a.is_internal).length : 0;
+   120→  const taskCount = (agent && tasks) ? tasks.filter(t => t.parent_agent_id?.toLowerCase() === agent.id.toLowerCase()).length : 0;
+   121→  const hasProcesses = subAgentCount > 0 || taskCount > 0;
+   122→
+   123→  const agentLogs = React.useMemo(() => (activeAgentId ? logs[activeAgentId] || [] : []), [activeAgentId, logs]);
+   124→  const latestSecretRequest = React.useMemo(() => {
+   125→    for (let i = agentLogs.length - 1; i >= 0; i--) {
+   126→      if (agentLogs[i].event_type === 'secret_request') {
+   127→        return agentLogs[i];
+   128→      }
+   129→    }
+   130→    return null;
+   131→  }, [agentLogs]);
+   132→  const latestSecretPayload = latestSecretRequest?.payload as any;
+   133→  const latestSecretToolCallId = latestSecretPayload?.tool_call_id || latestSecretPayload?.id;
+   134→
+   135→  const hasSidebarInfo = React.useMemo(() => {
+   136→    if (!agent) return false;
+   137→    return !!agent.current_scope?.content ||
+   138→      hasProcesses ||
+   139→      !!agent.initial_prompt ||
+   140→      (agent.parent_id && !!agents[agent.parent_id]?.current_scope?.content);
+   141→  }, [agent, agents, hasProcesses]);
+   142→
+   143→  const { data: config } = useQuery({
+   144→    queryKey: ['config'],
+   145→    queryFn: () => api.getConfig(),
+   146→  });
+   147→
+   148→  const { data: apiKeys } = useQuery({
+   149→    queryKey: ['apiKeys'],
+   150→    queryFn: () => api.getApiKeys(),
+   151→  });
+   152→
+   153→  useEffect(() => {
+   154→    if (shouldAutoScrollRef.current) {
+   155→      chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
+   156→    }
+   157→  }, [agentLogs]);
+   158→
+   159→  // Always scroll to bottom when switching to workspace tab or changing agents
+   160→  useEffect(() => {
+   161→    if (activeTab === 'workspace') {
+   162→      shouldAutoScrollRef.current = true;
+   163→      chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
+   164→    }
+   165→  }, [activeTab, activeAgentId]);
+   166→
+   167→  // Automatically collapse sidebar if empty when switching agents
+   168→  const lastActiveAgentIdRef = useRef<string | null>(null);
+   169→  useEffect(() => {
+   170→    if (activeAgentId && activeAgentId !== lastActiveAgentIdRef.current) {
+   171→      if (!hasSidebarInfo && !isSidebarCollapsed) {
+   172→        setSidebarCollapsed(true);
+   173→      }
+   174→      // We only set the ref when we have either successfully collapsed it
+   175→      // or we've decided it shouldn't be collapsed (has info or already collapsed)
+   176→      if (hasSidebarInfo || isSidebarCollapsed) {
+   177→        lastActiveAgentIdRef.current = activeAgentId;
+   178→      }
+   179→    }
+   180→  }, [activeAgentId, hasSidebarInfo, isSidebarCollapsed, setSidebarCollapsed]);
+   181→
+   182→  const handleSaveEdit = React.useCallback(async (newContent: string) => {
+   183→    if (activeAgentId) {
+   184→      await updateScope(activeAgentId, newContent, agent?.current_scope?.frontmatter);
+   185→    }
+   186→  }, [activeAgentId, updateScope, agent?.current_scope?.frontmatter]);
+   187→
+   188→  const handleSavePlan = React.useCallback(async () => {
+   189→    if (activeAgentId && agent?.current_scope) {
+   190→      await updateScope(activeAgentId, editPlanContent, agent.current_scope.frontmatter);
+   191→      setIsEditingPlan(false);
+   192→    }
+   193→  }, [activeAgentId, agent?.current_scope, editPlanContent, updateScope]);
+   194→
+   195→  const openInFinder = React.useCallback(async (path: string) => {
+   196→    try {
+   197→      // Use the 'reveal' command we defined in capabilities/default.json to open Finder and highlight the file
+   198→      await Command.create('reveal', ['-R', path]).execute();
+   199→    } catch (err) {
+   200→      console.error('Failed to reveal path in finder:', path, err);
+   201→      // Fallback to regular open if reveal fails
+   202→      try {
+   203→        await open(path);
+   204→      } catch (openErr) {
+   205→        console.error('Failed to open path:', path, openErr);
+   206→      }
+   207→    }
+   208→  }, []);
+   209→
+   210→  const filteredLogs = React.useMemo(() => {
+   211→    if (!agent) return [];
+   212→    return agentLogs.filter(log => {
+   213→      const matchesSearch = !logSearch || JSON.stringify(log.payload).toLowerCase().includes(logSearch.toLowerCase()) || log.event_type.toLowerCase().includes(logSearch.toLowerCase());
+   214→
+   215→      // Filter out internal system logs that have no renderable content for the user
+   216→      const payload = log.payload as any;
+   217→      const handledEvents = [
+   218→        'user_interaction',
+   219→        'model_responded',
+   220→        'scope_updated',
+   221→        'agent_error',
+   222→        'tool_call',
+   223→        'tool_output',
+   224→        'tool_error',
+   225→        'model_thinking',
+   226→        'sub_agent_report',
+   227→        'sub_agent_error',
+   228→        'history_compacted',
+   229→        'conversation_cleared',
+   230→        'compaction_requested',
+   231→        'tool_approval_requested',
+   232→        'tool_approval_resolved',
+   233→        'cli_output',
+   234→        'shell_output'
+   235→      ];
+   236→
+   237→      if (!handledEvents.includes(log.event_type)) {
+   238→        // If it's an unhandled system event, only show it if it has explicit content or message
+   239→        if (!payload?.content && !payload?.message && !payload?.findings) {
+   240→          return false;
+   241→        }
+   242→      }
+   243→
+   244→      // Always hide chunks as they are aggregated into model_responded
+   245→      if (log.event_type === 'model_responded_chunk') return false;
+   246→      // Hide sub-agent proposals in the log as they trigger UI state changes elsewhere or are redundant
+   247→      if (log.event_type === 'sub_agent_proposal') return false;
+   248→
+   249→      return matchesSearch;
+   250→    });
+   251→  }, [agent, agentLogs, logSearch]);
+   252→
+   253→  // Find the latest history_compacted event to hide older messages
+   254→  const displayLogs = React.useMemo(() => {
+   255→    if (!agent) return [];
+   256→
+   257→    let compactionCutoffIdx = -1;
+   258→    for (let i = filteredLogs.length - 1; i >= 0; i--) {
+   259→      if (filteredLogs[i].event_type === 'history_compacted' || filteredLogs[i].event_type === 'conversation_cleared') {
+   260→        compactionCutoffIdx = i;
+   261→        break;
+   262→      }
+   263→    }
+   264→
+   265→    return compactionCutoffIdx === -1
+   266→      ? filteredLogs
+   267→      : filteredLogs.slice(compactionCutoffIdx);
+   268→  }, [agent, filteredLogs]);
+   269→
+   270→  useEffect(() => {
+   271→    const handleKeyDown = (e: KeyboardEvent) => {
+   272→      // Don't trigger if user is typing in an input, unless it's a Cmd/Ctrl shortcut
+   273→      const activeElement = document.activeElement;
+   274→      const isInput = activeElement instanceof HTMLInputElement ||
+   275→        activeElement instanceof HTMLTextAreaElement ||
+   276→        (activeElement as HTMLElement)?.isContentEditable;
+   277→
+   278→      const hotkeys = config?.ui?.hotkeys || {};
+   279→
+   280→      if (isInput && !(e.metaKey || e.ctrlKey)) return;
+   281→
+   282→      if (isHotkey(e, hotkeys['toggle_sidebar'] || 'Cmd+B')) {
+   283→        e.preventDefault();
+   284→        toggleSidebar();
+   285→      }
+   286→      if (isHotkey(e, hotkeys['toggle_settings'] || 'Cmd+,')) {
+   287→        e.preventDefault();
+   288→        setActiveTab(prev => prev === 'settings' ? 'workspace' : 'settings');
+   289→      }
+   290→      if (isHotkey(e, hotkeys['toggle_pause'] || 'Cmd+P') && agent) {
+   291→        e.preventDefault();
+   292→        updateAgentState(agent.id, agent.state === 'running' ? 'pause' : 'resume');
+   293→      }
+   294→      if (isHotkey(e, hotkeys['compact'] || 'Cmd+Shift+C') && agent) {
+   295→        e.preventDefault();
+   296→        updateAgentState(agent.id, 'repair');
+   297→      }
+   298→
+   299→      if (e.key === 'ArrowUp') {
+   300→        if (scrollRef.current) {
+   301→          e.preventDefault();
+   302→          scrollRef.current.scrollBy({ top: -100, behavior: 'smooth' });
+   303→        }
+   304→      }
+   305→      if (e.key === 'ArrowDown') {
+   306→        if (scrollRef.current) {
+   307→          e.preventDefault();
+   308→          scrollRef.current.scrollBy({ top: 100, behavior: 'smooth' });
+   309→        }
+   310→      }
+   311→      if (e.key === ' ' && !isInput) {
+   312→        if (scrollRef.current) {
+   313→          e.preventDefault();
+   314→          const direction = e.shiftKey ? -1 : 1;
+   315→          scrollRef.current.scrollBy({
+   316→            top: direction * scrollRef.current.clientHeight * 0.8,
+   317→            behavior: 'smooth'
+   318→          });
+   319→        }
+   320→      }
+   321→    };
+   322→
+   323→    window.addEventListener('keydown', handleKeyDown);
+   324→    return () => window.removeEventListener('keydown', handleKeyDown);
+   325→  }, [toggleSidebar, agent, updateAgentState, displayLogs, approveTool, config]);
+   326→
+   327→  const handleSendMessageInternal = React.useCallback(async (content: string, attachments?: Attachment[]) => {
+   328→    if (agent) {
+   329→      await sendMessage(agent.id, content, attachments);
+   330→      shouldAutoScrollRef.current = true;
+   331→    }
+   332→  }, [agent?.id, sendMessage]);
+   333→
+   334→  if (!agent) return null;
+   335→
+   336→  const enabledProviders = Object.keys(config?.available_models || {}).filter(p => {
+   337→    const key = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+   338→    return key?.enabled === true;
+   339→  });
+   340→  const providers = enabledProviders.includes(agent.model_config.provider)
+   341→    ? enabledProviders
+   342→    : (agent.model_config.provider ? [...enabledProviders, agent.model_config.provider] : enabledProviders);
+   343→  const currentProvider = agent.model_config.provider || providers[0] || '';
+   344→  const availableModels = config?.available_models?.[currentProvider]?.chat || [];
+   345→
+   346→  const formatNextRun = (dateStr: string) => {
+   347→    const date = new Date(dateStr);
+   348→    const now = new Date();
+   349→    const isToday = date.toDateString() === now.toDateString();
+   350→    const options: Intl.DateTimeFormatOptions = isToday
+   351→      ? { hour: '2-digit', minute: '2-digit' }
+   352→      : { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+   353→    return (isToday ? 'Today ' : '') + date.toLocaleString([], options);
+   354→  };
+   355→
+   356→  return (
+   357→    <div className="flex flex-col h-full bg-background font-mono text-[13px]">
+   358→      {/* Main Layout */}
+   359→      <div className="flex-1 overflow-hidden flex flex-col">
+   360→        {activeTab === 'settings' ? (
+   361→          <div className="flex-1 overflow-y-auto custom-scrollbar">
+   362→            <AgentSettings
+   363→              agent={agent}
+   364→              onSavingChange={setIsSavingSettings}
+   365→              onSuccessChange={setShowSaveSuccess}
+   366→            />
+   367→          </div>
+   368→        ) : (
+   369→          <div className="flex h-full overflow-hidden">
+   370→            {/* Left Panel: Primary Buffer */}
+   371→            <div className="flex-1 flex flex-col min-w-0">
+   372→              <div
+   373→                ref={scrollRef}
+   374→                onScroll={handleScroll}
+   375→                className="flex-1 overflow-auto px-1.5 py-0.5 space-y-0 custom-scrollbar"
+   376→              >
+   377→                <LogViewer
+   378→                  logs={displayLogs}
+   379→                  agents={agents}
+   380→                  activeAgentId={activeAgentId!}
+   381→                  onUpdateScope={handleSaveEdit}
+   382→                  onUpdateAgentState={updateAgentState}
+   383→                  openInFinder={openInFinder}
+   384→                />
+   385→                {agent.state === 'awaiting_secret' && (
+   386→                  <div className="px-1.5 pb-2">
+   387→                    {latestSecretRequest && latestSecretToolCallId ? (
+   388→                      <SecretRequest
+   389→                        agentId={agent.id}
+   390→                        toolCallId={latestSecretToolCallId}
+   391→                        secretKeys={latestSecretPayload?.keys as string[] | undefined}
+   392→                        secretKey={latestSecretPayload?.key as string | undefined}
+   393→                        args={latestSecretPayload?.args}
+   394→                        isProcessed={false}
+   395→                      />
+   396→                    ) : (
+   397→                      <div className="px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-status-warning bg-surface/20 border border-status-warning/30">
+   398→                        Agent is waiting for a secure input. Please keep this window open and enter the requested secret once prompted.
+   399→                      </div>
+   400→                    )}
+   401→                  </div>
+   402→                )}
+   403→                <div ref={chatEndRef} />
+   404→              </div>
+   405→
+   406→              {/* Bottom Input Area */}
+   407→              {agent.type !== 'cli' && (
+   408→                <div className="border-t border-border/50 bg-surface/5 flex items-stretch">
+   409→                  <div className="flex-1 min-w-0">
+   410→                    <ChatInput
+   411→                      agentId={agent.id}
+   412→                      onSendMessage={handleSendMessageInternal}
+   413→                      disabled={(agent.state === 'running' || agent.is_compacting || isProcessing) && agent.state !== 'error'}
+   414→                    />
+   415→                  </div>
+   416→
+   417→                  {/* Agent Context & Controls Integrated Toolbar */}
+   418→                  <div className="flex items-center gap-1.5 px-1.5 border-l border-border/30 bg-background/20">
+   419→                    <div className="flex items-center gap-1">
+   420→                      {(pendingState || agent.state) === 'running' ? (
+   421→                        <button
+   422→                          onClick={async () => {
+   423→                            setIsProcessing(true);
+   424→                            setPendingState('paused');
+   425→                            try {
+   426→                              await updateAgentState(agent.id, 'pause');
+   427→                            } catch (e) {
+   428→                              setPendingState(null);
+   429→                            } finally {
+   430→                              setIsProcessing(false);
+   431→                            }
+   432→                          }}
+   433→                          disabled={agent.is_compacting || isProcessing}
+   434→                          className="p-1 hover:bg-status-warning/10 text-status-warning rounded transition-all disabled:opacity-20 active:scale-90 cursor-pointer"
+   435→                          title="Pause Agent"
+   436→                        >
+   437→                          <Pause size={13} fill="currentColor" />
+   438→                        </button>
+   439→                      ) : (
+   440→                        <button
+   441→                          onClick={async () => {
+   442→                            setIsProcessing(true);
+   443→                            setPendingState('running');
+   444→                            try {
+   445→                              await updateAgentState(agent.id, 'resume');
+   446→                            } catch (e) {
+   447→                              setPendingState(null);
+   448→                            } finally {
+   449→                              setIsProcessing(false);
+   450→                            }
+   451→                          }}
+   452→                          disabled={(agent.state === 'idle' && !agent.initial_prompt) || agent.is_compacting || isProcessing}
+   453→                          className="p-1 hover:bg-status-success/10 text-status-success rounded transition-all disabled:opacity-20 active:scale-90 cursor-pointer"
+   454→                          title="Start/Resume Agent"
+   455→                        >
+   456→                          <Play size={13} fill="currentColor" />
+   457→                        </button>
+   458→                      )}
+   459→
+   460→                      <div className="w-[1px] h-3 bg-border/20" />
+   461→
+   462→                      <button
+   463→                        onClick={async () => {
+   464→                          setIsProcessing(true);
+   465→                          try {
+   466→                            const result = await updateAgentState(agent.id, 'repair');
+   467→                            if (result?.status === 'skipped') {
+   468→                              if (result.reason === 'not_enough_history') {
+   469→                                await message("There isn't enough conversation history yet to compact. Compaction requires a longer history to summarize effectively.", {
+   470→                                  title: 'Compaction Skipped',
+   471→                                  kind: 'info'
+   472→                                });
+   473→                              }
+   474→                            }
+   475→                          } catch (err) {
+   476→                            console.error('Compaction failed:', err);
+   477→                            await message(err instanceof Error ? err.message : 'An unexpected error occurred during compaction.', {
+   478→                              title: 'Compaction Failed',
+   479→                              kind: 'error'
+   480→                            });
+   481→                          } finally {
+   482→                            setIsProcessing(false);
+   483→                          }
+   484→                        }}
+   485→                        disabled={agent.is_compacting || isProcessing}
+   486→                        className="p-1 hover:bg-accent/10 text-accent rounded transition-all disabled:opacity-20 active:scale-90 cursor-pointer"
+   487→                        title="Archive & Compact History"
+   488→                      >
+   489→                        <Zap size={13} fill={agent.is_compacting ? "none" : "currentColor"} className={clsx(agent.is_compacting && "animate-pulse")} />
+   490→                      </button>
+   491→
+   492→                      <div className="w-[1px] h-3 bg-border/20" />
+   493→
+   494→
+   495→                      <button
+   496→                        onClick={async () => {
+   497→                          const confirmed = await ask("Are you sure you want to clear the entire conversation history? This will archive the current history and start a fresh session. This action cannot be undone.", {
+   498→                            title: 'Archive & Clear History',
+   499→                            kind: 'warning',
+   500→                          });
+   501→                          if (confirmed) {
+   502→                            setIsProcessing(true);
+   503→                            try {
+   504→                              await clearConversation(agent.id);
+   505→                            } finally {
+   506→                              setIsProcessing(false);
+   507→                            }
+   508→                          }
+   509→                        }}
+   510→                        disabled={agent.is_compacting || isProcessing}
+   511→                        className="p-1 hover:bg-status-error/10 text-status-error rounded transition-all disabled:opacity-20 active:scale-90 cursor-pointer"
+   512→                        title="Clear Conversation History"
+   513→                      >
+   514→                        <Trash2 size={13} />
+   515→                      </button>
+   516→                    </div>
+   517→
+   518→                    {agent.is_compacting && (
+   519→                      <span className="text-[7px] text-accent animate-pulse font-black tracking-tighter shrink-0">COMPACTING</span>
+   520→                    )}
+   521→                  </div>
+   522→                </div>
+   523→              )}
+   524→            </div>
+   525→
+   526→            {/* Vertical Resizer */}
+   527→            {!isSidebarCollapsed && (
+   528→              <div
+   529→                className="w-[1px] hover:w-1 bg-border hover:bg-accent/50 cursor-col-resize transition-all shrink-0 z-10"
+   530→                onMouseDown={(e) => {
+   531→                  e.preventDefault();
+   532→                  isResizingSidebar.current = true;
+   533→                  document.body.style.cursor = 'col-resize';
+   534→                  document.body.style.userSelect = 'none';
+   535→                }}
+   536→              />
+   537→            )}
+   538→
+   539→            {/* Right Panel: Intent & Execution Sidebar */}
+   540→            <div
+   541→              style={{ width: isSidebarCollapsed ? 0 : sidebarWidth }}
+   542→              className={clsx(
+   543→                "flex flex-col bg-background shrink-0 transition-all duration-300 ease-in-out border-l border-border/50",
+   544→                isSidebarCollapsed && "overflow-hidden border-l-0"
+   545→              )}
+   546→            >
+   547→              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+   548→                {/* Section 1: Intent (Inherited North Star & Mission) */}
+   549→                {((agent.parent_id && parentAgent?.current_scope) || (agent.parent_id && agent.initial_prompt)) && (
+   550→                  <div className="flex flex-col border-b border-border bg-surface/10 shrink-0 max-h-[50%] min-h-0">
+   551→                    <button
+   552→                      onClick={() => setIsIntentCollapsed(!isIntentCollapsed)}
+   553→                      className="flex items-center justify-between px-2.5 py-2 bg-surface/40 shrink-0 border-b border-border/20 group"
+   554→                    >
+   555→                      <div className="flex items-center gap-1.5">
+   556→                        <Compass size={11} className={clsx("text-accent transition-transform duration-300", !isIntentCollapsed && "rotate-180")} />
+   557→                        <span className="text-[10px] font-black text-text-primary uppercase tracking-[0.15em]">
+   558→                          Intent
+   559→                        </span>
+   560→                      </div>
+   561→                      <ChevronRight size={12} className={clsx("text-text-tertiary transition-transform duration-200 pointer-events-none", !isIntentCollapsed && "rotate-90")} />
+   562→                    </button>
+   563→
+   564→                    {!isIntentCollapsed && (
+   565→                      <div className="flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+   566→                        {/* 1. Inherited North Star */}
+   567→                        {agent.parent_id && parentAgent?.current_scope && (
+   568→                          <div className="flex flex-col border-b border-border/10 bg-surface/5">
+   569→                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-background/20">
+   570→                              <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">
+   571→                                Inherited North Star
+   572→                              </span>
+   573→                            </div>
+   574→                            <div className="p-2.5 text-[10.5px] font-mono leading-relaxed text-text-secondary opacity-80">
+   575→                              <ReactMarkdown
+   576→                                components={{
+   577→                                  h1: ({ children }) => <h1 className="text-accent font-bold uppercase tracking-widest mt-2 mb-1 text-[8.5px] border-b border-border/30 pb-0.5">{children}</h1>,
+   578→                                  h2: ({ children }) => <h2 className="text-accent font-bold uppercase tracking-widest mt-1.5 mb-0.5 text-[8.5px]">{children}</h2>,
+   579→                                  p: ({ children }) => <p className="mb-1.5 last:mb-0 whitespace-pre-wrap">{children}</p>,
+   580→                                  ul: ({ children }) => <ul className="list-disc pl-4 mb-1.5 space-y-0">{children}</ul>,
+   581→                                  ol: ({ children }) => <ol className="list-decimal pl-5 mb-1.5 space-y-0">{children}</ol>,
+   582→                                  li: ({ children }) => <li className="pl-0.5">{children}</li>,
+   583→                                }}
+   584→                              >
+   585→                                {parentAgent.current_scope.content}
+   586→                              </ReactMarkdown>
+   587→                            </div>
+   588→                          </div>
+   589→                        )}
+   590→
+   591→                        {/* 2. Assigned Mission */}
+   592→                        {agent.parent_id && agent.initial_prompt && (
+   593→                          <div className="flex flex-col bg-surface/5">
+   594→                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-background/20">
+   595→                              <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">
+   596→                                Assigned Mission
+   597→                              </span>
+   598→                            </div>
+   599→                            <div className="p-2.5 text-[10px] font-mono leading-relaxed text-text-secondary italic">
+   600→                              <ReactMarkdown
+   601→                                components={{
+   602→                                  p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+   603→                                  code: ({ children }) => <code className="bg-black/30 px-1 rounded text-accent-hover font-mono">{children}</code>,
+   604→                                }}
+   605→                              >
+   606→                                {agent.initial_prompt}
+   607→                              </ReactMarkdown>
+   608→                            </div>
+   609→                          </div>
+   610→                        )}
+   611→                      </div>
+   612→                    )}
+   613→                  </div>
+   614→                )}
+   615→
+   616→                {/* Section 2: Execution Plan */}
+   617→                {agent.current_scope && (
+   618→                  <div id="plan-section" className="flex flex-col flex-1 min-h-0 bg-surface/10">
+   619→                    <div className="flex items-center justify-between px-2.5 py-2 bg-surface/40 shrink-0 border-b border-border/20">
+   620→                      <button
+   621→                        onClick={() => setIsPlanCollapsed(!isPlanCollapsed)}
+   622→                        className="flex flex-col items-start flex-1 min-w-0"
+   623→                      >
+   624→                        <div className="flex items-center gap-1.5 w-full">
+   625→                          <ClipboardList size={11} className="text-accent" />
+   626→                          <span className="text-[10px] font-black text-text-primary uppercase tracking-[0.15em]">
+   627→                            Execution Plan
+   628→                          </span>
+   629→                          <ChevronRight size={12} className={clsx("text-text-tertiary transition-transform duration-200 ml-auto mr-2 pointer-events-none", !isPlanCollapsed && "rotate-90")} />
+   630→                        </div>
+   631→                        <div className="text-[8px] text-text-tertiary font-bold uppercase tracking-widest mt-0.5 opacity-60 truncate w-full pr-4">
+   632→                          Plan: {(agent.current_scope?.content.match(/^\d+\./gm) || []).length} steps • updated {new Date(agent.current_scope?.created_at || agent.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+   633→                        </div>
+   634→                      </button>
+   635→                      <div className="flex items-center gap-1.5">
+   636→                        {!isEditingPlan ? (
+   637→                          <>
+   638→                            {agent.current_scope && (
+   639→                              <button
+   640→                                onClick={() => {
+   641→                                  setEditPlanContent(agent.current_scope!.content);
+   642→                                  setIsEditingPlan(true);
+   643→                                }}
+   644→                                className="p-1 hover:text-accent text-text-tertiary transition-all hover:bg-accent/10 rounded active:scale-90"
+   645→                                title="Edit Plan"
+   646→                              >
+   647→                                <Edit2 size={9} />
+   648→                              </button>
+   649→                            )}
+   650→                            <span className="text-[8px] font-mono text-text-tertiary opacity-70">
+   651→                              v{agent.current_scope?.version || 0}
+   652→                            </span>
+   653→                          </>
+   654→                        ) : (
+   655→                          <div className="flex items-center gap-1">
+   656→                            <button
+   657→                              onClick={handleSavePlan}
+   658→                              className="p-1 hover:text-status-success text-text-tertiary transition-all hover:bg-status-success/10 rounded active:scale-90"
+   659→                              title="Save Changes"
+   660→                            >
+   661→                              <Check size={9} />
+   662→                            </button>
+   663→                            <button
+   664→                              onClick={() => setIsEditingPlan(false)}
+   665→                              className="p-1 hover:text-status-error text-text-tertiary transition-all hover:bg-status-error/10 rounded active:scale-90"
+   666→                              title="Cancel"
+   667→                            >
+   668→                              <X size={9} />
+   669→                            </button>
+   670→                          </div>
+   671→                        )}
+   672→                      </div>
+   673→                    </div>
+   674→
+   675→                    {!isPlanCollapsed && (
+   676→                      <>
+   677→                        <div
+   678→                          style={{ flexBasis: planHeight, minHeight: 300 }}
+   679→                          className="flex-1 overflow-y-auto p-2.5 custom-scrollbar text-[10.5px] font-mono leading-relaxed text-text-secondary"
+   680→                        >
+   681→                          {isEditingPlan ? (
+   682→                            <textarea
+   683→                              value={editPlanContent}
+   684→                              onChange={(e) => setEditPlanContent(e.target.value)}
+   685→                              className="w-full h-full bg-black/20 text-text-primary p-2 rounded border border-border/50 focus:outline-none focus:border-accent/50 resize-none font-mono text-[10.5px]"
+   686→                              autoFocus
+   687→                            />
+   688→                          ) : (
+   689→                            <ReactMarkdown
+   690→                              components={{
+   691→                                h1: ({ children }) => <h1 className="text-accent font-bold uppercase tracking-widest mt-2 mb-1 text-[9px] border-b border-border/30 pb-0.5">{children}</h1>,
+   692→                                h2: ({ children }) => <h2 className="text-accent font-bold uppercase tracking-widest mt-1.5 mb-0.5 text-[9px]">{children}</h2>,
+   693→                                h3: ({ children }) => <h3 className="text-accent font-bold uppercase tracking-widest mt-1 mb-0.5 text-[9px]">{children}</h3>,
+   694→                                p: ({ children }) => <p className="mb-1.5 last:mb-0 whitespace-pre-wrap">{children}</p>,
+   695→                                ul: ({ children }) => <ul className="list-disc pl-4 mb-1.5 space-y-0">{children}</ul>,
+   696→                                ol: ({ children }) => <ol className="list-decimal pl-5 mb-1.5 space-y-0">{children}</ol>,
+   697→                                li: ({ children }) => <li className="pl-0.5">{children}</li>,
+   698→                                code: ({ children }) => <code className="bg-black/30 px-1 rounded text-accent-hover font-mono">{children}</code>,
+   699→                              }}
+   700→                            >
+   701→                              {agent.current_scope.content}
+   702→                            </ReactMarkdown>
+   703→                          )}
+   704→                        </div>
+   705→                        {/* Horizontal Resizer */}
+   706→                        <div
+   707→                          className="h-[1px] hover:h-1 bg-border hover:bg-accent/50 cursor-row-resize transition-all shrink-0 z-10"
+   708→                          onMouseDown={(e) => {
+   709→                            e.preventDefault();
+   710→                            isResizingPlan.current = true;
+   711→                            document.body.style.cursor = 'row-resize';
+   712→                            document.body.style.userSelect = 'none';
+   713→                          }}
+   714→                        />
+   715→                      </>
+   716→                    )}
+   717→                  </div>
+   718→                )}
+   719→              </div>
+   720→            </div>
+   721→          </div>
+   722→        )}
+   723→      </div>
+   724→    </div>
+   725→  );
+   726→};
+   727→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

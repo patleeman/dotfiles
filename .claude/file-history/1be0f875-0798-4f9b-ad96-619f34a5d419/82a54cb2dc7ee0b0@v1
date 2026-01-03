@@ -1,0 +1,94 @@
+SHELL := /bin/bash
+
+# Include signing variables if .env file exists
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
+.PHONY: setup run build test lint fmt clean website-dev website-build test-coverage test-backend-coverage test-ui-coverage deploy
+
+# --- Main Development Commands ---
+
+setup: build-go
+	cd packages/desktop && npm install
+	cd packages/desktop/ui && npm install
+	cd packages/website && npm install
+
+run: build-sidecar
+	cd packages/desktop && npx tauri dev
+
+build: build-go
+	cd packages/desktop && npx tauri build
+
+# --- Go Backend Commands ---
+
+# Target triple for Tauri sidecar
+TARGET_TRIPLE := $(shell rustc -vV | grep host | cut -d ' ' -f 2)
+
+build-go:
+	mkdir -p bin
+	cd packages/go-backend && go build -ldflags="-s -w" -o ../../bin/familiar-go ./cmd/server
+
+build-sidecar:
+	mkdir -p packages/desktop/src-tauri/bin
+	cd packages/go-backend && GOOS=darwin go build -ldflags="-s -w" -o ../../packages/desktop/src-tauri/bin/familiar-go-$(TARGET_TRIPLE) ./cmd/server
+
+build-signed: build-sidecar
+	cd packages/desktop && npx tauri build
+
+deploy: build-sidecar
+	cd packages/desktop && ./deploy-updates.sh
+
+run-backend: build-go
+	./bin/familiar-go --port 18080
+
+test: test-backend test-ui test-e2e
+
+test-coverage: test-coverage-backend test-coverage-ui
+
+test-coverage-backend:
+	cd packages/go-backend && go test -coverprofile=coverage.out ./...
+	cd packages/go-backend && go tool cover -html=coverage.out -o coverage.html
+	@echo "Backend coverage report generated at packages/go-backend/coverage.html"
+
+test-coverage-ui:
+	cd packages/desktop/ui && npm test -- --run --coverage
+	@echo "UI coverage report generated at packages/desktop/ui/coverage/index.html"
+
+test-backend:
+	cd packages/go-backend && go test -v ./...
+
+test-ui:
+	cd packages/desktop/ui && npm test -- --run
+
+test-e2e: build-go
+	cd packages/desktop/ui && npm run test:e2e
+
+test-e2e-ui: build-go
+	cd packages/desktop/ui && npm run test:e2e:ui
+
+test-e2e-headed: build-go
+	cd packages/desktop/ui && npm run test:e2e:headed
+
+lint:
+	cd packages/go-backend && go vet ./...
+
+fmt:
+	cd packages/go-backend && go fmt ./...
+
+# --- Utility Commands ---
+
+clean:
+	rm -rf bin/
+	rm -rf packages/desktop/src-tauri/target/
+	rm -rf .test-config/
+	rm -rf packages/desktop/test-results/
+	rm -rf packages/desktop/playwright-report/
+	rm -f backend.log
+
+website-dev:
+	cd packages/website && npm run dev
+
+website-build:
+	cd packages/website && npm run build

@@ -1,0 +1,13 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/global-setup.ts has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     1→import { spawn, ChildProcess } from 'child_process';
+     2→import { resolve, dirname } from 'path';
+     3→import { fileURLToPath } from 'url';
+     4→
+     5→const __filename = fileURLToPath(import.meta.url);
+     6→const __dirname = dirname(__filename);
+     7→
+     8→let serverProcess: ChildProcess | null = null;
+     9→
+    10→async function waitForServer(url: string, timeout = 30000): Promise<void> {
+    11→  const start = Date.now();
+    12→  while (Date.now() - start < timeout) {

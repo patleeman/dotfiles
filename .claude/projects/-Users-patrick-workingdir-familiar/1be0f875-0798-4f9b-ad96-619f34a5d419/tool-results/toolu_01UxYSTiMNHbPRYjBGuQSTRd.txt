@@ -1,0 +1,20 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   187→                    </tr>
+   188→                  </thead>
+   189→                  <tbody className="text-[11px]">
+   190→                    {models.length === 0 ? (
+   191→                      <tr>
+   192→                        <td colSpan={4} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+   193→                          No data available
+   194→                        </td>
+   195→                      </tr>
+   196→                    ) : (
+   197→                      models.map((m: UsageSummaryItem, i: number) => (
+   198→                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+   199→                          <td className="px-4 py-1 truncate font-black text-text-primary">
+   200→                            <span className="opacity-40 uppercase text-[9px] mr-2">{m.provider}</span>
+   201→                            {m.model.toUpperCase()}
+   202→                          </td>
+   203→                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+   204→                            {m.total_input_tokens.toLocaleString()}
+   205→                          </td>

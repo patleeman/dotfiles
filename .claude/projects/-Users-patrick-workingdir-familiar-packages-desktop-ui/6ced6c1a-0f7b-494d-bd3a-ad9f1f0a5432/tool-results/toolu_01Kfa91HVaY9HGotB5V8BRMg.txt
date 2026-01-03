@@ -1,0 +1,16 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/TriggersView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   171→                    </div>
+   172→                </div>
+   173→            </div>
+   174→
+   175→            <DropdownMenu
+   176→                data-testid="context-menu"
+   177→                isOpen={!!contextMenu}
+   178→                onClose={() => setContextMenu(null)}
+   179→                position={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : { x: 0, y: 0 }}
+   180→                title={contextMenu?.triggerId}
+   181→            >
+   182→                <DropdownMenuItem
+   183→                    onClick={() => {
+   184→                        if (contextMenu) handleAction(contextMenu.triggerId, 'edit');
+   185→                        setContextMenu(null);

@@ -1,0 +1,144 @@
+Exit code 2
+cd packages/go-backend && go test -v ./...
+?   	github.com/patrick/familiar/packages/go-backend/cmd/server	[no test files]
+2026/01/03 06:31:00 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+=== RUN   TestAgentWithAttachments
+--- PASS: TestAgentWithAttachments (0.00s)
+=== RUN   TestCountTokens
+--- PASS: TestCountTokens (0.00s)
+=== RUN   TestNeedsCompaction
+--- PASS: TestNeedsCompaction (0.00s)
+=== RUN   TestCompactMessages
+2026/01/03 06:31:00 INFO Compacting messages tokens=84 max=10 target=5 forced=false
+2026/01/03 06:31:00 INFO Compaction complete final_tokens=70 target=5
+--- PASS: TestCompactMessages (0.00s)
+=== RUN   TestAgentLifecycleIntegration
+2026/01/03 06:31:00 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestAgentLifecycleIntegration (0.50s)
+=== RUN   TestLoaderDebug
+Loaded 0 triggers
+--- PASS: TestLoaderDebug (0.00s)
+=== RUN   TestScopeDocumentParsing
+--- PASS: TestScopeDocumentParsing (0.00s)
+=== RUN   TestScopeDocumentParsingWithFences
+=== RUN   TestScopeDocumentParsingWithFences/wrapped_in_backticks
+=== RUN   TestScopeDocumentParsingWithFences/with_filler_and_backticks
+--- PASS: TestScopeDocumentParsingWithFences (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/wrapped_in_backticks (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/with_filler_and_backticks (0.00s)
+=== RUN   TestPermissionCheck
+--- PASS: TestPermissionCheck (0.00s)
+=== RUN   TestValidateScopeDocument
+=== RUN   TestValidateScopeDocument/Valid_document
+=== RUN   TestValidateScopeDocument/Missing_section
+=== RUN   TestValidateScopeDocument/Missing_frontmatter
+--- PASS: TestValidateScopeDocument (0.00s)
+    --- PASS: TestValidateScopeDocument/Valid_document (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_section (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_frontmatter (0.00s)
+=== RUN   TestStateMachine
+--- PASS: TestStateMachine (0.00s)
+=== RUN   TestStreamingEvents
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestStreamingEvents (0.00s)
+=== RUN   TestExtractVaultSaveKeys
+=== RUN   TestExtractVaultSaveKeys/keys_array_in_args
+=== RUN   TestExtractVaultSaveKeys/object_entries_inside_args_array
+=== RUN   TestExtractVaultSaveKeys/single_key_field
+=== RUN   TestExtractVaultSaveKeys/comma_separated_string
+=== RUN   TestExtractVaultSaveKeys/raw_secret_keys_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_array_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_single_string_fallback
+=== RUN   TestExtractVaultSaveKeys/deduplicate_and_trim
+=== RUN   TestExtractVaultSaveKeys/secret_names_alias
+=== RUN   TestExtractVaultSaveKeys/no_keys_available
+--- PASS: TestExtractVaultSaveKeys (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/keys_array_in_args (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/object_entries_inside_args_array (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/single_key_field (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/comma_separated_string (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_secret_keys_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_array_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_single_string_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/deduplicate_and_trim (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/secret_names_alias (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/no_keys_available (0.00s)
+=== RUN   TestNewTriggerManager
+--- PASS: TestNewTriggerManager (0.00s)
+=== RUN   TestTriggerManager_Register
+--- PASS: TestTriggerManager_Register (0.00s)
+=== RUN   TestTriggerManager_Unregister
+--- PASS: TestTriggerManager_Unregister (0.00s)
+=== RUN   TestTriggerManager_UnregisterNonExistent
+--- PASS: TestTriggerManager_UnregisterNonExistent (0.00s)
+=== RUN   TestTriggerManager_Start
+--- PASS: TestTriggerManager_Start (0.05s)
+=== RUN   TestTriggerManager_Emit
+--- PASS: TestTriggerManager_Emit (0.05s)
+=== RUN   TestTriggerManager_Emit_NoOutput
+--- PASS: TestTriggerManager_Emit_NoOutput (0.05s)
+=== RUN   TestTriggerManager_Emit_StoreError
+--- PASS: TestTriggerManager_Emit_StoreError (0.05s)
+=== RUN   TestTriggerManager_ListAvailableTriggers
+--- PASS: TestTriggerManager_ListAvailableTriggers (0.00s)
+=== RUN   TestTriggerManager_Clear
+--- PASS: TestTriggerManager_Clear (0.00s)
+=== RUN   TestTriggerManager_Emit_MultipleSubscriptions
+--- PASS: TestTriggerManager_Emit_MultipleSubscriptions (0.05s)
+=== RUN   TestTriggerManager_Emit_EmptyOutput
+--- PASS: TestTriggerManager_Emit_EmptyOutput (0.05s)
+PASS
+ok  	github.c
+
+... [1024625 characters truncated] ...
+
+46:3 › Chat Interaction › should show stop button when agent is running 
+    [chromium] › e2e/chat.spec.ts:59:3 › Chat Interaction › should stop agent when stop button is clicked 
+    [chromium] › e2e/chat.spec.ts:90:3 › Tool Approval › should show tool approval when tool call requires permission 
+    [chromium] › e2e/chat.spec.ts:103:3 › Tool Approval › should approve tool call when Allow is clicked 
+    [chromium] › e2e/chat.spec.ts:119:3 › Tool Approval › should reject tool call when Reject is clicked 
+    [chromium] › e2e/chat.spec.ts:135:3 › Tool Approval › should show Always Allow option for repeatable commands 
+    [chromium] › e2e/chat.spec.ts:149:3 › Secret Request › should display secret request modal when secret is needed 
+    [chromium] › e2e/chat.spec.ts:172:3 › Plan Update › should show inline plan update when agent uses agent_plan tool 
+    [chromium] › e2e/chat.spec.ts:193:3 › Plan Update › should expand/collapse plan update ─────────
+    [chromium] › e2e/navigation.spec.ts:47:3 › Navigation › should close command bar with Escape ───
+    [chromium] › e2e/navigation.spec.ts:65:3 › Navigation › should navigate back to dashboard from other pages 
+    [chromium] › e2e/navigation.spec.ts:74:3 › URL Routing › should load settings page directly ────
+    [chromium] › e2e/navigation.spec.ts:80:3 › URL Routing › should load skills page directly ──────
+    [chromium] › e2e/navigation.spec.ts:86:3 › URL Routing › should load triggers page directly ────
+    [chromium] › e2e/settings.spec.ts:8:3 › Settings - Provider Configuration › should display provider configuration section 
+    [chromium] › e2e/settings.spec.ts:13:3 › Settings - Provider Configuration › should show provider index with cloud providers 
+    [chromium] › e2e/settings.spec.ts:20:3 › Settings - Provider Configuration › should show local providers section 
+    [chromium] › e2e/settings.spec.ts:25:3 › Settings - Provider Configuration › should select a provider and show details 
+    [chromium] › e2e/settings.spec.ts:34:3 › Settings - Provider Configuration › should add API key for a provider 
+    [chromium] › e2e/settings.spec.ts:48:3 › Settings - Provider Configuration › should toggle provider on/off 
+    [chromium] › e2e/settings.spec.ts:63:3 › Settings - Provider Configuration › should show models section for provider 
+    [chromium] › e2e/settings.spec.ts:76:3 › Settings - Interface Theme › should display theme section 
+    [chromium] › e2e/settings.spec.ts:81:3 › Settings - Interface Theme › should show multiple theme options 
+    [chromium] › e2e/settings.spec.ts:148:3 › Settings - Sub-agents › should show Claude Code option 
+    [chromium] › e2e/settings.spec.ts:153:3 › Settings - Sub-agents › should show Codex option ─────
+    [chromium] › e2e/settings.spec.ts:176:3 › Settings - Shell Policy › should display shell policy section 
+    [chromium] › e2e/settings.spec.ts:181:3 › Settings - Shell Policy › should show execution mode options 
+    [chromium] › e2e/settings.spec.ts:193:3 › Settings - Secure Vault › should display vault section 
+    [chromium] › e2e/settings.spec.ts:198:3 › Settings - Secure Vault › should show vault index ────
+    [chromium] › e2e/settings.spec.ts:231:3 › Settings - Shortcuts › should show keyboard shortcut list 
+    [chromium] › e2e/skills.spec.ts:13:3 › Skills View › should show skills header ─────────────────
+    [chromium] › e2e/skills.spec.ts:19:3 › Skills View › should show skill list headers ────────────
+    [chromium] › e2e/triggers.spec.ts:13:3 › Triggers View › should show triggers header ───────────
+    [chromium] › e2e/triggers.spec.ts:19:3 › Triggers View › should show trigger list headers ──────
+    [chromium] › e2e/usage.spec.ts:18:3 › Usage View › should display summary stats ────────────────
+    [chromium] › e2e/usage.spec.ts:29:3 › Usage View › should show output token count ──────────────
+    [chromium] › e2e/usage.spec.ts:34:3 › Usage View › should show cost ────────────────────────────
+    [chromium] › e2e/usage.spec.ts:51:3 › Usage - Provider Summary › should show provider table headers 
+    [chromium] › e2e/usage.spec.ts:57:3 › Usage - Provider Summary › should display provider data or empty state 
+    [chromium] › e2e/usage.spec.ts:81:3 › Usage - Model Utilization › should show model table headers 
+    [chromium] › e2e/usage.spec.ts:86:3 › Usage - Model Utilization › should display model data or empty state 
+    [chromium] › e2e/usage.spec.ts:108:3 › Usage - Agent Usage › should show agent table headers ───
+    [chromium] › e2e/usage.spec.ts:114:3 › Usage - Agent Usage › should display agent usage data or empty state 
+    [chromium] › e2e/usage.spec.ts:131:3 › Usage - Tool Output Volume › should display tool output volume section 
+    [chromium] › e2e/usage.spec.ts:141:3 › Usage - Tool Output Volume › should show tool table headers 
+    [chromium] › e2e/usage.spec.ts:181:3 › Usage - Data Formatting › should format costs with dollar sign 
+  53 passed (2.6m)
+make: *** [test-e2e] Error 1

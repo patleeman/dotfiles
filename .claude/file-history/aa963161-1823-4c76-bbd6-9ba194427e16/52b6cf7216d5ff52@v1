@@ -1,0 +1,44 @@
+import React, { useState } from 'react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
+
+interface SidebarSectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+export const SidebarSection: React.FC<SidebarSectionProps> = ({
+  title,
+  children,
+  defaultOpen = true
+}) => {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div style={{ marginBottom: '4px' }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          width: '100%',
+          padding: '4px 8px',
+          background: 'none',
+          border: 'none',
+          color: '#64748b',
+          fontSize: '10px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          cursor: 'pointer',
+          textAlign: 'left'
+        }}
+      >
+        {open ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+        {title}
+      </button>
+      {open && <div style={{ paddingLeft: '4px' }}>{children}</div>}
+    </div>
+  );
+};

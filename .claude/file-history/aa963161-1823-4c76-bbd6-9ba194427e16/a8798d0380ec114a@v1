@@ -1,0 +1,56 @@
+import React from 'react';
+import { Circle } from 'lucide-react';
+
+interface SidebarItemProps {
+  label: string;
+  count?: number;
+  active?: boolean;
+  color?: string;
+  indent?: boolean;
+  icon?: React.ReactNode;
+  onClick?: () => void;
+}
+
+export const SidebarItem: React.FC<SidebarItemProps> = ({
+  label,
+  count,
+  active = false,
+  color,
+  indent = false,
+  icon,
+  onClick
+}) => (
+  <button
+    onClick={onClick}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      width: '100%',
+      padding: '3px 8px',
+      paddingLeft: indent ? '20px' : '8px',
+      background: active ? 'rgba(99, 102, 241, 0.15)' : 'none',
+      border: 'none',
+      borderRadius: '2px',
+      borderLeft: active ? '2px solid #6366f1' : '2px solid transparent',
+      color: active ? '#a5b4fc' : '#94a3b8',
+      fontSize: '12px',
+      cursor: 'pointer',
+      textAlign: 'left',
+      transition: 'all 0.15s ease',
+    }}
+  >
+    {icon}
+    {color && <Circle size={6} fill={color} stroke="none" />}
+    <span style={{ flex: 1 }}>{label}</span>
+    {count !== undefined && (
+      <span style={{
+        fontSize: '10px',
+        fontFamily: 'monospace',
+        color: active ? '#a5b4fc' : '#64748b'
+      }}>
+        {count}
+      </span>
+    )}
+  </button>
+);

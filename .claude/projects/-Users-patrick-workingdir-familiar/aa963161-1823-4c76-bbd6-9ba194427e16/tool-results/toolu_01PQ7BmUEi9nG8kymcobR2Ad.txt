@@ -1,0 +1,2 @@
+/Users/patrick/workingdir/familiar/docs/familiar-dense.jsx
+/Users/patrick/workingdir/familiar/docs/familiar-settings.jsx

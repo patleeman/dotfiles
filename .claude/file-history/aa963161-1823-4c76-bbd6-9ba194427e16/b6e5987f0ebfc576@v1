@@ -1,0 +1,87 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+// https://vitejs.dev/config/
+const backendPort = process.env.VITE_BACKEND_PORT || '18080';
+
+// Suppress Vite's proxy error logging for expected connection cleanup errors during tests
+if (process.env.VITE_BACKEND_PORT) {
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    const message = args[0]?.toString() || '';
+    // Suppress EPIPE and ECONNRESET errors from Vite's proxy
+    if (
+      message.includes('ws proxy error') ||
+      message.includes('ws proxy socket error')
+    ) {
+      const errorStr = args.join(' ');
+      if (errorStr.includes('EPIPE') || errorStr.includes('ECONNRESET')) {
+        // Suppress expected connection cleanup errors
+        return;
+      }
+    }
+    originalConsoleError.apply(console, args);
+  };
+}
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: `http://localhost:${backendPort}`,
+        changeOrigin: true,
+        ws: true,
+        configure: (proxy) => {
+          // Suppress expected connection cleanup errors (EPIPE, ECONNRESET)
+          // These occur when connections are closed during test cleanup
+          const isExpectedError = (err: NodeJS.ErrnoException) =>
+            err.code === 'EPIPE' || err.code === 'ECONNRESET';
+
+          proxy.on('error', (err: NodeJS.ErrnoException) => {
+            if (isExpectedError(err)) {
+              // Prevent error from propagating to Vite's logger
+              return;
+            }
+            console.log('proxy error', err);
+          });
+
+          proxy.on('proxyReq', (_proxyReq, req) => {
+            if (req.headers.upgrade) {
+              console.log('Proxying:', req.method, req.url, 'Upgrade:', req.headers.upgrade);
+            }
+          });
+
+          proxy.on('proxyReqWs', (_proxyReq, req, _socket) => {
+            console.log('WebSocket proxy:', req.url);
+
+            // Handle errors on the WebSocket socket before they propagate
+            const originalEmit = _socket.emit.bind(_socket);
+            _socket.emit = function (event: string, ...args: any[]) {
+              if (event === 'error' && args[0] && isExpectedError(args[0])) {
+                // Suppress expected errors - don't emit them
+                return false;
+              }
+              return originalEmit(event, ...args);
+            };
+
+            // Also handle via error event listener as fallback
+            _socket.on('error', (err: NodeJS.ErrnoException) => {
+              if (isExpectedError(err)) {
+                // Suppress expected errors
+                return;
+              }
+              console.log('WebSocket proxy socket error:', err);
+            });
+          });
+
+        },
+      },
+    },
+  },
+  build: {
+    outDir: 'dist',
+  },
+});

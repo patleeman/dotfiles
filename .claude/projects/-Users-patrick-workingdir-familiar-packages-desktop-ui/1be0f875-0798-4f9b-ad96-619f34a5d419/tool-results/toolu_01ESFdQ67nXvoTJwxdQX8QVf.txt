@@ -1,0 +1,14 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   321→              </div>
+   322→              <div className="border border-border/20 bg-surface/5">
+   323→                <table className="w-full text-left border-collapse table-fixed">
+   324→                  <thead>
+   325→                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">
+   326→                      <th className="px-4 py-1.5 w-[35%]">Skill</th>
+   327→                      <th className="px-4 py-1.5 text-right w-[15%]">Calls</th>
+   328→                      <th className="px-4 py-1.5 text-right">Est. Volume</th>
+   329→                    </tr>
+   330→                  </thead>
+   331→                  <tbody className="text-[11px]">
+   332→                    {skills.length === 0 ? (
+   333→                      <tr>

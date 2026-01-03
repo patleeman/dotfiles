@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"
+    ]
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -title \"Claude: ${CLAUDE_PROJECT_DIR##*/}\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass"
+          }
+        ]
+      }
+    ]
+  }
+}

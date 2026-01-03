@@ -1,0 +1,199 @@
+Exit code 2
+cd packages/go-backend && go test -v ./...
+?   	github.com/patrick/familiar/packages/go-backend/cmd/server	[no test files]
+2026/01/03 06:31:00 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+=== RUN   TestAgentWithAttachments
+--- PASS: TestAgentWithAttachments (0.00s)
+=== RUN   TestCountTokens
+--- PASS: TestCountTokens (0.00s)
+=== RUN   TestNeedsCompaction
+--- PASS: TestNeedsCompaction (0.00s)
+=== RUN   TestCompactMessages
+2026/01/03 06:31:00 INFO Compacting messages tokens=84 max=10 target=5 forced=false
+2026/01/03 06:31:00 INFO Compaction complete final_tokens=70 target=5
+--- PASS: TestCompactMessages (0.00s)
+=== RUN   TestAgentLifecycleIntegration
+2026/01/03 06:31:00 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestAgentLifecycleIntegration (0.50s)
+=== RUN   TestLoaderDebug
+Loaded 0 triggers
+--- PASS: TestLoaderDebug (0.00s)
+=== RUN   TestScopeDocumentParsing
+--- PASS: TestScopeDocumentParsing (0.00s)
+=== RUN   TestScopeDocumentParsingWithFences
+=== RUN   TestScopeDocumentParsingWithFences/wrapped_in_backticks
+=== RUN   TestScopeDocumentParsingWithFences/with_filler_and_backticks
+--- PASS: TestScopeDocumentParsingWithFences (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/wrapped_in_backticks (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/with_filler_and_backticks (0.00s)
+=== RUN   TestPermissionCheck
+--- PASS: TestPermissionCheck (0.00s)
+=== RUN   TestValidateScopeDocument
+=== RUN   TestValidateScopeDocument/Valid_document
+=== RUN   TestValidateScopeDocument/Missing_section
+=== RUN   TestValidateScopeDocument/Missing_frontmatter
+--- PASS: TestValidateScopeDocument (0.00s)
+    --- PASS: TestValidateScopeDocument/Valid_document (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_section (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_frontmatter (0.00s)
+=== RUN   TestStateMachine
+--- PASS: TestStateMachine (0.00s)
+=== RUN   TestStreamingEvents
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestStreamingEvents (0.00s)
+=== RUN   TestExtractVaultSaveKeys
+=== RUN   TestExtractVaultSaveKeys/keys_array_in_args
+=== RUN   TestExtractVaultSaveKeys/object_entries_inside_args_array
+=== RUN   TestExtractVaultSaveKeys/single_key_field
+=== RUN   TestExtractVaultSaveKeys/comma_separated_string
+=== RUN   TestExtractVaultSaveKeys/raw_secret_keys_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_array_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_single_string_fallback
+=== RUN   TestExtractVaultSaveKeys/deduplicate_and_trim
+=== RUN   TestExtractVaultSaveKeys/secret_names_alias
+=== RUN   TestExtractVaultSaveKeys/no_keys_available
+--- PASS: TestExtractVaultSaveKeys (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/keys_array_in_args (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/object_entries_inside_args_array (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/single_key_field (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/comma_separated_string (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_secret_keys_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_array_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_single_string_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/deduplicate_and_trim (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/secret_names_alias (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/no_keys_available (0.00s)
+=== RUN   TestNewTriggerManager
+--- PASS: TestNewTriggerManager (0.00s)
+=== RUN   TestTriggerManager_Register
+--- PASS: TestTriggerManager_Register (0.00s)
+=== RUN   TestTriggerManager_Unregister
+--- PASS: TestTriggerManager_Unregister (0.00s)
+=== RUN   TestTriggerManager_UnregisterNonExistent
+--- PASS: TestTriggerManager_UnregisterNonExistent (0.00s)
+=== RUN   TestTriggerManager_Start
+--- PASS: TestTriggerManager_Start (0.05s)
+=== RUN   TestTriggerManager_Emit
+--- PASS: TestTriggerManager_Emit (0.05s)
+=== RUN   TestTriggerManager_Emit_NoOutput
+--- PASS: TestTriggerManager_Emit_NoOutput (0.05s)
+=== RUN   TestTriggerManager_Emit_StoreError
+--- PASS: TestTriggerManager_Emit_StoreError (0.05s)
+=== RUN   TestTriggerManager_ListAvailableTriggers
+--- PASS: TestTriggerManager_ListAvailableTriggers (0.00s)
+=== RUN   TestTriggerManager_Clear
+--- PASS: TestTriggerManager_Clear (0.00s)
+=== RUN   TestTriggerManager_Emit_MultipleSubscriptions
+--- PASS: TestTriggerManager_Emit_MultipleSubscriptions (0.05s)
+=== RUN   TestTriggerManager_Emit_EmptyOutput
+--- PASS: TestTriggerManager_Emit_EmptyOutput (0.05s)
+PASS
+ok  	github.c
+
+... [31684 characters truncated] ...
+
+text (0.00s)
+PASS
+ok  	github.com/patrick/familiar/packages/go-backend/internal/utils	(cached)
+?   	github.com/patrick/familiar/packages/go-backend/pkg/types	[no test files]
+cd packages/desktop/ui && npm test -- --run
+
+> familiar-ui@0.1.0 test
+> vitest --run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90m/Users/patrick/workingdir/familiar/packages/desktop/ui[39m
+
+ [32m✓[39m src/lib/api.test.ts [2m([22m[2m36 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/lib/hotkeys.test.ts [2m([22m[2m47 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [2m[90m↓[39m[22m src/hooks/useAutoUpdate.test.tsx [2m([22m[2m10 tests[22m[2m | [22m[33m10 skipped[39m[2m)[22m
+ [32m✓[39m src/components/Agent/ToolApproval.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m src/components/Agent/InlineScopeProposal.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/components/SearchBar.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32m✓[39m src/components/Unibar.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+[90mstderr[2m | src/lib/websocket.test.ts[2m > [22m[2mGlobalWebSocket[2m > [22m[2mreconnection[2m > [22m[2mhandles connection errors
+[22m[39mGlobal WebSocket error Event {
+  NONE: [33m0[39m,
+  CAPTURING_PHASE: [33m1[39m,
+  AT_TARGET: [33m2[39m,
+  BUBBLING_PHASE: [33m3[39m,
+  [32mSymbol(composed)[39m: [33mfalse[39m,
+  [32mSymbol(bubbles)[39m: [33mfalse[39m,
+  [32mSymbol(cancelable)[39m: [33mfalse[39m,
+  [32mSymbol(defaultPrevented)[39m: [33mfalse[39m,
+  [32mSymbol(eventPhase)[39m: [33m0[39m,
+  [32mSymbol(timeStamp)[39m: [33m2062.259167[39m,
+  [32mSymbol(type)[39m: [32m'error'[39m,
+  [32mSymbol(dispatching)[39m: [33mfalse[39m,
+  [32mSymbol(immediatePropagationStopped)[39m: [33mfalse[39m,
+  [32mSymbol(propagationStopped)[39m: [33mfalse[39m,
+  [32mSymbol(target)[39m: [1mnull[22m,
+  [32mSymbol(currentTarget)[39m: [1mnull[22m,
+  [32mSymbol(isInPassiveEventListener)[39m: [33mfalse[39m
+}
+
+ [32m✓[39m src/lib/websocket.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 1690[2mms[22m[39m
+       [33m[2m✓[22m[39m reconnects after close [33m 1135[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (8)[39m
+[2m      Tests [22m [1m[32m122 passed[39m[22m[2m | [22m[33m10 skipped[39m[90m (132)[39m
+[2m   Start at [22m 06:46:15
+[2m   Duration [22m 2.17s[2m (transform 637ms, setup 586ms, import 938ms, tests 1.85s, environment 1.57s)[22m
+
+mkdir -p bin
+cd packages/go-backend && go build -ldflags="-s -w" -o ../../bin/familiar-go ./cmd/server
+cd packages/desktop/ui && npm run test:e2e
+
+> familiar-ui@0.1.0 test:e2e
+> playwright test
+
+Starting backend server...
+[backend] 2026/01/03 06:46:19 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+
+[backend] time=2026-01-03T06:46:19.950-05:00 level=INFO msg="Backend boot starting"
+
+[backend] time=2026-01-03T06:46:19.953-05:00 level=INFO msg="Database initialized" duration=2.847041ms
+
+[backend] time=2026-01-03T06:46:19.954-05:00 level=INFO msg="Bootstrap phase completed" duration=139.292µs
+
+[backend] time=2026-01-03T06:46:19.954-05:00 level=INFO msg="Scheduler started"
+
+[backend] [GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+
+[backend] [GIN-debug] GET    /health                   --> main.main.func5 (4 handlers)
+
+[backend] [GIN-debug] GET    /api/health               --> main.main.func6 (4 handlers)
+[GIN-debug] GET    /api/ws                   --> main.(*Server).handleGlobalWebSocket-fm (4 handlers)
+
+[backend] time=2026-01-03T06:46:19.955-05:00 level=INFO msg="Server starting" port=18080 total_boot_duration=5.184ms
+
+[backend] time=2026-01-03T06:46:20.057-05:00 level=INFO msg="Event recovery completed" duration=1.066875ms
+
+Error: Server at http://localhost:9712/api/v1/ping did not start within 30000ms
+
+   at global-setup.ts:23
+
+  21 |     await new Promise(resolve => setTimeout(resolve, 500));
+  22 |   }
+> 23 |   throw new Error(`Server at ${url} did not start within ${timeout}ms`);
+     |         ^
+  24 | }
+  25 |
+  26 | export default async function globalSetup() {
+    at waitForServer (/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/global-setup.ts:23:9)
+    at globalSetup (/Users/patrick/workingdir/familiar/packages/desktop/ui/e2e/global-setup.ts:66:3)
+
+Stopping backend server (PID: 50569)...
+[backend] time=2026-01-03T06:46:49.203-05:00 level=INFO msg="Shutting down server..."
+time=2026-01-03T06:46:49.203-05:00 level=INFO msg="Scheduler stopped"
+
+[backend] time=2026-01-03T06:46:49.204-05:00 level=INFO msg="Server exited"
+
+[1A[2Kmake: *** [test-e2e] Error 1

@@ -1,0 +1,443 @@
+2026-01-03T11:19:44.681Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (21.4ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T11:19:44.701Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (19.6ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T11:19:44.715Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude, /Users/patrick/workingdir/familiar/.claude, /Users/patrick/workingdir/familiar/.claude...
+2026-01-03T11:19:44.727Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T11:19:44.727Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T11:19:44.727Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T11:19:44.727Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'userSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T11:19:44.727Z [DEBUG] Applying permission update: Adding 12 allow rule(s) to destination 'localSettings': ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)"]
+2026-01-03T11:19:44.728Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T11:19:44.728Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T11:19:44.730Z [DEBUG] Loading plugin ralph-wiggum from source: "./plugins/ralph-wiggum"
+2026-01-03T11:19:44.748Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-03T11:19:44.748Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-03T11:19:44.748Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-03T11:19:44.748Z [DEBUG] Path /Users/patrick/workingdir/familiar already tracked for repo patleeman/familiar
+2026-01-03T11:19:44.748Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T11:19:44.748Z [DEBUG] Plugin ralph-wiggum@claude-plugins-official version 6d3752c000e2 already cached at /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T11:19:44.748Z [DEBUG] Copied local plugin ralph-wiggum to versioned cache: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T11:19:44.749Z [DEBUG] Loaded hooks from standard location for plugin ralph-wiggum: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/hooks/hooks.json
+2026-01-03T11:19:44.749Z [DEBUG] Found 1 plugins (1 enabled, 0 disabled)
+2026-01-03T11:19:44.755Z [DEBUG] Stats cache is up to date
+2026-01-03T11:19:44.757Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T11:19:44.757Z [DEBUG] Passes: Cache stale, returning cached data and refreshing in background
+2026-01-03T11:19:44.759Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T11:19:44.769Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T11:19:44.769Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T11:19:44.769Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T11:19:44.769Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767439184769-hei6k5.sh
+2026-01-03T11:19:44.769Z [DEBUG] Shell binary exists: true
+2026-01-03T11:19:44.769Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T11:19:44.770Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/9def64a9-4499-42b0-848a-876c27cd5c62-agent-9def64a9-4499-42b0-848a-876c27cd5c62.json.tmp.25572.1767439184770
+2026-01-03T11:19:44.770Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T11:19:44.770Z [DEBUG] Renaming /Users/patrick/.claude/todos/9def64a9-4499-42b0-848a-876c27cd5c62-agent-9def64a9-4499-42b0-848a-876c27cd5c62.json.tmp.25572.1767439184770 to /Users/patrick/.claude/todos/9def64a9-4499-42b0-848a-876c27cd5c62-agent-9def64a9-4499-42b0-848a-876c27cd5c62.json
+2026-01-03T11:19:44.770Z [DEBUG] File /Users/patrick/.claude/todos/9def64a9-4499-42b0-848a-876c27cd5c62-agent-9def64a9-4499-42b0-848a-876c27cd5c62.json written atomically
+2026-01-03T11:19:44.773Z [DEBUG] getPluginSkills: Processing 1 enabled plugins
+2026-01-03T11:19:44.773Z [DEBUG] Checking plugin ralph-wiggum: skillsPath=none, skillsPaths=0 paths
+2026-01-03T11:19:44.773Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T11:19:44.774Z [DEBUG] Loading hooks from plugin: ralph-wiggum
+2026-01-03T11:19:44.774Z [DEBUG] Registered 1 hooks from 1 plugins
+2026-01-03T11:19:44.775Z [DEBUG] Loaded 3 commands from plugin ralph-wiggum default directory
+2026-01-03T11:19:44.775Z [DEBUG] Total plugin commands loaded: 3
+2026-01-03T11:19:44.778Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T11:19:44.778Z [DEBUG] Protecting locked version from cleanup: 2.0.67
+2026-01-03T11:19:44.779Z [ERROR] Error: Error: NON-FATAL: Lock acquisition failed for /Users/patrick/.local/share/claude/versions/2.0.76 (expected in multi-process scenarios)
+    at XZR (/$bunfs/root/claude:2430:2165)
+    at fUA (/$bunfs/root/claude:2430:1885)
+    at processTicksAndRejections (native:7:39)
+2026-01-03T11:19:44.817Z [DEBUG] Loaded 1 unique skills (managed: 0, user: 0, project: 0, legacy commands: 1)
+2026-01-03T11:19:44.817Z [DEBUG] getSkills returning: 1 skill dir commands, 0 plugin skills
+2026-01-03T11:19:44.822Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439184822
+2026-01-03T11:19:44.822Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:19:44.823Z [DEBUG] Temp file written successfully, size: 58954 bytes
+2026-01-03T11:19:44.823Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:19:44.823Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439184822 to /Users/patrick/.claude.json
+2026-01-03T11:19:44.823Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:19:44.904Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439184904
+2026-01-03T11:19:44.904Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:19:44.904Z [DEBUG] Temp file written successfully, size: 58954 bytes
+2026-01-03T11:19:44.904Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:19:44.904Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439184904 to /Users/patrick/.claude.json
+2026-01-03T11:19:44.905Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:19:44.905Z [DEBUG] Passes eligibility cached for org c1f3985d-9cb2-42fc-8447-d25b0848c0f9: true
+2026-01-03T11:19:44.915Z [DEBUG] Metrics opt-out API response: enabled=true, vcsLinking=false
+2026-01-03T11:19:45.041Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T11:19:45.048Z [DEBUG] All plugins already exist, skipping migration
+2026-01-03T11:19:45.048Z [DEBUG] Initialized versioned plugins system with 1 plugins
+2026-01-03T11:19:45.050Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439185050
+2026-01-03T11:19:45.050Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:19:45.050Z [DEBUG] Temp file written successfully, size: 58954 bytes
+2026-01-03T11:19:45.050Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:19:45.050Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439185050 to /Users/patrick/.claude.json
+2026-01-03T11:19:45.051Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:19:45.707Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-03T11:19:45.707Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:19:45.707Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-03T11:19:45.709Z [DEBUG] Summarizing all 3 messages (~0 tokens)
+2026-01-03T11:19:45.717Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-03T11:19:45.717Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:19:45.717Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-03T11:19:45.719Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-03T11:19:45.719Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:19:45.719Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-03T11:19:45.721Z [DEBUG] Shell snapshot created successfully (42836 bytes)
+2026-01-03T11:19:45.722Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T11:19:45.722Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-03T11:19:45.728Z [DEBUG] Skills and commands included in Skill tool: commit-and-push, ralph-wiggum:help, ralph-wiggum:cancel-ralph, ralph-wiggum:ralph-loop
+2026-01-03T11:19:45.734Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/Users/patrick/.local/share/claude/versions/2.0.76)
+2026-01-03T11:19:45.758Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439185758
+2026-01-03T11:19:45.758Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:19:45.758Z [DEBUG] Temp file written successfully, size: 58881 bytes
+2026-01-03T11:19:45.758Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:19:45.758Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439185758 to /Users/patrick/.claude.json
+2026-01-03T11:19:45.758Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:19:45.760Z [DEBUG] Official marketplace auto-install skipped: already_attempted
+2026-01-03T11:19:45.760Z [DEBUG] performStartupChecks called
+2026-01-03T11:19:45.760Z [DEBUG] Starting background plugin installations
+2026-01-03T11:19:45.761Z [DEBUG] performBackgroundPluginInstallations called
+2026-01-03T11:19:45.776Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:19:45.778Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439185778
+2026-01-03T11:19:45.778Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:19:45.778Z [DEBUG] Temp file written successfully, size: 58954 bytes
+2026-01-03T11:19:45.778Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:19:45.778Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439185778 to /Users/patrick/.claude.json
+2026-01-03T11:19:45.778Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:19:45.779Z [DEBUG] Found 1 enabled plugins
+2026-01-03T11:19:45.779Z [DEBUG] All plugins already exist, skipping migration
+2026-01-03T11:19:45.779Z [DEBUG] Found 1 installed plugins (V2 format)
+2026-01-03T11:19:45.779Z [DEBUG] Loaded plugins - Enabled: 1, Disabled: 0, Commands: 3, Agents: 0, Errors: 0
+2026-01-03T11:19:45.779Z [DEBUG] Found 0 missing plugins (not installed):
+2026-01-03T11:19:45.779Z [DEBUG] Setting installation status: 0 marketplaces, 0 installable plugins, 0 uninstallable plugins
+2026-01-03T11:19:45.780Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T11:19:45.794Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:19:45.794Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:19:45.794Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:19:45.794Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:19:45.800Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439185800
+2026-01-03T11:19:45.800Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:19:45.800Z [DEBUG] Temp file written successfully, size: 58954 bytes
+2026-01-03T11:19:45.800Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:19:45.800Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439185800 to /Users/patrick/.claude.json
+2026-01-03T11:19:45.801Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:19:45.811Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T11:19:45.811Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:19:45.811Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:19:45.813Z [DEBUG] Total plugin output styles loaded: 0
+2026-01-03T11:19:45.813Z [DEBUG] FileHistory: Added snapshot for 57afc48a-682a-449e-b533-9189a65fe8a0, tracking 0 files
+2026-01-03T11:19:45.876Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:19:45.876Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:19:46.142Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:19:46.463Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:19:47.179Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:19:47.206Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T11:19:47.207Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T11:19:47.208Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T11:19:47.208Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 13 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)"]
+2026-01-03T11:19:47.661Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T11:19:47.661Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:19:47.661Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:19:48.712Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:19:49.493Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T11:19:49.493Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T11:19:49.493Z [DEBUG] Matched 1 unique hooks for query "no match query" (1 before deduplication)
+2026-01-03T11:19:49.523Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439189523
+2026-01-03T11:19:49.523Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:19:49.523Z [DEBUG] Temp file written successfully, size: 58955 bytes
+2026-01-03T11:19:49.523Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:19:49.523Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439189523 to /Users/patrick/.claude.json
+2026-01-03T11:19:49.524Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:21:15.515Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:21:15.515Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:21:15.515Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:21:15.515Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:21:15.528Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T11:21:15.528Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:15.528Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:21:15.528Z [DEBUG] FileHistory: Making snapshot for message 199237d0-cefd-4938-8621-032bc7270212
+2026-01-03T11:21:15.529Z [DEBUG] FileHistory: Added snapshot for 199237d0-cefd-4938-8621-032bc7270212, tracking 0 files
+2026-01-03T11:21:15.978Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:19.784Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:24.284Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:21:24.295Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:21:24.295Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:24.295Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:21:24.314Z [DEBUG] tree-sitter: loaded from embedded
+2026-01-03T11:21:24.333Z [DEBUG] No session environment scripts found
+2026-01-03T11:21:24.361Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:21:24.361Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:24.361Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:21:24.368Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:21:24.368Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:21:24.368Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:21:24.368Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:21:24.921Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:27.975Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:31.982Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:21:31.986Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:21:31.986Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:31.986Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:21:31.986Z [DEBUG] executePreToolHooks called for tool: Read
+2026-01-03T11:21:31.986Z [DEBUG] executePreToolHooks called for tool: Read
+2026-01-03T11:21:31.986Z [DEBUG] executePreToolHooks called for tool: Read
+2026-01-03T11:21:31.989Z [DEBUG] Getting matching hook commands for PreToolUse with query: Read
+2026-01-03T11:21:31.989Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:31.989Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:31.989Z [DEBUG] Getting matching hook commands for PreToolUse with query: Read
+2026-01-03T11:21:31.989Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:31.989Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:31.989Z [DEBUG] Getting matching hook commands for PreToolUse with query: Read
+2026-01-03T11:21:31.989Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:31.989Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:32.020Z [DEBUG] Getting matching hook commands for PostToolUse with query: Read
+2026-01-03T11:21:32.020Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:32.020Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:32.020Z [DEBUG] Getting matching hook commands for PostToolUse with query: Read
+2026-01-03T11:21:32.020Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:32.020Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:32.020Z [DEBUG] Getting matching hook commands for PostToolUse with query: Read
+2026-01-03T11:21:32.020Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:32.020Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:32.033Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:21:32.033Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:32.033Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:21:32.042Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:21:32.042Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:21:32.042Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:21:32.042Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:21:32.484Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T11:21:32.484Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:32.484Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:21:32.645Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:34.335Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:39.262Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:21:39.266Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:21:39.266Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:39.266Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:21:39.324Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:21:39.324Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:39.324Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:21:39.330Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:21:39.330Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:21:39.330Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:21:39.330Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:21:40.595Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:43.650Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:21:45.109Z [DEBUG] executePreToolHooks called for tool: Read
+2026-01-03T11:21:45.116Z [DEBUG] Getting matching hook commands for PreToolUse with query: Read
+2026-01-03T11:21:45.116Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:45.116Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:45.135Z [DEBUG] Getting matching hook commands for PostToolUse with query: Read
+2026-01-03T11:21:45.135Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:21:45.135Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:21:45.141Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:21:45.141Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:21:45.141Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:21:45.141Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:21:48.574Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:22:06.760Z [DEBUG] executePreToolHooks called for tool: Write
+2026-01-03T11:22:06.762Z [DEBUG] Getting matching hook commands for PreToolUse with query: Write
+2026-01-03T11:22:06.762Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:22:06.762Z [DEBUG] Matched 0 unique hooks for query "Write" (0 before deduplication)
+2026-01-03T11:22:06.772Z [DEBUG] Permission suggestions for Write: [
+  {
+    "type": "setMode",
+    "mode": "acceptEdits",
+    "destination": "session"
+  }
+]
+2026-01-03T11:22:06.800Z [DEBUG] executePermissionRequestHooks called for tool: Write
+2026-01-03T11:22:06.815Z [DEBUG] Getting matching hook commands for PermissionRequest with query: Write
+2026-01-03T11:22:06.815Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:22:06.815Z [DEBUG] Matched 0 unique hooks for query "Write" (0 before deduplication)
+2026-01-03T11:22:10.812Z [DEBUG] Applying permission update: Setting mode to 'acceptEdits'
+2026-01-03T11:22:10.812Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:22:10.816Z [DEBUG] FileHistory: Tracked file modification for /Users/patrick/workingdir/familiar/CLAUDE.md
+2026-01-03T11:22:10.823Z [DEBUG] [lspRecommendation] Looking for LSP plugins for .md
+2026-01-03T11:22:10.875Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:22:10.875Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:22:11.250Z [DEBUG] Writing to temp file: /Users/patrick/workingdir/familiar/CLAUDE.md.tmp.25572.1767439331250
+2026-01-03T11:22:11.251Z [DEBUG] Temp file written successfully, size: 1669 bytes
+2026-01-03T11:22:11.251Z [DEBUG] Renaming /Users/patrick/workingdir/familiar/CLAUDE.md.tmp.25572.1767439331250 to /Users/patrick/workingdir/familiar/CLAUDE.md
+2026-01-03T11:22:11.251Z [DEBUG] File /Users/patrick/workingdir/familiar/CLAUDE.md written atomically
+2026-01-03T11:22:11.256Z [DEBUG] Getting matching hook commands for PostToolUse with query: Write
+2026-01-03T11:22:11.256Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:22:11.256Z [DEBUG] Matched 0 unique hooks for query "Write" (0 before deduplication)
+2026-01-03T11:22:11.268Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:22:11.268Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:22:11.268Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:22:11.268Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:22:12.729Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:22:15.331Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T11:22:15.331Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T11:22:15.331Z [DEBUG] Matched 1 unique hooks for query "no match query" (1 before deduplication)
+2026-01-03T11:22:15.362Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439335362
+2026-01-03T11:22:15.362Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:22:15.363Z [DEBUG] Temp file written successfully, size: 58955 bytes
+2026-01-03T11:22:15.363Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:22:15.363Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439335362 to /Users/patrick/.claude.json
+2026-01-03T11:22:15.363Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:22:15.366Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439335366
+2026-01-03T11:22:15.366Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:22:15.366Z [DEBUG] Temp file written successfully, size: 58955 bytes
+2026-01-03T11:22:15.366Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:22:15.366Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439335366 to /Users/patrick/.claude.json
+2026-01-03T11:22:15.366Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:22:19.095Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:22:23.408Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T11:22:23.408Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:22:23.408Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:22:38.951Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T11:22:38.953Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T11:22:38.953Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T11:22:38.953Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 14 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)"]
+2026-01-03T11:23:01.311Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:23:01.368Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:23:01.368Z [DEBUG] Already running version 2.0.76 - no update needed
+2026-01-03T11:23:01.373Z [DEBUG] Metadata string for commit-and-push:
+2026-01-03T11:23:01.373Z [DEBUG] <command-message>commit-and-push</command-message>
+<command-name>/commit-and-push</command-name>
+2026-01-03T11:23:01.373Z [DEBUG] command-message tags in metadata: 1
+2026-01-03T11:23:01.375Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:23:01.375Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:23:01.375Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:23:01.375Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:23:01.377Z [DEBUG] processPromptSlashCommand creating 4 messages for commit-and-push
+2026-01-03T11:23:01.377Z [DEBUG] Message 1: <command-message>commit-and-push</command-message>
+<command-name>/commit-and-push</command-name>
+2026-01-03T11:23:01.377Z [DEBUG] Message 2 [META]: [{"type":"text","text":"## Commit and Push\n\nReview all changes, fix any issues, then commit and push.\n\n### Current State\n\n- **Branch**: main\n- **Remote tracking**: ## main...origin/main\n- **St
+2026-01-03T11:23:01.377Z [DEBUG] Message 3: [ATTACHMENT]
+2026-01-03T11:23:01.377Z [DEBUG] Message 4: [ATTACHMENT]
+2026-01-03T11:23:01.380Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T11:23:01.380Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:01.380Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:23:01.380Z [DEBUG] FileHistory: Making snapshot for message 57dbae10-ac12-4a57-8ab1-45946ebe9c85
+2026-01-03T11:23:01.381Z [DEBUG] FileHistory: Added snapshot for 57dbae10-ac12-4a57-8ab1-45946ebe9c85, tracking 1 files
+2026-01-03T11:23:01.381Z [DEBUG] UserCommandMessage rendering: "commit-and-push" (args: "none")
+2026-01-03T11:23:01.381Z [DEBUG] isSkillFormat: false
+2026-01-03T11:23:01.386Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439381386
+2026-01-03T11:23:01.386Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:23:01.386Z [DEBUG] Temp file written successfully, size: 59000 bytes
+2026-01-03T11:23:01.386Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:23:01.386Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439381386 to /Users/patrick/.claude.json
+2026-01-03T11:23:01.386Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:23:01.903Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:01.951Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:01.984Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:02.027Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:02.056Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:05.267Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:07.372Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:23:07.372Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:23:07.377Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:23:07.377Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:07.377Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:07.377Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:23:07.377Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:07.377Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:07.431Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:23:07.431Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:07.431Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:07.448Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:23:07.448Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:07.448Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:07.455Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:23:07.455Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:23:07.455Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:23:07.455Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:23:08.085Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:08.340Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:09.580Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:10.277Z [DEBUG] executePreToolHooks called for tool: Read
+2026-01-03T11:23:10.280Z [DEBUG] Getting matching hook commands for PreToolUse with query: Read
+2026-01-03T11:23:10.280Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:10.280Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:23:10.307Z [DEBUG] Getting matching hook commands for PostToolUse with query: Read
+2026-01-03T11:23:10.307Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:10.307Z [DEBUG] Matched 0 unique hooks for query "Read" (0 before deduplication)
+2026-01-03T11:23:10.314Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:23:10.314Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:23:10.314Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:23:10.314Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:23:12.292Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:20.260Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:23:20.263Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:23:20.263Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:20.263Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:20.857Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:21.035Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:21.237Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:21.566Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:23:21.566Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:21.566Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:21.570Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:23:21.570Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:23:21.570Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:23:21.570Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:23:22.071Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:24.072Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:28.511Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:23:28.518Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:23:28.518Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:28.518Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:29.079Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:29.091Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:29.246Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:23:29.246Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:29.246Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:29.252Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:23:29.252Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:23:29.252Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:23:29.252Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:23:29.773Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:31.885Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:32.659Z [DEBUG] executePreToolHooks called for tool: Bash
+2026-01-03T11:23:32.663Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2026-01-03T11:23:32.663Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:32.663Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:33.404Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:34.205Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2026-01-03T11:23:34.205Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:34.205Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2026-01-03T11:23:34.212Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T11:23:34.212Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T11:23:34.212Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T11:23:34.212Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T11:23:34.819Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:36.881Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:39.064Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T11:23:39.064Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T11:23:39.064Z [DEBUG] Matched 1 unique hooks for query "no match query" (1 before deduplication)
+2026-01-03T11:23:39.094Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439419094
+2026-01-03T11:23:39.094Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:23:39.094Z [DEBUG] Temp file written successfully, size: 59000 bytes
+2026-01-03T11:23:39.094Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:23:39.094Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439419094 to /Users/patrick/.claude.json
+2026-01-03T11:23:39.094Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:23:39.097Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.25572.1767439419097
+2026-01-03T11:23:39.097Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T11:23:39.097Z [DEBUG] Temp file written successfully, size: 59000 bytes
+2026-01-03T11:23:39.097Z [DEBUG] Applied original permissions to temp file
+2026-01-03T11:23:39.097Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.25572.1767439419097 to /Users/patrick/.claude.json
+2026-01-03T11:23:39.097Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T11:23:40.941Z [DEBUG] Stream started - received first chunk
+2026-01-03T11:23:41.392Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T11:23:41.392Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T11:23:41.392Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T11:24:39.087Z [DEBUG] Getting matching hook commands for Notification with query: idle_prompt
+2026-01-03T11:24:39.087Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T11:24:39.087Z [DEBUG] Matched 1 unique hooks for query "idle_prompt" (1 before deduplication)
+2026-01-03T11:24:39.299Z [DEBUG] Notification:idle_prompt [bash -c 'terminal-notifier -title "Claude: ${CLAUDE_PROJECT_DIR##*/}" -message "Claude needs your attention" -activate com.apple.Terminal -sound Glass'] completed with status 0
+2026-01-03T11:24:39.299Z [DEBUG] Hook output does not start with {, treating as plain text
+2026-01-03T11:25:34.089Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T11:25:34.091Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T11:25:34.091Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T11:25:34.091Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 15 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)"]
+2026-01-03T11:26:27.374Z [DEBUG] Detected change to /Users/patrick/workingdir/familiar/.claude/settings.local.json
+2026-01-03T11:26:27.376Z [DEBUG] Settings changed from localSettings, updating AppState
+2026-01-03T11:26:27.376Z [DEBUG] Replacing all allow rules for destination 'userSettings' with 1 rule(s): ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T11:26:27.376Z [DEBUG] Replacing all allow rules for destination 'localSettings' with 16 rule(s): ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)"]
+2026-01-03T11:31:25.450Z [DEBUG] UserCommandMessage rendering: "usage" (args: "none")
+2026-01-03T11:31:25.450Z [DEBUG] isSkillFormat: false
+2026-01-03T11:31:25.458Z [DEBUG] AutoUpdaterWrapper: Installation type: native
+2026-01-03T11:31:25.552Z [DEBUG] Checking for native installer update to version 2.0.76
+2026-01-03T11:31:25.552Z [DEBUG] Already running version 2.0.76 - no update needed

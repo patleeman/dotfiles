@@ -1,0 +1,18 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/UsageView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   286→                  </thead>
+   287→                  <tbody className="text-[11px]">
+   288→                    {tools.length === 0 ? (
+   289→                      <tr>
+   290→                        <td colSpan={3} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+   291→                          No data available
+   292→                        </td>
+   293→                      </tr>
+   294→                    ) : (
+   295→                      tools.map((t, i) => (
+   296→                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+   297→                          <td className="px-4 py-1 truncate font-black text-text-primary uppercase">
+   298→                            {t.tool}
+   299→                          </td>
+   300→                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+   301→                            {t.total_calls.toLocaleString()}
+   302→                          </td>

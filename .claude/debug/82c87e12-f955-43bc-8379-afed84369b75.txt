@@ -1,0 +1,113 @@
+2025-12-30T19:58:07.262Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (15.9ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-30T19:58:07.283Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-30T19:58:07.284Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-30T19:58:07.284Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-30T19:58:07.286Z [DEBUG] LSP server manager initialized successfully
+2025-12-30T19:58:07.286Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-30T19:58:07.286Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-30T19:58:07.295Z [DEBUG] Stats cache is up to date
+2025-12-30T19:58:07.298Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-30T19:58:07.436Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (136.3ms): cursor --version
+2025-12-30T19:58:07.440Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-30T19:58:07.452Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-30T19:58:07.452Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-30T19:58:07.452Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-30T19:58:07.452Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767124687452-zhly5v.sh
+2025-12-30T19:58:07.452Z [DEBUG] Shell binary exists: true
+2025-12-30T19:58:07.452Z [DEBUG] Execution timeout: 10000ms
+2025-12-30T19:58:07.453Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/82c87e12-f955-43bc-8379-afed84369b75-agent-82c87e12-f955-43bc-8379-afed84369b75.json.tmp.68479.1767124687453
+2025-12-30T19:58:07.459Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.8ms)
+2025-12-30T19:58:07.459Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-30T19:58:07.459Z [DEBUG] Renaming /Users/patrick/.claude/todos/82c87e12-f955-43bc-8379-afed84369b75-agent-82c87e12-f955-43bc-8379-afed84369b75.json.tmp.68479.1767124687453 to /Users/patrick/.claude/todos/82c87e12-f955-43bc-8379-afed84369b75-agent-82c87e12-f955-43bc-8379-afed84369b75.json
+2025-12-30T19:58:07.459Z [DEBUG] File /Users/patrick/.claude/todos/82c87e12-f955-43bc-8379-afed84369b75-agent-82c87e12-f955-43bc-8379-afed84369b75.json written atomically
+2025-12-30T19:58:07.535Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-30T19:58:07.535Z [DEBUG] Total plugin skills loaded: 0
+2025-12-30T19:58:07.535Z [DEBUG] Total plugin commands loaded: 0
+2025-12-30T19:58:07.535Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-30T19:58:07.538Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-30T19:58:07.538Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-30T19:58:07.554Z [DEBUG] Remote settings: Retry 1/5 after 525.1362346341349ms
+2025-12-30T19:58:07.558Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.68479.1767124687558
+2025-12-30T19:58:07.558Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T19:58:07.562Z [DEBUG] Temp file written successfully, size: 53256 bytes
+2025-12-30T19:58:07.563Z [DEBUG] Applied original permissions to temp file
+2025-12-30T19:58:07.563Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.68479.1767124687558 to /Users/patrick/.claude.json
+2025-12-30T19:58:07.563Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T19:58:07.564Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.68479.1767124687564
+2025-12-30T19:58:07.564Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T19:58:07.569Z [DEBUG] Temp file written successfully, size: 53256 bytes
+2025-12-30T19:58:07.569Z [DEBUG] Applied original permissions to temp file
+2025-12-30T19:58:07.569Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.68479.1767124687564 to /Users/patrick/.claude.json
+2025-12-30T19:58:07.569Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T19:58:07.569Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2025-12-30T19:58:07.569Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2025-12-30T19:58:07.569Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2025-12-30T19:58:07.569Z [DEBUG] Path /Users/patrick/workingdir/personal-agent already tracked for repo patleeman/familiar
+2025-12-30T19:58:07.579Z [DEBUG] Total plugin agents loaded: 0
+2025-12-30T19:58:07.584Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2025-12-30T19:58:07.585Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2025-12-30T19:58:07.585Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:07.585Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2025-12-30T19:58:07.592Z [DEBUG] Total plugin output styles loaded: 0
+2025-12-30T19:58:07.597Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-30T19:58:07.598Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2025-12-30T19:58:07.598Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:07.598Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2025-12-30T19:58:07.598Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2025-12-30T19:58:07.598Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:07.598Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2025-12-30T19:58:07.605Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-30T19:58:07.605Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-30T19:58:07.606Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-30T19:58:07.606Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-30T19:58:07.608Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2025-12-30T19:58:07.608Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:07.608Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T19:58:07.613Z [DEBUG] Skills and commands included in Skill tool:
+2025-12-30T19:58:07.711Z [DEBUG] Shell snapshot created successfully (43335 bytes)
+2025-12-30T19:58:07.836Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.68479.1767124687836
+2025-12-30T19:58:07.836Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T19:58:07.842Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.1ms)
+2025-12-30T19:58:07.842Z [DEBUG] Temp file written successfully, size: 53256 bytes
+2025-12-30T19:58:07.842Z [DEBUG] Applied original permissions to temp file
+2025-12-30T19:58:07.842Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.68479.1767124687836 to /Users/patrick/.claude.json
+2025-12-30T19:58:07.843Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T19:58:07.868Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.68479.1767124687868
+2025-12-30T19:58:07.868Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T19:58:07.873Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.3ms)
+2025-12-30T19:58:07.873Z [DEBUG] Temp file written successfully, size: 53257 bytes
+2025-12-30T19:58:07.873Z [DEBUG] Applied original permissions to temp file
+2025-12-30T19:58:07.873Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.68479.1767124687868 to /Users/patrick/.claude.json
+2025-12-30T19:58:07.873Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T19:58:08.412Z [DEBUG] Remote settings: No settings found (404)
+2025-12-30T19:58:08.413Z [DEBUG] Programmatic settings change notification for policySettings
+2025-12-30T19:58:08.413Z [DEBUG] Plugin hooks: reloading due to policySettings change
+2025-12-30T19:58:08.414Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-30T19:58:08.416Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-30T19:58:08.774Z [DEBUG] Stream started - received first chunk
+2025-12-30T19:58:09.778Z [DEBUG] Stream started - received first chunk
+2025-12-30T19:58:10.222Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-30T19:58:10.222Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:10.222Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T19:58:11.010Z [DEBUG] Stream started - received first chunk
+2025-12-30T19:58:12.090Z [DEBUG] executePreToolHooks called for tool: Bash
+2025-12-30T19:58:12.091Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2025-12-30T19:58:12.091Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:12.091Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2025-12-30T19:58:12.096Z [DEBUG] tree-sitter: WASM files not found
+2025-12-30T19:58:12.102Z [DEBUG] No session environment scripts found
+2025-12-30T19:58:12.147Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2025-12-30T19:58:12.147Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:12.147Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2025-12-30T19:58:12.160Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-30T19:58:12.160Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-30T19:58:12.160Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-30T19:58:12.160Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-30T19:58:12.549Z [DEBUG] Stream started - received first chunk
+2025-12-30T19:58:14.835Z [DEBUG] Stream started - received first chunk
+2025-12-30T19:58:15.268Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-30T19:58:15.268Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:15.268Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T19:58:15.464Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2025-12-30T19:58:15.464Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T19:58:15.464Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)

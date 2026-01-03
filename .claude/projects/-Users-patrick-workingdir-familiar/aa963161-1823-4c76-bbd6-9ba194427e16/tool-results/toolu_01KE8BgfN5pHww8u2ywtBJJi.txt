@@ -1,0 +1,620 @@
+     1→import React, { useState, useEffect, useRef, useCallback } from 'react';
+     2→import { useAgents } from '../context/AgentContext';
+     3→import { useNavigate, useLocation } from 'react-router-dom';
+     4→import { Terminal, Bot, Settings, Zap, BarChart3, Plus, Menu, Edit2, ChevronLeft, ChevronRight } from 'lucide-react';
+     5→import { clsx } from 'clsx';
+     6→import { type Agent, isSubAgentManagedCLI } from '../lib/api';
+     7→import { useQuery } from '@tanstack/react-query';
+     8→import { api } from '../lib/api';
+     9→import { ask } from '@tauri-apps/plugin-dialog';
+    10→import { isHotkey } from '../lib/hotkeys';
+    11→import { open } from '@tauri-apps/plugin-shell';
+    12→
+    13→interface Command {
+    14→  id: string;
+    15→  label: string;
+    16→  icon: React.ReactNode;
+    17→  cmd: string;
+    18→  path?: string;
+    19→  action?: () => void;
+    20→}
+    21→
+    22→export const Unibar: React.FC = () => {
+    23→  const { agents, selectAgent, createAgent, setSidebarCollapsed, updateAgentState, renameAgent, deleteAgent } = useAgents();
+    24→  const [isOpen, setIsOpen] = useState(false);
+    25→  const [query, setQuery] = useState('');
+    26→  const [selectedIndex, setSelectedIndex] = useState(0);
+    27→  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, agentId: string } | null>(null);
+    28→  const inputRef = useRef<HTMLInputElement>(null);
+    29→  const listRef = useRef<HTMLDivElement>(null);
+    30→  const navigate = useNavigate();
+    31→  const location = useLocation();
+    32→
+    33→  useEffect(() => {
+    34→    const handleClick = () => setContextMenu(null);
+    35→    window.addEventListener('click', handleClick);
+    36→    return () => window.removeEventListener('click', handleClick);
+    37→  }, []);
+    38→
+    39→  const agentMatch = location.pathname.match(/\/agent\/([^/]+)/);
+    40→  const activeAgentId = agentMatch ? agentMatch[1] : null;
+    41→
+    42→  const { data: config } = useQuery({
+    43→    queryKey: ['config'],
+    44→    queryFn: () => api.getConfig(),
+    45→  });
+    46→
+    47→  const { data: apiKeys } = useQuery({
+    48→    queryKey: ['apiKeys'],
+    49→    queryFn: () => api.getApiKeys(),
+    50→  });
+    51→
+    52→  const handleDuplicate = async (agentId: string) => {
+    53→    const agent = agents[agentId];
+    54→    if (!agent) return;
+    55→
+    56→    try {
+    57→      const response = await createAgent(
+    58→        agent.model_config,
+    59→        agent.initial_prompt,
+    60→        {
+    61→          name: `${agent.name || 'Agent'} (Copy)`,
+    62→          plan_enabled: agent.plan_enabled,
+    63→          sub_agents_enabled: agent.sub_agents_enabled
+    64→        }
+    65→      );
+    66→      if (response && response.id) {
+    67→        selectAgent(response.id);
+    68→        navigate(`/agent/${response.id}`);
+    69→      }
+    70→    } catch (err) {
+    71→      console.error('Failed to duplicate agent:', err);
+    72→    }
+    73→  };
+    74→
+    75→  const handleRename = async (agentId: string) => {
+    76→    const agent = agents[agentId];
+    77→    if (!agent) return;
+    78→
+    79→    const newName = window.prompt("Enter new name for agent:", agent.name || '');
+    80→
+    81→    if (newName && newName !== agent.name) {
+    82→      await renameAgent(agentId, newName);
+    83→    }
+    84→  };
+    85→
+    86→  const handleDelete = async (agentId: string) => {
+    87→    const confirmed = await ask("Are you sure you want to delete this agent? This action cannot be undone.", {
+    88→      title: 'Delete Agent',
+    89→      kind: 'warning',
+    90→    });
+    91→
+    92→    if (confirmed) {
+    93→      await deleteAgent(agentId);
+    94→      if (activeAgentId === agentId) {
+    95→        navigate('/');
+    96→      }
+    97→    }
+    98→  };
+    99→
+   100→  const handleCreateAgent = async () => {
+   101→    try {
+   102→      let provider = config?.inference?.chat?.provider || '';
+   103→      let model = config?.inference?.chat?.model || '';
+   104→
+   105→      // Ensure provider is configured and enabled
+   106→      if (apiKeys) {
+   107→        const keyData = apiKeys.find(k => k.provider === provider);
+   108→        const currentValid = provider && model && keyData?.enabled === true;
+   109→
+   110→        if (!currentValid) {
+   111→          const firstValid = apiKeys.find(k => k.enabled === true);
+   112→          if (firstValid) {
+   113→            provider = firstValid.provider;
+   114→            model = config?.available_models?.[provider]?.chat?.[0] || '';
+   115→          } else {
+   116→            // No providers configured, maybe redirect to settings or show error?
+   117→            const confirmed = await ask("No LLM provider is enabled. You must enable at least one provider in Settings to create agents. Would you like to go to Settings now?", {
+   118→              title: 'No Providers Enabled',
+   119→              kind: 'warning',
+   120→            });
+   121→            if (confirmed) {
+   122→              navigate('/settings');
+   123→            }
+   124→            handleClose();
+   125→            return;
+   126→          }
+   127→        }
+   128→      }
+   129→
+   130→      if (!provider || !model) {
+   131→        // Fallback check if for some reason we still don't have a provider/model
+   132→        navigate('/settings');
+   133→        handleClose();
+   134→        return;
+   135→      }
+   136→
+   137→      const response = await createAgent({ provider, model }, "");
+   138→      if (response && response.id) {
+   139→        setSidebarCollapsed(true);
+   140→        navigate(`/agent/${response.id}`);
+   141→      }
+   142→    } catch (err) {
+   143→      console.error('Failed to create agent from omnibar:', err);
+   144→    }
+   145→  };
+   146→
+   147→  const sortedAgents = React.useMemo(() => {
+   148→    const allArr = Object.values(agents);
+   149→    const all = allArr.filter(a => {
+   150→      if (a.is_internal) return false;
+   151→
+   152→      // Also filter out sub-agents of internal agents
+   153→      let curr = a;
+   154→      while (curr.parent_id) {
+   155→        const parent = agents[curr.parent_id];
+   156→        if (parent && parent.is_internal) return false;
+   157→
+   158→        // Fallback for sub-agents whose parent might be transient or not yet correctly flagged
+   159→        if (parent && (parent.name === 'Feedback Collector' || parent.name?.toLowerCase().includes('skill architect') || parent.name?.toLowerCase().includes('trigger architect'))) return false;
+   160→
+   161→        if (!parent) break;
+   162→        curr = parent;
+   163→      }
+   164→
+   165→      return (
+   166→        a.name?.toLowerCase().includes(query.toLowerCase()) ||
+   167→        a.id.toLowerCase().includes(query.toLowerCase()) ||
+   168→        a.model_config.model.toLowerCase().includes(query.toLowerCase())
+   169→      );
+   170→    });
+   171→
+   172→    const result: typeof all = [];
+   173→    const visited = new Set<string>();
+   174→
+   175→    const addWithChildren = (parentId: string | null) => {
+   176→      const children = all
+   177→        .filter(a => a.parent_id === parentId)
+   178→        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+   179→
+   180→      children.forEach(child => {
+   181→        if (visited.has(child.id)) return;
+   182→        visited.add(child.id);
+   183→        result.push(child);
+   184→        addWithChildren(child.id);
+   185→      });
+   186→    };
+   187→
+   188→    // Start with root agents (no parent)
+   189→    addWithChildren(null);
+   190→
+   191→    // Add any agents that were missed (e.g. orphans or disconnected trees)
+   192→    all.forEach(a => {
+   193→      if (!visited.has(a.id)) {
+   194→        visited.add(a.id);
+   195→        result.push(a);
+   196→        addWithChildren(a.id);
+   197→      }
+   198→    });
+   199→
+   200→    return result;
+   201→  }, [agents, query]);
+   202→
+   203→  const commands: Command[] = [
+   204→    { id: 'dashboard', label: 'Agent Dashboard', icon: <Terminal size={12} />, cmd: '', path: '/' },
+   205→    { id: 'create-agent', label: 'Create New Agent', icon: <Plus size={12} />, cmd: '', action: handleCreateAgent },
+   206→    { id: 'skills', label: 'Skills', icon: <Zap size={12} />, cmd: '', path: '/skills' },
+   207→    { id: 'triggers', label: 'Triggers', icon: <Zap size={12} />, cmd: '', path: '/triggers' },
+   208→    { id: 'usage', label: 'Usage', icon: <BarChart3 size={12} />, cmd: '', path: '/usage' },
+   209→    { id: 'settings', label: 'System Settings', icon: <Settings size={12} />, cmd: '', path: '/settings' },
+   210→  ].filter(c => c.label.toLowerCase().includes(query.toLowerCase()));
+   211→
+   212→  const results = [...commands, ...sortedAgents];
+   213→
+   214→  const handleOpen = useCallback(() => {
+   215→    setIsOpen(true);
+   216→    setQuery('');
+   217→    setSelectedIndex(0);
+   218→    setTimeout(() => inputRef.current?.focus(), 10);
+   219→  }, []);
+   220→
+   221→  const handleClose = useCallback(() => {
+   222→    setIsOpen(false);
+   223→    setQuery('');
+   224→  }, []);
+   225→
+   226→  useEffect(() => {
+   227→    const handleKeyDown = (e: KeyboardEvent) => {
+   228→      const toggleHotkey = (config?.ui as any)?.hotkeys?.['toggle_unibar'] || 'Cmd+K';
+   229→      if (isHotkey(e, toggleHotkey)) {
+   230→        e.preventDefault();
+   231→        if (isOpen) {
+   232→          handleClose();
+   233→        } else {
+   234→          handleOpen();
+   235→        }
+   236→      }
+   237→      if (e.key === 'Escape') {
+   238→        if (isOpen) {
+   239→          e.preventDefault();
+   240→          e.stopPropagation();
+   241→          handleClose();
+   242→        }
+   243→      }
+   244→    };
+   245→
+   246→    window.addEventListener('keydown', handleKeyDown);
+   247→    return () => window.removeEventListener('keydown', handleKeyDown);
+   248→  }, [handleOpen, handleClose, isOpen, config]);
+   249→
+   250→  useEffect(() => {
+   251→    if (isOpen && listRef.current) {
+   252→      const selectedElement = listRef.current.children[selectedIndex] as HTMLElement;
+   253→      if (selectedElement) {
+   254→        selectedElement.scrollIntoView({
+   255→          block: 'nearest',
+   256→        });
+   257→      }
+   258→    }
+   259→  }, [selectedIndex, isOpen]);
+   260→
+   261→  const handleSelect = (item: Agent | Command) => {
+   262→    if ('cmd' in item) {
+   263→      if (item.action) {
+   264→        item.action();
+   265→      } else if (item.path) {
+   266→        navigate(item.path);
+   267→        if (item.id === 'dashboard') selectAgent(null);
+   268→      }
+   269→    } else {
+   270→      selectAgent(item.id);
+   271→      navigate(`/agent/${item.id}`);
+   272→    }
+   273→    handleClose();
+   274→  };
+   275→
+   276→  const onKeyDown = (e: React.KeyboardEvent) => {
+   277→    if (e.key === 'ArrowDown') {
+   278→      e.preventDefault();
+   279→      setSelectedIndex(prev => (prev + 1) % Math.max(1, results.length));
+   280→    } else if (e.key === 'ArrowUp') {
+   281→      e.preventDefault();
+   282→      setSelectedIndex(prev => (prev - 1 + results.length) % Math.max(1, results.length));
+   283→    } else if (e.key === 'Enter') {
+   284→      e.preventDefault();
+   285→      if (results[selectedIndex]) {
+   286→        handleSelect(results[selectedIndex]);
+   287→      }
+   288→    }
+   289→  };
+   290→
+   291→  if (!isOpen) {
+   292→    return (
+   293→      <div
+   294→        className="fixed top-0 left-0 right-0 h-6 bg-surface/90 backdrop-blur-md border-b border-border flex items-center px-3 justify-between z-40 text-[9px] uppercase tracking-widest font-bold text-text-primary py-0.5 font-mono"
+   295→        data-tauri-drag-region
+   296→      >
+   297→        <div className="flex items-center gap-4 pointer-events-auto">
+   298→          <div className="flex items-center gap-1">
+   299→            <button
+   300→              onClick={() => {
+   301→                selectAgent(null);
+   302→                navigate('/');
+   303→              }}
+   304→              className={clsx(
+   305→                "transition-all px-1.5 py-0.5 rounded active:scale-95 cursor-pointer text-[9px] font-bold uppercase tracking-widest",
+   306→                (location.pathname === '/' || location.pathname.endsWith('/'))
+   307→                  ? "text-accent bg-accent/10 shadow-[0_0_10px_rgba(var(--accent),0.2)]"
+   308→                  : "hover:text-text-primary hover:bg-surface-hover text-text-tertiary"
+   309→              )}
+   310→            >
+   311→              {(location.pathname === '/' || location.pathname.endsWith('/')) ? '/FLEET' : 'FLEET'}
+   312→            </button>
+   313→            <button
+   314→              onClick={() => navigate('/skills')}
+   315→              className={clsx(
+   316→                "transition-all px-1.5 py-0.5 rounded active:scale-95 cursor-pointer text-[9px] font-bold uppercase tracking-widest",
+   317→                location.pathname === '/skills'
+   318→                  ? "text-accent bg-accent/10 shadow-[0_0_10px_rgba(var(--accent),0.2)]"
+   319→                  : "hover:text-text-primary hover:bg-surface-hover text-text-tertiary"
+   320→              )}
+   321→            >
+   322→              {location.pathname === '/skills' ? '/SKILLS' : 'SKILLS'}
+   323→            </button>
+   324→            <button
+   325→              onClick={() => navigate('/triggers')}
+   326→              className={clsx(
+   327→                "transition-all px-1.5 py-0.5 rounded active:scale-95 cursor-pointer text-[9px] font-bold uppercase tracking-widest",
+   328→                location.pathname === '/triggers'
+   329→                  ? "text-accent bg-accent/10 shadow-[0_0_10px_rgba(var(--accent),0.2)]"
+   330→                  : "hover:text-text-primary hover:bg-surface-hover text-text-tertiary"
+   331→              )}
+   332→            >
+   333→              {location.pathname === '/triggers' ? '/TRIGGERS' : 'TRIGGERS'}
+   334→            </button>
+   335→            <button
+   336→              onClick={() => navigate('/usage')}
+   337→              className={clsx(
+   338→                "transition-all px-1.5 py-0.5 rounded active:scale-95 cursor-pointer text-[9px] font-bold uppercase tracking-widest",
+   339→                location.pathname === '/usage'
+   340→                  ? "text-accent bg-accent/10 shadow-[0_0_10px_rgba(var(--accent),0.2)]"
+   341→                  : "hover:text-text-primary hover:bg-surface-hover text-text-tertiary"
+   342→              )}
+   343→            >
+   344→              {location.pathname === '/usage' ? '/USAGE' : 'USAGE'}
+   345→            </button>
+   346→            <button
+   347→              onClick={() => navigate('/settings')}
+   348→              className={clsx(
+   349→                "transition-all px-1.5 py-0.5 rounded active:scale-95 cursor-pointer text-[9px] font-bold uppercase tracking-widest",
+   350→                location.pathname === '/settings'
+   351→                  ? "text-accent bg-accent/10 shadow-[0_0_10px_rgba(var(--accent),0.2)]"
+   352→                  : "hover:text-text-primary hover:bg-surface-hover text-text-tertiary"
+   353→              )}
+   354→            >
+   355→              {location.pathname === '/settings' ? '/SETTINGS' : 'SETTINGS'}
+   356→            </button>
+   357→          </div>
+   358→        </div>
+   359→
+   360→        {contextMenu && (
+   361→          <div
+   362→            className="fixed z-[100] w-44 bg-[#0a0a0a] border border-[#333] font-mono text-[10px] overflow-hidden animate-in fade-in duration-75"
+   363→            style={{ top: contextMenu.y, left: contextMenu.x }}
+   364→            onClick={(e) => e.stopPropagation()}
+   365→          >
+   366→            <div className="px-2 py-1 border-b border-[#333] bg-[#111] text-[#666]">
+   367→              <span className="text-[8px] tracking-wider">
+   368→                *** {agents[contextMenu.agentId]?.name || agents[contextMenu.agentId]?.id.slice(0, 8)}
+   369→              </span>
+   370→            </div>
+   371→            <button
+   372→              className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   373→              onClick={() => {
+   374→                selectAgent(contextMenu.agentId);
+   375→                navigate(`/agent/${contextMenu.agentId}`);
+   376→                setContextMenu(null);
+   377→              }}
+   378→            >
+   379→              VIEW LOGS
+   380→            </button>
+   381→            <button
+   382→              className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   383→              onClick={() => {
+   384→                const agent = agents[contextMenu.agentId];
+   385→                if (agent) {
+   386→                  updateAgentState(contextMenu.agentId, agent.state === 'running' ? 'pause' : 'resume');
+   387→                }
+   388→                setContextMenu(null);
+   389→              }}
+   390→            >
+   391→              {agents[contextMenu.agentId]?.state === 'running' ? 'PAUSE' : 'RESUME'}
+   392→            </button>
+   393→            {agents[contextMenu.agentId]?.state === 'running' && (
+   394→              <button
+   395→                className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   396→                onClick={() => {
+   397→                  updateAgentState(contextMenu.agentId, 'pause_tree');
+   398→                  setContextMenu(null);
+   399→                }}
+   400→              >
+   401→                PAUSE TREE
+   402→              </button>
+   403→            )}
+   404→            {(agents[contextMenu.agentId]?.state === 'paused' || agents[contextMenu.agentId]?.state === 'waiting') && (
+   405→              <button
+   406→                className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   407→                onClick={() => {
+   408→                  updateAgentState(contextMenu.agentId, 'resume_tree');
+   409→                  setContextMenu(null);
+   410→                }}
+   411→              >
+   412→                RESUME TREE
+   413→              </button>
+   414→            )}
+   415→            <button
+   416→              className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   417→              onClick={() => {
+   418→                handleRename(contextMenu.agentId);
+   419→                setContextMenu(null);
+   420→              }}
+   421→            >
+   422→              RENAME
+   423→            </button>
+   424→            <button
+   425→              className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   426→              onClick={() => {
+   427→                handleDuplicate(contextMenu.agentId);
+   428→                setContextMenu(null);
+   429→              }}
+   430→            >
+   431→              DUPLICATE
+   432→            </button>
+   433→            <button
+   434→              className="w-full text-left px-2 py-1.5 text-[#f44] hover:bg-[#f44]/10 hover:text-[#f44] transition-colors"
+   435→              onClick={async () => {
+   436→                await handleDelete(contextMenu.agentId);
+   437→                setContextMenu(null);
+   438→              }}
+   439→            >
+   440→              DELETE
+   441→            </button>
+   442→          </div>
+   443→        )}
+   444→
+   445→        <div className="flex items-center gap-1 pointer-events-auto opacity-50">
+   446→          <button
+   447→            onClick={() => navigate(-1)}
+   448→            className="p-1 hover:bg-surface-hover rounded transition-colors active:scale-95 cursor-pointer text-text-tertiary hover:text-text-primary"
+   449→            title="Back"
+   450→          >
+   451→            <ChevronLeft size={10} />
+   452→          </button>
+   453→          <button
+   454→            onClick={() => navigate(1)}
+   455→            className="p-1 hover:bg-surface-hover rounded transition-colors active:scale-95 cursor-pointer text-text-tertiary hover:text-text-primary"
+   456→            title="Forward"
+   457→          >
+   458→            <ChevronRight size={10} />
+   459→          </button>
+   460→        </div>
+   461→      </div>
+   462→    );
+   463→  }
+   464→
+   465→  return (
+   466→    <div className="fixed inset-0 z-50 flex items-start justify-center font-mono">
+   467→      {/* Dimmed gradient behind the bar instead of full screen blur */}
+   468→      <div
+   469→        className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent"
+   470→        onClick={handleClose}
+   471→      />
+   472→      <div
+   473→        className="w-full border-b border-accent/30 shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col animate-in slide-in-from-top-2 duration-150 relative"
+   474→        style={{ backgroundColor: 'rgb(var(--surface))' }}
+   475→      >
+   476→        <div
+   477→          className="flex items-center px-4 h-6 border-b border-border/50"
+   478→          style={{ backgroundColor: 'rgb(var(--surface))' }}
+   479→        >
+   480→          <span className="text-text-tertiary/40 mr-2 text-[9px]">[{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]</span>
+   481→          <span className="text-accent font-bold mr-2 text-[9px]">{'>'}</span>
+   482→          <input
+   483→            ref={inputRef}
+   484→            type="text"
+   485→            className="flex-1 bg-transparent border-none outline-none text-[9px] font-mono text-text-primary placeholder:text-text-tertiary/50 uppercase tracking-widest font-bold"
+   486→            placeholder="search agents or commands..."
+   487→            value={query}
+   488→            onChange={(e) => {
+   489→              setQuery(e.target.value);
+   490→              setSelectedIndex(0);
+   491→            }}
+   492→            onKeyDown={onKeyDown}
+   493→          />
+   494→          <div className="flex items-center gap-4 ml-4">
+   495→            <div className="flex gap-3 text-[7.5px] text-text-tertiary uppercase tracking-widest opacity-60">
+   496→              <span>NAV</span>
+   497→              <span>↑↓</span>
+   498→              <span>↵</span>
+   499→            </div>
+   500→            <span className="text-[8px] font-bold text-text-tertiary/60 uppercase">{(config?.ui as any)?.hotkeys?.['global_back'] || 'ESCAPE'}</span>
+   501→          </div>
+   502→        </div>
+   503→
+   504→        <div
+   505→          ref={listRef}
+   506→          className="max-h-[200px] overflow-y-auto custom-scrollbar p-0.5"
+   507→          style={{ backgroundColor: 'rgb(var(--surface))' }}
+   508→        >
+   509→          {results.length === 0 ? (
+   510→            <div className="py-3 text-center text-text-tertiary opacity-30 text-[8.5px] uppercase tracking-[0.2em]">
+   511→              *** No Results
+   512→            </div>
+   513→          ) : (
+   514→            results.map((item: Agent | Command, index) => {
+   515→              const isItemCommand = 'cmd' in item;
+   516→              const depth = isItemCommand ? 0 : (() => {
+   517→                let d = 0;
+   518→                let curr = item as Agent;
+   519→                while (curr.parent_id && agents[curr.parent_id]) {
+   520→                  d++;
+   521→                  curr = agents[curr.parent_id];
+   522→                }
+   523→                return d;
+   524→              })();
+   525→
+   526→              const contextPct = !isItemCommand && (item as Agent).max_context_tokens > 0
+   527→                ? Math.min(100, Math.round(((item as Agent).context_tokens / (item as Agent).max_context_tokens) * 100))
+   528→                : 0;
+   529→
+   530→              return (
+   531→                <div
+   532→                  key={isItemCommand ? (item as Command).id : (item as Agent).id}
+   533→                  onClick={() => handleSelect(item)}
+   534→                  className={clsx(
+   535→                    "flex items-center px-3 py-1 cursor-pointer transition-colors group relative font-mono",
+   536→                    index === selectedIndex ? "bg-accent/20 text-accent" : "hover:bg-surface-hover text-text-secondary"
+   537→                  )}
+   538→                  style={{ paddingLeft: `${12 + depth * 10}px` }}
+   539→                >
+   540→                  <div className="flex items-center gap-1.5 mr-2">
+   541→                    <span className="text-text-tertiary opacity-20 text-[9px]">***</span>
+   542→                  </div>
+   543→                  <div className="flex-1 min-w-0 flex items-center justify-between">
+   544→                    <div className="flex items-center gap-2.5">
+   545→                      <div className="flex items-center">
+   546→                        <span className="font-bold text-[9.5px] uppercase tracking-widest flex items-center gap-1">
+   547→                          {(!isItemCommand && depth > 0) && (
+   548→                            <span className="flex items-center shrink-0">
+   549→                              {Array.from({ length: depth }).map((_, i) => (
+   550→                                <span key={i} className="w-3 flex items-center justify-center">
+   551→                                  {i === depth - 1 ? (
+   552→                                    <span className="text-[9.5px] opacity-50 text-text-secondary">↳</span>
+   553→                                  ) : (
+   554→                                    <span className="text-[9.5px] opacity-20 text-border">│</span>
+   555→                                  )}
+   556→                                </span>
+   557→                              ))}
+   558→                            </span>
+   559→                          )}
+   560→                          <span className="opacity-40 mr-1">[{isItemCommand ? 'CMD' : 'AGENT'}]</span>
+   561→                          {isItemCommand ? (item as Command).label : (item as Agent).name || (item as Agent).model_config.model.split('/').pop()}
+   562→                        </span>
+   563→                      </div>
+   564→                      {!isItemCommand && (
+   565→                        <span className="text-[8.5px] opacity-40 font-mono">
+   566→                          {(item as Agent).id.slice(0, 8)}
+   567→                        </span>
+   568→                      )}
+   569→                    </div>
+   570→                    {!isItemCommand && (
+   571→                      <div className="flex items-center gap-2.5 ml-3">
+   572→                        {!isSubAgentManagedCLI(item as Agent) && (
+   573→                          <div
+   574→                            className="flex items-center gap-1 py-0.5 px-0.5 rounded hover:bg-surface-hover transition-colors cursor-help"
+   575→                            title={`Usage: ${(item as Agent).context_tokens?.toLocaleString() || 0} tk\nLimit: ${(item as Agent).max_context_tokens?.toLocaleString() || 0} tk\n${config?.agent?.auto_compaction_enabled !== false ? 'Compaction at 75%' : 'Compaction Disabled'}`}
+   576→                          >
+   577→                            <div className="w-8 h-0.5 bg-border/30 rounded-full overflow-hidden border border-border/10 shrink-0">
+   578→                              <div
+   579→                                className={clsx(
+   580→                                  "h-full transition-all duration-500",
+   581→                                  contextPct > 90 ? "bg-status-error shadow-[0_0_8px_rgba(239,68,68,0.4)]" :
+   582→                                    contextPct > 75 ? "bg-status-warning shadow-[0_0_8px_rgba(245,158,11,0.4)]" : "bg-accent shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+   583→                                )}
+   584→                                style={{ width: `${contextPct}%` }}
+   585→                              />
+   586→                            </div>
+   587→                            <span className={clsx(
+   588→                              "text-[8.5px] font-bold w-6 tracking-tight text-right",
+   589→                              contextPct > 90 ? "text-status-error" : contextPct > 75 ? "text-status-warning" : "opacity-60 text-text-primary"
+   590→                            )}>
+   591→                              {contextPct}%
+   592→                            </span>
+   593→                          </div>
+   594→                        )}
+   595→                        <div className="text-[8.5px] uppercase tracking-widest opacity-60 font-bold whitespace-nowrap flex items-center gap-1">
+   596→                          {(item as Agent).type === 'cli' ? 'EXT • ' : ''}{(depth > 0 ? 'SUB • ' : '')}
+   597→                          {(item as Agent).state === 'running' ? '▶ RUNNING' :
+   598→                            (item as Agent).state === 'waiting' ? '… WAITING' :
+   599→                              ((item as Agent).state === 'awaiting_approval' || (item as Agent).state === 'awaiting_secret') ? '‼ [!!!] ATTENTION' :
+   600→                                (item as Agent).state === 'error' ? '✖ ERROR' :
+   601→                                  (item as Agent).state === 'paused' ? '⏸ PAUSED' : '● IDLE'}
+   602→                          {!isSubAgentManagedCLI(item as Agent) && <span> • {(item as Agent).model_config.provider}</span>}
+   603→                        </div>
+   604→                      </div>
+   605→                    )}
+   606→                  </div>
+   607→                </div>
+   608→              );
+   609→            })
+   610→          )}
+   611→        </div>
+   612→      </div>
+   613→    </div>
+   614→  );
+   615→};
+   616→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

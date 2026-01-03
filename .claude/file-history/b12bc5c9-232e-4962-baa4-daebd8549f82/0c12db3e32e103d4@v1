@@ -1,0 +1,218 @@
+import React, { useState, useEffect } from 'react';
+import { clsx } from 'clsx';
+import { useAgents } from '../../context/AgentContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Zap, Plus, Loader2 } from 'lucide-react';
+import { api, type Skill } from '../../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { open } from '@tauri-apps/plugin-shell';
+import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from '../ui';
+
+export const SkillsView: React.FC = () => {
+  const { listSkills, deleteSkill, isExplorerCollapsed, agents, createAgent, selectAgent, setSidebarCollapsed } = useAgents();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, skillName: string } | null>(null);
+  const [isCreating, setIsCreating] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  const handleContextMenu = (e: React.MouseEvent, skillName: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, skillName });
+  };
+
+  const { data: config } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => api.getConfig(),
+  });
+
+  const { data: skillsData, isLoading: skillsLoading } = useQuery({
+    queryKey: ['skills'],
+    queryFn: async () => {
+      const resp = await listSkills();
+      return Array.isArray(resp?.skills) ? resp.skills : [];
+    }
+  });
+
+  const handleSkillClick = async (skill: Skill) => {
+    // Find if there's an existing Skill Architect agent for this skill
+    const architect = Object.values(agents).find(a =>
+      a.name === `Skill Architect: ${skill.name}` &&
+      !a.is_internal
+    );
+
+    if (architect) {
+      selectAgent(architect.id);
+      navigate(`/agent/${architect.id}`);
+      return;
+    }
+
+    setIsCreating(skill.name);
+    try {
+      const response = await createAgent(
+        { provider: config?.inference?.chat?.provider, model: config?.inference?.chat?.model },
+        '',
+        { is_skill_creator: true, skill_id: skill.name }
+      );
+      if (response && response.id) {
+        setSidebarCollapsed(true);
+        selectAgent(response.id);
+        navigate(`/agent/${response.id}`);
+      }
+    } catch (err) {
+      console.error('Failed to create skill architect:', err);
+    } finally {
+      setIsCreating(null);
+    }
+  };
+
+  const handleAction = async (name: string, action: 'edit' | 'open' | 'delete') => {
+    const skill = skillsData?.find((s: Skill) => s.name === name);
+    if (!skill) return;
+
+    switch (action) {
+      case 'edit':
+        handleSkillClick(skill);
+        break;
+      case 'open':
+        if (skill.path) {
+          try {
+            // Open the parent directory of the skill
+            const parentPath = skill.path.substring(0, skill.path.lastIndexOf('/'));
+            await api.openPath(parentPath);
+          } catch (err) {
+            console.error('Failed to open finder:', err);
+          }
+        }
+        break;
+      case 'delete':
+        const confirmed = await ask(`Are you sure you want to delete the skill "${name}"? This will permanently remove the skill files from your library. This cannot be undone.`, {
+          title: 'Delete Skill',
+          kind: 'warning',
+        });
+        if (confirmed) {
+          await deleteSkill(name);
+          queryClient.invalidateQueries({ queryKey: ['skills'] });
+        }
+        break;
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-background font-mono text-[12px] relative overflow-hidden select-none">
+      {/* ... Skills Header ... */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border/20 bg-surface/5 shrink-0 font-mono">
+        <div className="flex items-center gap-3">
+          <h1 className="text-[11px] font-black text-accent uppercase tracking-[0.25em]">
+            {isExplorerCollapsed ? 'Skills ' : null}
+            <span className={clsx("text-text-tertiary opacity-30 font-black", isExplorerCollapsed ? "ml-1" : "ml-0")}>
+              {skillsData?.length || 0} skills
+            </span>
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-4">
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto p-1 custom-scrollbar">
+        <div className="w-full font-mono">
+          <div className="sticky top-0 z-10 grid grid-cols-[200px_1fr] gap-2 px-4 py-1.5 bg-background border-b border-border/40 text-[9px] font-black text-text-tertiary uppercase tracking-widest shadow-sm">
+            <div>Skill</div>
+            <div>Description</div>
+          </div>
+
+          <div className="flex flex-col">
+            {skillsLoading ? (
+              <div className="px-4 py-12 text-center">
+                <div className="flex flex-col items-center gap-2 text-text-tertiary/20">
+                  <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  <span className="uppercase tracking-[0.2em] text-[9px] font-black">Loading skills...</span>
+                </div>
+              </div>
+            ) : skillsData?.length === 0 ? (
+              <div className="px-4 py-12 text-center text-text-tertiary/30 uppercase tracking-[0.2em] text-[9px] font-black">
+                No skills found
+              </div>
+            ) : (
+              [...skillsData]
+                .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
+                .map((skill: Skill) => (
+                  <div
+                    key={skill.name}
+                    onClick={() => handleSkillClick(skill)}
+                    onContextMenu={(e) => handleContextMenu(e, skill.name)}
+                    className={clsx(
+                      "grid grid-cols-[200px_1fr] gap-2 px-4 py-1 border-b border-border/5 hover:bg-surface/30 transition-all items-start group cursor-pointer",
+                      isCreating === skill.name && "opacity-50 pointer-events-none"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 text-text-primary font-black uppercase tracking-tighter text-[10px]">
+                      {isCreating === skill.name && (
+                        <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {skill.name}
+                    </div>
+                    <div className="text-text-secondary opacity-50 text-[10px] leading-relaxed uppercase tracking-tight font-black">
+                      {skill.description}
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {contextMenu && (
+        <div
+          className="fixed z-[100] w-44 bg-[#0a0a0a] border border-[#333] font-mono text-[10px] overflow-hidden animate-in fade-in duration-75"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-2 py-1 border-b border-[#333] bg-[#111] text-[#666]">
+            <span className="text-[8px] tracking-wider">
+              {contextMenu.skillName}
+            </span>
+          </div>
+
+          <button
+            className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+            onClick={() => {
+              handleAction(contextMenu.skillName, 'edit');
+              setContextMenu(null);
+            }}
+          >
+            EDIT
+          </button>
+
+          <button
+            className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+            onClick={() => {
+              handleAction(contextMenu.skillName, 'open');
+              setContextMenu(null);
+            }}
+          >
+            OPEN
+          </button>
+
+          <button
+            className="w-full text-left px-2 py-1.5 text-[#f44] hover:bg-[#f44]/10 hover:text-[#f44] transition-colors"
+            onClick={() => {
+              handleAction(contextMenu.skillName, 'delete');
+              setContextMenu(null);
+            }}
+          >
+            DELETE
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+

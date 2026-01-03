@@ -1,0 +1,285 @@
+     1→import React, { useState, useEffect } from 'react';
+     2→import { useAgents } from '../../context/AgentContext';
+     3→import { useNavigate } from 'react-router-dom';
+     4→import { HierarchyTree } from './HierarchyTree';
+     5→import { Search, Loader2, Bot, Plus } from 'lucide-react';
+     6→import { ask } from '@tauri-apps/plugin-dialog';
+     7→import { useQuery } from '@tanstack/react-query';
+     8→import { api } from '../../lib/api';
+     9→import { isHotkey } from '../../lib/hotkeys';
+    10→
+    11→export const AgentExplorer: React.FC = () => {
+    12→  const {
+    13→    agents,
+    14→    activeAgentId,
+    15→    selectAgent,
+    16→    renameAgent,
+    17→    updateAgentState,
+    18→    createAgent,
+    19→    deleteAgent,
+    20→    focusedPane
+    21→  } = useAgents();
+    22→  const navigate = useNavigate();
+    23→  const [searchQuery, setSearchQuery] = useState('');
+    24→  const [isSearching, setIsSearching] = useState(false);
+    25→  const [activeIndex, setActiveIndex] = useState(-1);
+    26→  const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+    27→
+    28→  useEffect(() => {
+    29→    const handleClick = () => setContextMenu(null);
+    30→    window.addEventListener('click', handleClick);
+    31→    return () => window.removeEventListener('click', handleClick);
+    32→  }, []);
+    33→
+    34→  const handleContextMenu = (e: React.MouseEvent) => {
+    35→    e.preventDefault();
+    36→    setContextMenu({ x: e.clientX, y: e.clientY });
+    37→  };
+    38→
+    39→  const { data: config } = useQuery({
+    40→    queryKey: ['config'],
+    41→    queryFn: () => api.getConfig(),
+    42→  });
+    43→
+    44→  const { data: apiKeys } = useQuery({
+    45→    queryKey: ['apiKeys'],
+    46→    queryFn: () => api.getApiKeys(),
+    47→  });
+    48→
+    49→  const filteredAgents = React.useMemo(() => {
+    50→    if (!searchQuery) return agents;
+    51→    const filtered: Record<string, any> = {};
+    52→    Object.entries(agents).forEach(([id, agent]) => {
+    53→      if (
+    54→        agent.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    55→        id.toLowerCase().includes(searchQuery.toLowerCase())
+    56→      ) {
+    57→        filtered[id] = agent;
+    58→      }
+    59→    });
+    60→    return filtered;
+    61→  }, [agents, searchQuery]);
+    62→
+    63→  const flatVisibleAgents = React.useMemo(() => {
+    64→    const result: any[] = [];
+    65→    const visited = new Set<string>();
+    66→
+    67→    const addWithChildren = (parentId: string | null) => {
+    68→      const children = Object.values(filteredAgents)
+    69→        .filter(a => a.parent_id === parentId)
+    70→        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    71→
+    72→      children.forEach(child => {
+    73→        if (visited.has(child.id)) return;
+    74→        visited.add(child.id);
+    75→        result.push(child);
+    76→        addWithChildren(child.id);
+    77→      });
+    78→    };
+    79→
+    80→    addWithChildren(null);
+    81→    Object.keys(filteredAgents).forEach(id => {
+    82→      if (!visited.has(id)) {
+    83→        visited.add(id);
+    84→        result.push(filteredAgents[id]);
+    85→        addWithChildren(id);
+    86→      }
+    87→    });
+    88→    return result;
+    89→  }, [filteredAgents]);
+    90→
+    91→  useEffect(() => {
+    92→    const handleKeyDown = (e: KeyboardEvent) => {
+    93→      if (e.key === 'Escape' && isSearching) {
+    94→        setIsSearching(false);
+    95→        setSearchQuery('');
+    96→      }
+    97→
+    98→      if (focusedPane !== 'explorer') return;
+    99→
+   100→      if (e.key === 'ArrowDown') {
+   101→        e.preventDefault();
+   102→        setActiveIndex(prev => Math.min(prev + 1, flatVisibleAgents.length - 1));
+   103→      } else if (e.key === 'ArrowUp') {
+   104→        e.preventDefault();
+   105→        setActiveIndex(prev => Math.max(prev - 1, 0));
+   106→      } else if (e.key === 'Enter') {
+   107→        if (activeIndex >= 0 && flatVisibleAgents[activeIndex]) {
+   108→          e.preventDefault();
+   109→          const agent = flatVisibleAgents[activeIndex];
+   110→          selectAgent(agent.id);
+   111→          navigate(`/agent/${agent.id}`);
+   112→        }
+   113→      }
+   114→    };
+   115→
+   116→    window.addEventListener('keydown', handleKeyDown);
+   117→    return () => window.removeEventListener('keydown', handleKeyDown);
+   118→  }, [isSearching, focusedPane, flatVisibleAgents, activeIndex, selectAgent, navigate]);
+   119→
+   120→  const handleRename = async (id: string) => {
+   121→    const agent = agents[id];
+   122→    if (!agent) return;
+   123→
+   124→    const newName = window.prompt("Enter new name for agent:", agent.name || agent.id.slice(0, 8));
+   125→
+   126→    if (newName && newName !== agent.name) {
+   127→      await renameAgent(id, newName);
+   128→    }
+   129→  };
+   130→
+   131→  const handleAddSubagent = async (parentId: string) => {
+   132→    const parent = agents[parentId];
+   133→    if (!parent) return;
+   134→
+   135→    try {
+   136→      const response = await createAgent(
+   137→        parent.model_config,
+   138→        "",
+   139→        { parent_id: parentId }
+   140→      );
+   141→      if (response && response.id) {
+   142→        selectAgent(response.id);
+   143→        navigate(`/agent/${response.id}`);
+   144→      }
+   145→    } catch (err) {
+   146→      console.error('Failed to create subagent:', err);
+   147→    }
+   148→  };
+   149→
+   150→  const handleAction = async (id: string, action: 'pause' | 'pause_tree' | 'resume' | 'resume_tree' | 'delete') => {
+   151→    switch (action) {
+   152→      case 'pause':
+   153→      case 'pause_tree':
+   154→      case 'resume':
+   155→      case 'resume_tree':
+   156→        await updateAgentState(id, action);
+   157→        break;
+   158→      case 'delete':
+   159→        const confirmed = await ask("Are you sure you want to delete this agent and all its history? This cannot be undone.", {
+   160→          title: 'Delete Agent',
+   161→          kind: 'warning',
+   162→        });
+   163→        if (confirmed) {
+   164→          await deleteAgent(id);
+   165→          if (activeAgentId === id) {
+   166→            navigate('/');
+   167→          }
+   168→        }
+   169→        break;
+   170→    }
+   171→  };
+   172→
+   173→  const handleCreateAgent = async () => {
+   174→    try {
+   175→      let provider = config?.inference?.chat?.provider || '';
+   176→      let model = config?.inference?.chat?.model || '';
+   177→
+   178→      if (apiKeys) {
+   179→        const keyData = apiKeys.find(k => k.provider === provider);
+   180→        if (!provider || !model || keyData?.enabled !== true) {
+   181→          const firstValid = apiKeys.find(k => k.enabled === true);
+   182→          if (firstValid) {
+   183→            provider = firstValid.provider;
+   184→            model = config?.available_models?.[provider]?.chat?.[0] || '';
+   185→          }
+   186→        }
+   187→      }
+   188→
+   189→      if (!provider || !model) {
+   190→        navigate('/settings');
+   191→        return;
+   192→      }
+   193→
+   194→      const response = await createAgent({ provider, model }, "");
+   195→      if (response && response.id) {
+   196→        selectAgent(response.id);
+   197→        navigate(`/agent/${response.id}`);
+   198→      }
+   199→    } catch (err) {
+   200→      console.error('Failed to create agent:', err);
+   201→    }
+   202→  };
+   203→
+   204→  return (
+   205→    <div className="flex flex-col h-full bg-background select-none relative group/explorer font-mono">
+   206→      {/* Sidebar Header */}
+   207→      <div className="p-3 border-b border-border/20 bg-surface/5 flex flex-col gap-3">
+   208→        <div className="flex items-center gap-2 text-accent">
+   209→          <span className="text-[11px] font-black uppercase tracking-[0.25em]">/AGENTS</span>
+   210→        </div>
+   211→        <p className="text-[9px] text-text-tertiary/50 leading-tight">
+   212→          Navigate and manage agent hierarchy
+   213→        </p>
+   214→
+   215→        <button
+   216→          onClick={() => navigate('/')}
+   217→          className="w-full flex items-center justify-start gap-2 py-1.5 hover:bg-accent/5 text-accent transition-all group"
+   218→        >
+   219→          <span className="text-[10px] font-black uppercase tracking-widest">[ BACK_TO_FLEET ]</span>
+   220→        </button>
+   221→      </div>
+   222→
+   223→      {/* Search Overlay */}
+   224→      {isSearching && (
+   225→        <div className="absolute inset-x-0 top-0 z-20 p-1 bg-background border-b border-border/40">
+   226→          <div className="flex items-center gap-2 px-2 py-1 bg-surface/50 border border-accent/20 font-mono">
+   227→            <span className="text-accent text-[10px] font-black animate-pulse">{'>'}</span>
+   228→            <input
+   229→              autoFocus
+   230→              type="text"
+   231→              placeholder="QUERY..."
+   232→              value={searchQuery}
+   233→              onChange={(e) => setSearchQuery(e.target.value)}
+   234→              onBlur={() => { if (!searchQuery) setIsSearching(false); }}
+   235→              className="bg-transparent border-none outline-none text-[10px] text-text-primary placeholder:text-text-tertiary/20 uppercase w-full font-black tracking-tighter"
+   236→            />
+   237→          </div>
+   238→        </div>
+   239→      )}
+   240→
+   241→      {/* Hierarchy Tree */}
+   242→      <div
+   243→        className="flex-1 overflow-y-auto custom-scrollbar pt-0.5"
+   244→        onContextMenu={handleContextMenu}
+   245→      >
+   246→        <HierarchyTree
+   247→          agents={filteredAgents}
+   248→          activeAgentId={activeAgentId}
+   249→          highlightedAgentId={activeIndex >= 0 ? flatVisibleAgents[activeIndex]?.id : null}
+   250→          onSelectAgent={(id) => {
+   251→            selectAgent(id);
+   252→            navigate(`/agent/${id}`);
+   253→          }}
+   254→          onRename={handleRename}
+   255→          onAddSubagent={handleAddSubagent}
+   256→          onAction={handleAction}
+   257→        />
+   258→      </div>
+   259→
+   260→      {contextMenu && (
+   261→        <div
+   262→          className="fixed z-[100] w-40 bg-surface border border-border rounded shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 backdrop-blur-md"
+   263→          style={{ top: contextMenu.y, left: contextMenu.x }}
+   264→          onClick={(e) => e.stopPropagation()}
+   265→        >
+   266→          <button
+   267→            className="w-full text-left px-3 py-2 hover:bg-accent hover:text-background transition-colors flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider"
+   268→            onClick={() => {
+   269→              handleCreateAgent();
+   270→              setContextMenu(null);
+   271→            }}
+   272→          >
+   273→            <Plus size={10} />
+   274→            NEW AGENT
+   275→          </button>
+   276→        </div>
+   277→      )}
+   278→    </div>
+   279→  );
+   280→};
+   281→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

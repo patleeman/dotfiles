@@ -1,0 +1,479 @@
+     1→import { useState, useEffect, useRef, useCallback } from 'react';
+     2→import { BrowserRouter, Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
+     3→import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+     4→import { clsx } from 'clsx';
+     5→import { AgentDashboard } from './components/Agent/AgentDashboard';
+     6→import { FleetSidebar } from './components/Agent/FleetSidebar';
+     7→import { AgentWorkspace } from './components/Agent/AgentWorkspace';
+     8→import { AgentExplorer } from './components/Agent/AgentExplorer';
+     9→import { SettingsSidebar } from './components/Agent/SettingsSidebar';
+    10→import { SkillsSidebar } from './components/Agent/SkillsSidebar';
+    11→import { StatusBar } from './components/Agent/StatusBar';
+    12→import { SkillsView } from './components/Agent/SkillsView';
+    13→import { TriggersView } from './components/Agent/TriggersView';
+    14→import { SettingsView } from './components/Agent/SettingsView';
+    15→import { UsageView } from './components/Agent/UsageView';
+    16→import { UsageSidebar } from './components/Agent/UsageSidebar';
+    17→import { TriggersSidebar } from './components/Agent/TriggersSidebar';
+    18→import { Unibar } from './components/Unibar';
+    19→import { SearchBar } from './components/SearchBar';
+    20→import { MissedTasksModal } from './components/Agent/MissedTasksModal';
+    21→import { api } from './lib/api';
+    22→import { NotificationProvider } from './hooks/useNotifications';
+    23→import { SystemProvider, useSystem } from './context/SystemContext';
+    24→import { AgentProvider, useAgents } from './context/AgentContext';
+    25→import { useQuery } from '@tanstack/react-query';
+    26→import { isHotkey } from './lib/hotkeys';
+    27→import { listen } from '@tauri-apps/api/event';
+    28→import { confirm, message } from '@tauri-apps/plugin-dialog';
+    29→import { useAutoUpdate } from './hooks/useAutoUpdate';
+    30→
+    31→const queryClient = new QueryClient({
+    32→  defaultOptions: {
+    33→    queries: {
+    34→      refetchOnWindowFocus: false,
+    35→      retry: 1,
+    36→    },
+    37→  },
+    38→});
+    39→
+    40→function applyTheme(theme: string | null) {
+    41→  if (theme && theme !== 'default') {
+    42→    document.documentElement.setAttribute('data-theme', theme);
+    43→  } else {
+    44→    document.documentElement.removeAttribute('data-theme');
+    45→  }
+    46→}
+    47→
+    48→const savedTheme = localStorage.getItem('pa_theme');
+    49→if (savedTheme) {
+    50→  applyTheme(savedTheme);
+    51→}
+    52→
+    53→function WaitingForBackend() {
+    54→  return (
+    55→    <div className="flex h-screen w-screen items-center justify-center bg-background text-text-primary">
+    56→      <div className="flex flex-col items-center gap-4">
+    57→        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+    58→        <p className="text-text-secondary">Starting backend...</p>
+    59→      </div>
+    60→    </div>
+    61→  );
+    62→}
+    63→
+    64→function AgentRouteWrapper() {
+    65→  const { id } = useParams<{ id: string }>();
+    66→  const { selectAgent, agents, initialized } = useAgents();
+    67→  const navigate = useNavigate();
+    68→
+    69→  useEffect(() => {
+    70→    if (!initialized || !id) return;
+    71→
+    72→    if (agents[id]) {
+    73→      selectAgent(id);
+    74→    } else {
+    75→      // If agent doesn't exist, go back to dashboard
+    76→      selectAgent(null);
+    77→      navigate('/', { replace: true });
+    78→    }
+    79→  }, [id, agents, initialized, selectAgent, navigate]);
+    80→
+    81→  if (!id || !agents[id]) return null;
+    82→
+    83→  return <AgentWorkspace />;
+    84→}
+    85→
+    86→function DashboardRouteWrapper() {
+    87→  const { selectAgent } = useAgents();
+    88→  useEffect(() => {
+    89→    selectAgent(null);
+    90→  }, [selectAgent]);
+    91→  return <AgentDashboard />;
+    92→}
+    93→
+    94→function SearchManager() {
+    95→  const { isSearchBarOpen, setIsSearchBarOpen } = useSystem();
+    96→
+    97→  const { data: config } = useQuery({
+    98→    queryKey: ['config'],
+    99→    queryFn: () => api.getConfig(),
+   100→  });
+   101→
+   102→  useEffect(() => {
+   103→    const handleKeyDown = (e: KeyboardEvent) => {
+   104→      // Toggle Search Bar
+   105→      if (isHotkey(e, 'Cmd+F')) {
+   106→        e.preventDefault();
+   107→        setIsSearchBarOpen(!isSearchBarOpen);
+   108→        return;
+   109→      }
+   110→    };
+   111→
+   112→    window.addEventListener('keydown', handleKeyDown, true);
+   113→    return () => window.removeEventListener('keydown', handleKeyDown, true);
+   114→  }, [isSearchBarOpen, setIsSearchBarOpen]);
+   115→
+   116→  if (!isSearchBarOpen) return null;
+   117→
+   118→  return <SearchBar onClose={() => setIsSearchBarOpen(false)} />;
+   119→}
+   120→
+   121→function AppContent() {
+   122→  useAutoUpdate();
+   123→  const navigate = useNavigate();
+   124→  const location = useLocation();
+   125→  const [zoom, setZoom] = useState(() => {
+   126→    const saved = localStorage.getItem('pa_zoom');
+   127→    return saved ? parseFloat(saved) : 1.2;
+   128→  });
+   129→
+   130→  const { data: config } = useQuery({
+   131→    queryKey: ['config'],
+   132→    queryFn: () => api.getConfig(),
+   133→  });
+   134→
+   135→  const { createAgent, selectAgent, setSidebarCollapsed, isExplorerCollapsed, toggleExplorer, activeAgentId, agents, setFocusedPane } = useAgents();
+   136→  const { activeSettingsTab, setActiveSettingsTab } = useSystem();
+   137→
+   138→  const activeAgent = activeAgentId ? agents[activeAgentId] : null;
+   139→  const isSkillArchitect = activeAgent?.name?.toLowerCase().includes('skill architect') || activeAgent?.initial_prompt?.includes('Skill Architect');
+   140→  const isTriggerArchitect = activeAgent?.name?.toLowerCase().includes('trigger architect') || activeAgent?.initial_prompt?.includes('Trigger Architect');
+   141→  const isSkillsRoute = location.pathname === '/skills';
+   142→  const isTriggersRoute = location.pathname === '/triggers';
+   143→
+   144→  const [explorerWidth, setExplorerWidth] = useState(() => {
+   145→    const saved = localStorage.getItem('agent-explorer-width');
+   146→    return saved ? parseInt(saved, 10) : 256;
+   147→  });
+   148→
+   149→  const isResizingExplorer = useRef(false);
+   150→
+   151→  useEffect(() => {
+   152→    localStorage.setItem('agent-explorer-width', explorerWidth.toString());
+   153→  }, [explorerWidth]);
+   154→
+   155→  useEffect(() => {
+   156→    const handleMouseMove = (e: MouseEvent) => {
+   157→      if (isResizingExplorer.current) {
+   158→        setExplorerWidth(Math.max(160, Math.min(600, e.clientX)));
+   159→      }
+   160→    };
+   161→
+   162→    const handleMouseUp = () => {
+   163→      isResizingExplorer.current = false;
+   164→      document.body.style.cursor = 'default';
+   165→      document.body.style.userSelect = 'auto';
+   166→    };
+   167→
+   168→    window.addEventListener('mousemove', handleMouseMove);
+   169→    window.addEventListener('mouseup', handleMouseUp);
+   170→    return () => {
+   171→      window.removeEventListener('mousemove', handleMouseMove);
+   172→      window.removeEventListener('mouseup', handleMouseUp);
+   173→    };
+   174→  }, []);
+   175→
+   176→  useEffect(() => {
+   177→    const handleKeyDown = (e: KeyboardEvent) => {
+   178→      const backHotkey = (config?.ui as any)?.hotkeys?.['global_back'] || 'Escape';
+   179→      const toggleExplorerHotkey = (config?.ui as any)?.hotkeys?.['toggle_explorer'] || 'Cmd+E';
+   180→
+   181→      // Toggle Explorer hotkey
+   182→      if (isHotkey(e, toggleExplorerHotkey)) {
+   183→        e.preventDefault();
+   184→        toggleExplorer();
+   185→        return;
+   186→      }
+   187→
+   188→      // Zoom hotkeys
+   189→      if (isHotkey(e, 'Cmd+=') || isHotkey(e, 'Cmd++') || isHotkey(e, 'Cmd+Plus')) {
+   190→        e.preventDefault();
+   191→        setZoom(prev => {
+   192→          const next = Math.min(prev + 0.1, 2.0);
+   193→          localStorage.setItem('pa_zoom', next.toString());
+   194→          return next;
+   195→        });
+   196→        return;
+   197→      }
+   198→      if (isHotkey(e, 'Cmd+-') || isHotkey(e, 'Cmd+_') || isHotkey(e, 'Cmd+Minus')) {
+   199→        e.preventDefault();
+   200→        setZoom(prev => {
+   201→          const next = Math.max(prev - 0.1, 0.5);
+   202→          localStorage.setItem('pa_zoom', next.toString());
+   203→          return next;
+   204→        });
+   205→        return;
+   206→      }
+   207→      if (isHotkey(e, 'Cmd+0')) {
+   208→        e.preventDefault();
+   209→        setZoom(1.2);
+   210→        localStorage.setItem('pa_zoom', '1.2');
+   211→        return;
+   212→      }
+   213→
+   214→      if (isHotkey(e, backHotkey)) {
+   215→        // If another component already handled this Escape (e.g. closing a modal)
+   216→        if (e.defaultPrevented) return;
+   217→
+   218→        // Don't navigate back if we're already at the dashboard
+   219→        if (location.pathname === '/') return;
+   220→
+   221→        // Don't navigate back if the user is typing in an input or textarea
+   222→        const activeElement = document.activeElement;
+   223→        const isInput = activeElement instanceof HTMLInputElement ||
+   224→          activeElement instanceof HTMLTextAreaElement ||
+   225→          (activeElement as HTMLElement)?.isContentEditable;
+   226→
+   227→        if (isInput) {
+   228→          (activeElement as HTMLElement).blur();
+   229→          return;
+   230→        }
+   231→
+   232→        navigate('/');
+   233→      }
+   234→    };
+   235→
+   236→    window.addEventListener('keydown', handleKeyDown);
+   237→    return () => window.removeEventListener('keydown', handleKeyDown);
+   238→  }, [navigate, location.pathname, config, toggleExplorer]);
+   239→
+   240→  const configRef = useRef(config);
+   241→  const restorePromptRef = useRef(false);
+   242→  useEffect(() => {
+   243→    configRef.current = config;
+   244→  }, [config]);
+   245→
+   246→  useEffect(() => {
+   247→    let unlistenFeedback: (() => void) | undefined;
+   248→    let unlistenOnboarding: (() => void) | undefined;
+   249→    let unlistenRestoreSkills: (() => void) | undefined;
+   250→    let unlistenRestoreTriggers: (() => void) | undefined;
+   251→
+   252→    const setupListeners = async () => {
+   253→      try {
+   254→        unlistenFeedback = await listen('feedback-requested', async () => {
+   255→          const currentConfig = configRef.current;
+   256→          try {
+   257→            const response = await createAgent(
+   258→              {
+   259→                provider: currentConfig?.inference?.chat?.provider,
+   260→                model: currentConfig?.inference?.chat?.model
+   261→              },
+   262→              "",
+   263→              { is_feedback_collector: true }
+   264→            );
+   265→            if (response && response.id) {
+   266→              setSidebarCollapsed(true);
+   267→              selectAgent(response.id);
+   268→              navigate(`/agent/${response.id}`);
+   269→            }
+   270→          } catch (err) {
+   271→            console.error('Failed to create feedback agent:', err);
+   272→          }
+   273→        });
+   274→
+   275→        unlistenOnboarding = await listen('restart-onboarding', async () => {
+   276→          try {
+   277→            await api.restartOnboarding();
+   278→            navigate('/');
+   279→          } catch (err) {
+   280→            console.error('Failed to restart onboarding:', err);
+   281→          }
+   282→        });
+   283→
+   284→        unlistenRestoreSkills = await listen('restore-default-skills', async () => {
+   285→          if (restorePromptRef.current) return;
+   286→          restorePromptRef.current = true;
+   287→          try {
+   288→            const confirmed = await confirm('Restore default skills? This will back up your current skills and replace them with defaults.', {
+   289→              title: 'Restore Default Skills',
+   290→              kind: 'warning',
+   291→            });
+   292→            if (!confirmed) return;
+   293→            const result = await api.restoreDefaultSkills();
+   294→            queryClient.invalidateQueries({ queryKey: ['skills'] });
+   295→            const backupPath = result?.backup_path ? `Backup saved to:\n${result.backup_path}` : 'No existing skills to back up.';
+   296→            await message(`Default skills restored.\n\n${backupPath}`, {
+   297→              title: 'Restore Default Skills',
+   298→              kind: 'info',
+   299→            });
+   300→          } catch (err) {
+   301→            console.error('Failed to restore default skills:', err);
+   302→          } finally {
+   303→            restorePromptRef.current = false;
+   304→          }
+   305→        });
+   306→
+   307→        unlistenRestoreTriggers = await listen('restore-default-triggers', async () => {
+   308→          if (restorePromptRef.current) return;
+   309→          restorePromptRef.current = true;
+   310→          try {
+   311→            const confirmed = await confirm('Restore default triggers? This will back up your current triggers and replace them with defaults.', {
+   312→              title: 'Restore Default Triggers',
+   313→              kind: 'warning',
+   314→            });
+   315→            if (!confirmed) return;
+   316→            const result = await api.restoreDefaultTriggers();
+   317→            queryClient.invalidateQueries({ queryKey: ['triggers'] });
+   318→            const backupPath = result?.backup_path ? `Backup saved to:\n${result.backup_path}` : 'No existing triggers to back up.';
+   319→            await message(`Default triggers restored.\n\n${backupPath}`, {
+   320→              title: 'Restore Default Triggers',
+   321→              kind: 'info',
+   322→            });
+   323→          } catch (err) {
+   324→            console.error('Failed to restore default triggers:', err);
+   325→          } finally {
+   326→            restorePromptRef.current = false;
+   327→          }
+   328→        });
+   329→      } catch (err) {
+   330→        console.error('Failed to setup Tauri listeners:', err);
+   331→      }
+   332→    };
+   333→
+   334→    setupListeners();
+   335→
+   336→    return () => {
+   337→      if (unlistenFeedback) unlistenFeedback();
+   338→      if (unlistenOnboarding) unlistenOnboarding();
+   339→      if (unlistenRestoreSkills) unlistenRestoreSkills();
+   340→      if (unlistenRestoreTriggers) unlistenRestoreTriggers();
+   341→    };
+   342→    // eslint-disable-next-line react-hooks/exhaustive-deps
+   343→  }, []); // Only setup once on mount
+   344→
+   345→  useEffect(() => {
+   346→    const syncTheme = async () => {
+   347→      try {
+   348→        const config = await api.getConfig();
+   349→        const theme = config.ui?.theme || 'default';
+   350→        localStorage.setItem('pa_theme', theme);
+   351→        applyTheme(theme);
+   352→      } catch (err) {
+   353→        console.error('Failed to sync theme:', err);
+   354→      }
+   355→    };
+   356→    syncTheme();
+   357→  }, []);
+   358→
+   359→  return (
+   360→    <div
+   361→      className="flex flex-col h-screen w-screen overflow-hidden bg-background text-text-primary font-mono text-[13px]"
+   362→      style={{ zoom: zoom } as React.CSSProperties}
+   363→    >
+   364→      <Unibar />
+   365→
+   366→      <div className="flex-1 flex overflow-hidden mt-6">
+   367→        <aside
+   368→          style={{ width: isExplorerCollapsed ? 0 : explorerWidth }}
+   369→          onMouseDown={() => setFocusedPane('explorer')}
+   370→          className={clsx(
+   371→            "flex flex-col bg-background shrink-0 transition-all duration-300 ease-in-out",
+   372→            isExplorerCollapsed ? "overflow-hidden" : "border-r border-border/50"
+   373→          )}
+   374→        >
+   375→          {location.pathname === '/settings' ? (
+   376→            <SettingsSidebar activeTab={activeSettingsTab} onTabChange={setActiveSettingsTab} />
+   377→          ) : isSkillsRoute ? (
+   378→            <SkillsSidebar />
+   379→          ) : isTriggersRoute ? (
+   380→            <TriggersSidebar />
+   381→          ) : isSkillArchitect ? (
+   382→            <SkillsSidebar />
+   383→          ) : isTriggerArchitect ? (
+   384→            <TriggersSidebar />
+   385→          ) : location.pathname === '/usage' ? (
+   386→            <UsageSidebar />
+   387→          ) : location.pathname === '/' ? (
+   388→            <FleetSidebar />
+   389→          ) : (
+   390→            <AgentExplorer />
+   391→          )}
+   392→        </aside>
+   393→
+   394→        {/* Explorer Resizer */}
+   395→        {!isExplorerCollapsed && (
+   396→          <div
+   397→            className="w-[1px] hover:w-1 bg-border hover:bg-accent/50 cursor-col-resize transition-all shrink-0 z-10 -ml-[1px]"
+   398→            onMouseDown={(e) => {
+   399→              e.preventDefault();
+   400→              isResizingExplorer.current = true;
+   401→              document.body.style.cursor = 'col-resize';
+   402→              document.body.style.userSelect = 'none';
+   403→            }}
+   404→          />
+   405→        )}
+   406→
+   407→        <main
+   408→          className="flex-1 relative overflow-hidden flex flex-col"
+   409→          onMouseDown={() => setFocusedPane('main')}
+   410→        >
+   411→          <Routes>
+   412→            <Route path="/" element={<DashboardRouteWrapper />} />
+   413→            <Route path="/agent/:id" element={<AgentRouteWrapper />} />
+   414→            <Route path="/skills" element={<SkillsView />} />
+   415→            <Route path="/triggers" element={<TriggersView />} />
+   416→            <Route path="/settings" element={<SettingsView />} />
+   417→            <Route path="/usage" element={<UsageView />} />
+   418→          </Routes>
+   419→        </main>
+   420→      </div>
+   421→
+   422→      <StatusBar />
+   423→
+   424→      <MissedTasksModal />
+   425→    </div>
+   426→  );
+   427→}
+   428→
+   429→function AppWithBackendCheck() {
+   430→  const [backendReady, setBackendReady] = useState(false);
+   431→
+   432→  useEffect(() => {
+   433→    let cancelled = false;
+   434→    const checkBackend = async () => {
+   435→      while (!cancelled) {
+   436→        const ok = await api.health();
+   437→        if (ok) {
+   438→          setBackendReady(true);
+   439→          return;
+   440→        }
+   441→        await new Promise(r => setTimeout(r, 500));
+   442→      }
+   443→    };
+   444→    checkBackend();
+   445→    return () => { cancelled = true; };
+   446→  }, []);
+   447→
+   448→  if (!backendReady) {
+   449→    return <WaitingForBackend />;
+   450→  }
+   451→
+   452→  return (
+   453→    <NotificationProvider>
+   454→      <SystemProvider>
+   455→        <AgentProvider>
+   456→          <BrowserRouter>
+   457→            <SearchManager />
+   458→            <AppContent />
+   459→          </BrowserRouter>
+   460→        </AgentProvider>
+   461→      </SystemProvider>
+   462→    </NotificationProvider>
+   463→  );
+   464→}
+   465→
+   466→function App() {
+   467→  return (
+   468→    <QueryClientProvider client={queryClient}>
+   469→      <AppWithBackendCheck />
+   470→    </QueryClientProvider>
+   471→  );
+   472→}
+   473→
+   474→export default App;
+   475→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

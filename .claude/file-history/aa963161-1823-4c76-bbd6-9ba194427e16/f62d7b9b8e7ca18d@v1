@@ -1,0 +1,33 @@
+import React from 'react';
+import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { Sparkline } from './Sparkline';
+
+interface MetricProps {
+  value: string | number;
+  unit?: string;
+  trend?: number;
+  sparkData?: number[];
+}
+
+export const Metric: React.FC<MetricProps> = ({ value, unit, trend, sparkData }) => {
+  const trendColor = trend && trend > 0 ? '#22c55e' : trend && trend < 0 ? '#ef4444' : '#6b7280';
+  const TrendIcon = trend && trend > 0 ? ArrowUpRight : trend && trend < 0 ? ArrowDownRight : Minus;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {sparkData && <Sparkline data={sparkData} color="#6366f1" height={16} width={40} />}
+      <span style={{
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#e2e8f0',
+        fontVariantNumeric: 'tabular-nums'
+      }}>
+        {value}
+        {unit && <span style={{ color: '#64748b', fontSize: '10px' }}>{unit}</span>}
+      </span>
+      {trend !== undefined && (
+        <TrendIcon size={12} color={trendColor} />
+      )}
+    </div>
+  );
+};

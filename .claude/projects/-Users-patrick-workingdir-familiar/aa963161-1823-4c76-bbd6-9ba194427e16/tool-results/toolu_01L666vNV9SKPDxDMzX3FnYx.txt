@@ -1,0 +1,1081 @@
+     1→import React, { useState } from 'react';
+     2→import { Zap, Search, ChevronRight, ChevronDown, Key, Server, Cpu, Bell, Shield, Database, Code, Clock, Trash2, Plus, Eye, EyeOff, Check, AlertTriangle, ExternalLink, Copy, RotateCcw, Circle } from 'lucide-react';
+     3→
+     4→const Tag = ({ children, color = '#475569' }) => (
+     5→  <span style={{
+     6→    display: 'inline-block',
+     7→    padding: '1px 5px',
+     8→    fontSize: '10px',
+     9→    fontFamily: 'monospace',
+    10→    backgroundColor: `${color}22`,
+    11→    color: color,
+    12→    borderRadius: '2px',
+    13→    border: `1px solid ${color}44`,
+    14→  }}>
+    15→    {children}
+    16→  </span>
+    17→);
+    18→
+    19→const Toggle = ({ enabled, onChange }) => (
+    20→  <button
+    21→    onClick={() => onChange(!enabled)}
+    22→    style={{
+    23→      width: '32px',
+    24→      height: '16px',
+    25→      borderRadius: '8px',
+    26→      border: 'none',
+    27→      backgroundColor: enabled ? '#6366f1' : '#334155',
+    28→      position: 'relative',
+    29→      cursor: 'pointer',
+    30→      transition: 'background-color 0.15s ease',
+    31→    }}
+    32→  >
+    33→    <span style={{
+    34→      position: 'absolute',
+    35→      top: '2px',
+    36→      left: enabled ? '16px' : '2px',
+    37→      width: '12px',
+    38→      height: '12px',
+    39→      borderRadius: '50%',
+    40→      backgroundColor: '#fff',
+    41→      transition: 'left 0.15s ease',
+    42→    }} />
+    43→  </button>
+    44→);
+    45→
+    46→const Input = ({ value, onChange, placeholder, type = 'text', mono = false, width = '100%' }) => (
+    47→  <input
+    48→    type={type}
+    49→    value={value}
+    50→    onChange={(e) => onChange(e.target.value)}
+    51→    placeholder={placeholder}
+    52→    style={{
+    53→      width,
+    54→      padding: '5px 8px',
+    55→      backgroundColor: '#0f1117',
+    56→      border: '1px solid #334155',
+    57→      borderRadius: '3px',
+    58→      color: '#e2e8f0',
+    59→      fontSize: '12px',
+    60→      fontFamily: mono ? 'monospace' : 'inherit',
+    61→      outline: 'none',
+    62→    }}
+    63→  />
+    64→);
+    65→
+    66→const Select = ({ value, onChange, options, width = '100%' }) => (
+    67→  <select
+    68→    value={value}
+    69→    onChange={(e) => onChange(e.target.value)}
+    70→    style={{
+    71→      width,
+    72→      padding: '5px 8px',
+    73→      backgroundColor: '#0f1117',
+    74→      border: '1px solid #334155',
+    75→      borderRadius: '3px',
+    76→      color: '#e2e8f0',
+    77→      fontSize: '12px',
+    78→      outline: 'none',
+    79→      cursor: 'pointer',
+    80→    }}
+    81→  >
+    82→    {options.map(opt => (
+    83→      <option key={opt.value} value={opt.value}>{opt.label}</option>
+    84→    ))}
+    85→  </select>
+    86→);
+    87→
+    88→const Button = ({ children, variant = 'default', size = 'sm', onClick }) => {
+    89→  const styles = {
+    90→    default: { bg: 'transparent', border: '#334155', color: '#94a3b8' },
+    91→    primary: { bg: '#6366f1', border: '#6366f1', color: '#fff' },
+    92→    danger: { bg: 'transparent', border: '#dc2626', color: '#ef4444' },
+    93→  };
+    94→  const s = styles[variant];
+    95→  
+    96→  return (
+    97→    <button
+    98→      onClick={onClick}
+    99→      style={{
+   100→        display: 'inline-flex',
+   101→        alignItems: 'center',
+   102→        gap: '4px',
+   103→        padding: size === 'sm' ? '4px 8px' : '6px 12px',
+   104→        backgroundColor: s.bg,
+   105→        border: `1px solid ${s.border}`,
+   106→        borderRadius: '3px',
+   107→        color: s.color,
+   108→        fontSize: '11px',
+   109→        fontWeight: '500',
+   110→        cursor: 'pointer',
+   111→      }}
+   112→    >
+   113→      {children}
+   114→    </button>
+   115→  );
+   116→};
+   117→
+   118→const SettingRow = ({ label, description, children, badge }) => (
+   119→  <div style={{
+   120→    display: 'flex',
+   121→    alignItems: 'flex-start',
+   122→    padding: '10px 0',
+   123→    borderBottom: '1px solid #1e293b',
+   124→    gap: '16px',
+   125→  }}>
+   126→    <div style={{ flex: 1, minWidth: 0 }}>
+   127→      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+   128→        <span style={{ fontSize: '12px', color: '#e2e8f0' }}>{label}</span>
+   129→        {badge}
+   130→      </div>
+   131→      {description && (
+   132→        <p style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: '1.4' }}>
+   133→          {description}
+   134→        </p>
+   135→      )}
+   136→    </div>
+   137→    <div style={{ flexShrink: 0 }}>
+   138→      {children}
+   139→    </div>
+   140→  </div>
+   141→);
+   142→
+   143→const ProviderCard = ({ name, status, models, apiKey, usage, onEdit }) => {
+   144→  const [showKey, setShowKey] = useState(false);
+   145→  const isConnected = status === 'connected';
+   146→  
+   147→  return (
+   148→    <div style={{
+   149→      backgroundColor: '#0a0b0f',
+   150→      border: '1px solid #1e293b',
+   151→      borderRadius: '4px',
+   152→      padding: '12px',
+   153→      marginBottom: '8px',
+   154→    }}>
+   155→      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+   156→        <span style={{ 
+   157→          fontSize: '12px', 
+   158→          fontWeight: '500', 
+   159→          color: '#e2e8f0',
+   160→          flex: 1,
+   161→        }}>
+   162→          {name}
+   163→        </span>
+   164→        <Circle 
+   165→          size={6} 
+   166→          fill={isConnected ? '#22c55e' : '#64748b'} 
+   167→          stroke="none" 
+   168→        />
+   169→        <span style={{ 
+   170→          fontSize: '10px', 
+   171→          color: isConnected ? '#22c55e' : '#64748b' 
+   172→        }}>
+   173→          {status}
+   174→        </span>
+   175→      </div>
+   176→      
+   177→      {apiKey && (
+   178→        <div style={{ 
+   179→          display: 'flex', 
+   180→          alignItems: 'center', 
+   181→          gap: '6px',
+   182→          marginBottom: '8px',
+   183→        }}>
+   184→          <span style={{ 
+   185→            fontSize: '11px', 
+   186→            fontFamily: 'monospace',
+   187→            color: '#64748b',
+   188→            backgroundColor: '#1e293b',
+   189→            padding: '2px 6px',
+   190→            borderRadius: '2px',
+   191→            flex: 1,
+   192→          }}>
+   193→            {showKey ? apiKey : '••••••••••••' + apiKey.slice(-4)}
+   194→          </span>
+   195→          <button 
+   196→            onClick={() => setShowKey(!showKey)}
+   197→            style={{ 
+   198→              background: 'none', 
+   199→              border: 'none', 
+   200→              color: '#64748b', 
+   201→              cursor: 'pointer',
+   202→              padding: '2px',
+   203→            }}
+   204→          >
+   205→            {showKey ? <EyeOff size={12} /> : <Eye size={12} />}
+   206→          </button>
+   207→          <button 
+   208→            style={{ 
+   209→              background: 'none', 
+   210→              border: 'none', 
+   211→              color: '#64748b', 
+   212→              cursor: 'pointer',
+   213→              padding: '2px',
+   214→            }}
+   215→          >
+   216→            <Copy size={12} />
+   217→          </button>
+   218→        </div>
+   219→      )}
+   220→      
+   221→      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+   222→        {models.map(m => (
+   223→          <Tag key={m} color="#8b5cf6">{m}</Tag>
+   224→        ))}
+   225→      </div>
+   226→      
+   227→      {usage && (
+   228→        <div style={{ 
+   229→          display: 'flex', 
+   230→          gap: '16px', 
+   231→          fontSize: '10px',
+   232→          color: '#64748b',
+   233→          fontFamily: 'monospace',
+   234→        }}>
+   235→          <span>Requests: <span style={{ color: '#94a3b8' }}>{usage.requests}</span></span>
+   236→          <span>Tokens: <span style={{ color: '#94a3b8' }}>{usage.tokens}</span></span>
+   237→          <span>Cost: <span style={{ color: '#94a3b8' }}>${usage.cost}</span></span>
+   238→        </div>
+   239→      )}
+   240→      
+   241→      <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+   242→        <Button onClick={onEdit}>Edit</Button>
+   243→        <Button>Test Connection</Button>
+   244→      </div>
+   245→    </div>
+   246→  );
+   247→};
+   248→
+   249→const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
+   250→  <button
+   251→    onClick={onClick}
+   252→    style={{
+   253→      display: 'flex',
+   254→      alignItems: 'center',
+   255→      gap: '8px',
+   256→      width: '100%',
+   257→      padding: '6px 10px',
+   258→      backgroundColor: active ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+   259→      border: 'none',
+   260→      borderRadius: '3px',
+   261→      borderLeft: active ? '2px solid #6366f1' : '2px solid transparent',
+   262→      color: active ? '#a5b4fc' : '#94a3b8',
+   263→      fontSize: '12px',
+   264→      cursor: 'pointer',
+   265→      textAlign: 'left',
+   266→    }}
+   267→  >
+   268→    <Icon size={14} />
+   269→    {label}
+   270→  </button>
+   271→);
+   272→
+   273→const Section = ({ title, children, defaultOpen = true }) => {
+   274→  const [open, setOpen] = useState(defaultOpen);
+   275→  
+   276→  return (
+   277→    <div style={{ marginBottom: '16px' }}>
+   278→      <button
+   279→        onClick={() => setOpen(!open)}
+   280→        style={{
+   281→          display: 'flex',
+   282→          alignItems: 'center',
+   283→          gap: '6px',
+   284→          background: 'none',
+   285→          border: 'none',
+   286→          color: '#94a3b8',
+   287→          fontSize: '11px',
+   288→          fontWeight: '600',
+   289→          textTransform: 'uppercase',
+   290→          letterSpacing: '0.5px',
+   291→          cursor: 'pointer',
+   292→          marginBottom: '8px',
+   293→          padding: 0,
+   294→        }}
+   295→      >
+   296→        {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+   297→        {title}
+   298→      </button>
+   299→      {open && children}
+   300→    </div>
+   301→  );
+   302→};
+   303→
+   304→export default function FamiliarSettings() {
+   305→  const [activeSection, setActiveSection] = useState('providers');
+   306→  const [settings, setSettings] = useState({
+   307→    defaultModel: 'qwen3-30b-a3b',
+   308→    defaultProvider: 'openrouter',
+   309→    maxConcurrent: 10,
+   310→    timeout: 30000,
+   311→    retryAttempts: 3,
+   312→    rateLimitRpm: 60,
+   313→    rateLimitTpm: 100000,
+   314→    autoSave: true,
+   315→    telemetry: false,
+   316→    debugMode: false,
+   317→    theme: 'dark',
+   318→    compactMode: true,
+   319→    refreshInterval: 5,
+   320→    notifyErrors: true,
+   321→    notifyComplete: false,
+   322→    webhookUrl: '',
+   323→  });
+   324→
+   325→  const updateSetting = (key, value) => {
+   326→    setSettings(prev => ({ ...prev, [key]: value }));
+   327→  };
+   328→
+   329→  return (
+   330→    <div style={{
+   331→      minHeight: '100vh',
+   332→      backgroundColor: '#0f1117',
+   333→      color: '#e2e8f0',
+   334→      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+   335→      fontSize: '13px',
+   336→    }}>
+   337→      <style>{`
+   338→        * { box-sizing: border-box; margin: 0; padding: 0; }
+   339→        ::-webkit-scrollbar { width: 6px; height: 6px; }
+   340→        ::-webkit-scrollbar-track { background: transparent; }
+   341→        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+   342→        select option { background: #0f1117; }
+   343→      `}</style>
+   344→      
+   345→      {/* Top Bar */}
+   346→      <header style={{
+   347→        height: '36px',
+   348→        backgroundColor: '#0a0b0f',
+   349→        borderBottom: '1px solid #1e293b',
+   350→        display: 'flex',
+   351→        alignItems: 'center',
+   352→        padding: '0 12px',
+   353→        gap: '16px',
+   354→      }}>
+   355→        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+   356→          <Zap size={14} color="#8b5cf6" />
+   357→          <span style={{ fontWeight: '600', fontSize: '13px' }}>Familiar</span>
+   358→          <Tag color="#f59e0b">DEV</Tag>
+   359→        </div>
+   360→        
+   361→        <nav style={{ display: 'flex', gap: '2px' }}>
+   362→          {['Fleet', 'Skills', 'Triggers', 'Usage', 'Settings'].map(item => (
+   363→            <button key={item} style={{
+   364→              padding: '6px 10px',
+   365→              background: item === 'Settings' ? 'rgba(99, 102, 241, 0.15)' : 'none',
+   366→              border: 'none',
+   367→              borderRadius: '3px',
+   368→              color: item === 'Settings' ? '#a5b4fc' : '#64748b',
+   369→              fontSize: '12px',
+   370→              cursor: 'pointer',
+   371→            }}>
+   372→              {item}
+   373→            </button>
+   374→          ))}
+   375→        </nav>
+   376→        
+   377→        <div style={{ flex: 1 }} />
+   378→        
+   379→        <div style={{ 
+   380→          display: 'flex', 
+   381→          alignItems: 'center', 
+   382→          gap: '4px',
+   383→          padding: '4px 8px',
+   384→          backgroundColor: '#1e293b',
+   385→          borderRadius: '3px',
+   386→        }}>
+   387→          <Search size={12} color="#64748b" />
+   388→          <input 
+   389→            placeholder="Search settings..." 
+   390→            style={{
+   391→              background: 'none',
+   392→              border: 'none',
+   393→              color: '#e2e8f0',
+   394→              fontSize: '12px',
+   395→              width: '140px',
+   396→              outline: 'none',
+   397→            }}
+   398→          />
+   399→        </div>
+   400→      </header>
+   401→      
+   402→      <div style={{ display: 'flex', height: 'calc(100vh - 36px)' }}>
+   403→        {/* Sidebar */}
+   404→        <aside style={{
+   405→          width: '180px',
+   406→          borderRight: '1px solid #1e293b',
+   407→          padding: '12px 8px',
+   408→          backgroundColor: '#0a0b0f',
+   409→        }}>
+   410→          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+   411→            <SidebarItem 
+   412→              icon={Key} 
+   413→              label="Providers & Keys" 
+   414→              active={activeSection === 'providers'}
+   415→              onClick={() => setActiveSection('providers')}
+   416→            />
+   417→            <SidebarItem 
+   418→              icon={Cpu} 
+   419→              label="Model Defaults" 
+   420→              active={activeSection === 'models'}
+   421→              onClick={() => setActiveSection('models')}
+   422→            />
+   423→            <SidebarItem 
+   424→              icon={Server} 
+   425→              label="Execution" 
+   426→              active={activeSection === 'execution'}
+   427→              onClick={() => setActiveSection('execution')}
+   428→            />
+   429→            <SidebarItem 
+   430→              icon={Shield} 
+   431→              label="Rate Limits" 
+   432→              active={activeSection === 'limits'}
+   433→              onClick={() => setActiveSection('limits')}
+   434→            />
+   435→            <SidebarItem 
+   436→              icon={Bell} 
+   437→              label="Notifications" 
+   438→              active={activeSection === 'notifications'}
+   439→              onClick={() => setActiveSection('notifications')}
+   440→            />
+   441→            <SidebarItem 
+   442→              icon={Database} 
+   443→              label="Data & Storage" 
+   444→              active={activeSection === 'data'}
+   445→              onClick={() => setActiveSection('data')}
+   446→            />
+   447→            <SidebarItem 
+   448→              icon={Code} 
+   449→              label="Advanced" 
+   450→              active={activeSection === 'advanced'}
+   451→              onClick={() => setActiveSection('advanced')}
+   452→            />
+   453→          </div>
+   454→          
+   455→          <div style={{ 
+   456→            marginTop: 'auto', 
+   457→            paddingTop: '16px',
+   458→            borderTop: '1px solid #1e293b',
+   459→            marginTop: '16px',
+   460→          }}>
+   461→            <div style={{ 
+   462→              fontSize: '10px', 
+   463→              color: '#475569',
+   464→              fontFamily: 'monospace',
+   465→              padding: '0 10px',
+   466→            }}>
+   467→              <div>v0.4.2-beta</div>
+   468→              <div style={{ marginTop: '4px' }}>
+   469→                <a href="#" style={{ color: '#6366f1', textDecoration: 'none' }}>
+   470→                  Docs <ExternalLink size={9} style={{ marginLeft: '2px' }} />
+   471→                </a>
+   472→              </div>
+   473→            </div>
+   474→          </div>
+   475→        </aside>
+   476→        
+   477→        {/* Main Content */}
+   478→        <main style={{ flex: 1, overflow: 'auto', padding: '16px 24px' }}>
+   479→          {activeSection === 'providers' && (
+   480→            <>
+   481→              <div style={{ 
+   482→                display: 'flex', 
+   483→                alignItems: 'center', 
+   484→                justifyContent: 'space-between',
+   485→                marginBottom: '16px',
+   486→              }}>
+   487→                <div>
+   488→                  <h2 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+   489→                    Providers & API Keys
+   490→                  </h2>
+   491→                  <p style={{ fontSize: '11px', color: '#64748b' }}>
+   492→                    Configure LLM providers and manage API credentials
+   493→                  </p>
+   494→                </div>
+   495→                <Button variant="primary">
+   496→                  <Plus size={12} />
+   497→                  Add Provider
+   498→                </Button>
+   499→              </div>
+   500→              
+   501→              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
+   502→                <ProviderCard
+   503→                  name="OpenRouter"
+   504→                  status="connected"
+   505→                  models={['qwen3-30b-a3b', 'llama-3.1-70b', 'claude-3-haiku']}
+   506→                  apiKey="sk-or-v1-xxxxxxxxxxxxxxxxxxxx"
+   507→                  usage={{ requests: '12,847', tokens: '2.4M', cost: '14.22' }}
+   508→                />
+   509→                <ProviderCard
+   510→                  name="Anthropic"
+   511→                  status="not configured"
+   512→                  models={['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku']}
+   513→                  apiKey=""
+   514→                  usage={null}
+   515→                />
+   516→                <ProviderCard
+   517→                  name="OpenAI"
+   518→                  status="not configured"
+   519→                  models={['gpt-4-turbo', 'gpt-4o', 'gpt-3.5-turbo']}
+   520→                  apiKey=""
+   521→                  usage={null}
+   522→                />
+   523→                <ProviderCard
+   524→                  name="Together AI"
+   525→                  status="connected"
+   526→                  models={['mixtral-8x7b', 'llama-3-70b']}
+   527→                  apiKey="tog-xxxxxxxxxxxxxxxxxxxx"
+   528→                  usage={{ requests: '847', tokens: '340k', cost: '1.82' }}
+   529→                />
+   530→              </div>
+   531→              
+   532→              <Section title="Provider Priority" defaultOpen={true}>
+   533→                <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+   534→                  Drag to reorder. Agents will fallback to the next provider on failure.
+   535→                </p>
+   536→                <div style={{ 
+   537→                  backgroundColor: '#0a0b0f', 
+   538→                  border: '1px solid #1e293b', 
+   539→                  borderRadius: '4px',
+   540→                  padding: '8px',
+   541→                }}>
+   542→                  {['OpenRouter', 'Together AI', 'Anthropic', 'OpenAI'].map((p, i) => (
+   543→                    <div key={p} style={{
+   544→                      display: 'flex',
+   545→                      alignItems: 'center',
+   546→                      gap: '8px',
+   547→                      padding: '6px 8px',
+   548→                      backgroundColor: i === 0 ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+   549→                      borderRadius: '2px',
+   550→                      marginBottom: '2px',
+   551→                    }}>
+   552→                      <span style={{ 
+   553→                        fontSize: '10px', 
+   554→                        fontFamily: 'monospace', 
+   555→                        color: '#475569',
+   556→                        width: '16px',
+   557→                      }}>
+   558→                        {i + 1}.
+   559→                      </span>
+   560→                      <span style={{ fontSize: '12px', color: '#e2e8f0', flex: 1 }}>{p}</span>
+   561→                      <span style={{ fontSize: '10px', color: '#475569', cursor: 'grab' }}>⋮⋮</span>
+   562→                    </div>
+   563→                  ))}
+   564→                </div>
+   565→              </Section>
+   566→            </>
+   567→          )}
+   568→          
+   569→          {activeSection === 'models' && (
+   570→            <>
+   571→              <div style={{ marginBottom: '16px' }}>
+   572→                <h2 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+   573→                  Model Defaults
+   574→                </h2>
+   575→                <p style={{ fontSize: '11px', color: '#64748b' }}>
+   576→                  Default model settings for new agents
+   577→                </p>
+   578→              </div>
+   579→              
+   580→              <Section title="Defaults">
+   581→                <SettingRow label="Default Provider" description="Provider used when creating new agents">
+   582→                  <Select 
+   583→                    value={settings.defaultProvider}
+   584→                    onChange={(v) => updateSetting('defaultProvider', v)}
+   585→                    options={[
+   586→                      { value: 'openrouter', label: 'OpenRouter' },
+   587→                      { value: 'anthropic', label: 'Anthropic' },
+   588→                      { value: 'openai', label: 'OpenAI' },
+   589→                      { value: 'together', label: 'Together AI' },
+   590→                    ]}
+   591→                    width="180px"
+   592→                  />
+   593→                </SettingRow>
+   594→                
+   595→                <SettingRow label="Default Model" description="Model used when creating new agents">
+   596→                  <Select 
+   597→                    value={settings.defaultModel}
+   598→                    onChange={(v) => updateSetting('defaultModel', v)}
+   599→                    options={[
+   600→                      { value: 'qwen3-30b-a3b', label: 'qwen3-30b-a3b' },
+   601→                      { value: 'llama-3.1-70b', label: 'llama-3.1-70b' },
+   602→                      { value: 'claude-3-haiku', label: 'claude-3-haiku' },
+   603→                      { value: 'gpt-4o', label: 'gpt-4o' },
+   604→                    ]}
+   605→                    width="180px"
+   606→                  />
+   607→                </SettingRow>
+   608→              </Section>
+   609→              
+   610→              <Section title="Model Aliases">
+   611→                <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '8px' }}>
+   612→                  Create shortcuts for frequently used model configurations
+   613→                </p>
+   614→                <div style={{ 
+   615→                  backgroundColor: '#0a0b0f', 
+   616→                  border: '1px solid #1e293b', 
+   617→                  borderRadius: '4px',
+   618→                }}>
+   619→                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+   620→                    <thead>
+   621→                      <tr>
+   622→                        <th style={{ padding: '8px', textAlign: 'left', fontSize: '10px', color: '#64748b', borderBottom: '1px solid #1e293b' }}>ALIAS</th>
+   623→                        <th style={{ padding: '8px', textAlign: 'left', fontSize: '10px', color: '#64748b', borderBottom: '1px solid #1e293b' }}>MODEL</th>
+   624→                        <th style={{ padding: '8px', textAlign: 'left', fontSize: '10px', color: '#64748b', borderBottom: '1px solid #1e293b' }}>PROVIDER</th>
+   625→                        <th style={{ padding: '8px', width: '60px', borderBottom: '1px solid #1e293b' }}></th>
+   626→                      </tr>
+   627→                    </thead>
+   628→                    <tbody>
+   629→                      {[
+   630→                        { alias: 'fast', model: 'qwen3-30b-a3b', provider: 'OpenRouter' },
+   631→                        { alias: 'smart', model: 'claude-3-sonnet', provider: 'Anthropic' },
+   632→                        { alias: 'cheap', model: 'llama-3.1-8b', provider: 'Together AI' },
+   633→                      ].map(row => (
+   634→                        <tr key={row.alias}>
+   635→                          <td style={{ padding: '6px 8px', fontSize: '12px', fontFamily: 'monospace', color: '#a5b4fc' }}>@{row.alias}</td>
+   636→                          <td style={{ padding: '6px 8px', fontSize: '12px', color: '#94a3b8' }}>{row.model}</td>
+   637→                          <td style={{ padding: '6px 8px', fontSize: '12px', color: '#64748b' }}>{row.provider}</td>
+   638→                          <td style={{ padding: '6px 8px' }}>
+   639→                            <button style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}>
+   640→                              <Trash2 size={12} />
+   641→                            </button>
+   642→                          </td>
+   643→                        </tr>
+   644→                      ))}
+   645→                    </tbody>
+   646→                  </table>
+   647→                </div>
+   648→                <Button style={{ marginTop: '8px' }}>
+   649→                  <Plus size={12} />
+   650→                  Add Alias
+   651→                </Button>
+   652→              </Section>
+   653→            </>
+   654→          )}
+   655→          
+   656→          {activeSection === 'execution' && (
+   657→            <>
+   658→              <div style={{ marginBottom: '16px' }}>
+   659→                <h2 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+   660→                  Execution Settings
+   661→                </h2>
+   662→                <p style={{ fontSize: '11px', color: '#64748b' }}>
+   663→                  Control how agents execute tasks
+   664→                </p>
+   665→              </div>
+   666→              
+   667→              <Section title="Concurrency">
+   668→                <SettingRow label="Max Concurrent Agents" description="Maximum number of agents that can run simultaneously">
+   669→                  <Input 
+   670→                    value={settings.maxConcurrent}
+   671→                    onChange={(v) => updateSetting('maxConcurrent', parseInt(v) || 0)}
+   672→                    type="number"
+   673→                    width="80px"
+   674→                    mono
+   675→                  />
+   676→                </SettingRow>
+   677→                
+   678→                <SettingRow label="Queue Behavior" description="What happens when max concurrency is reached">
+   679→                  <Select 
+   680→                    value="queue"
+   681→                    onChange={() => {}}
+   682→                    options={[
+   683→                      { value: 'queue', label: 'Queue' },
+   684→                      { value: 'reject', label: 'Reject' },
+   685→                      { value: 'preempt', label: 'Preempt Lowest Priority' },
+   686→                    ]}
+   687→                    width="180px"
+   688→                  />
+   689→                </SettingRow>
+   690→              </Section>
+   691→              
+   692→              <Section title="Timeouts & Retries">
+   693→                <SettingRow label="Request Timeout" description="Max time to wait for a model response" badge={<Tag color="#64748b">ms</Tag>}>
+   694→                  <Input 
+   695→                    value={settings.timeout}
+   696→                    onChange={(v) => updateSetting('timeout', parseInt(v) || 0)}
+   697→                    type="number"
+   698→                    width="100px"
+   699→                    mono
+   700→                  />
+   701→                </SettingRow>
+   702→                
+   703→                <SettingRow label="Retry Attempts" description="Number of retries on transient failures">
+   704→                  <Input 
+   705→                    value={settings.retryAttempts}
+   706→                    onChange={(v) => updateSetting('retryAttempts', parseInt(v) || 0)}
+   707→                    type="number"
+   708→                    width="80px"
+   709→                    mono
+   710→                  />
+   711→                </SettingRow>
+   712→                
+   713→                <SettingRow label="Retry Backoff" description="Backoff strategy between retries">
+   714→                  <Select 
+   715→                    value="exponential"
+   716→                    onChange={() => {}}
+   717→                    options={[
+   718→                      { value: 'exponential', label: 'Exponential' },
+   719→                      { value: 'linear', label: 'Linear' },
+   720→                      { value: 'constant', label: 'Constant' },
+   721→                    ]}
+   722→                    width="140px"
+   723→                  />
+   724→                </SettingRow>
+   725→              </Section>
+   726→              
+   727→              <Section title="Context Management">
+   728→                <SettingRow label="Max Context Window" description="Maximum tokens to include in context" badge={<Tag color="#64748b">tokens</Tag>}>
+   729→                  <Input 
+   730→                    value="32000"
+   731→                    onChange={() => {}}
+   732→                    type="number"
+   733→                    width="100px"
+   734→                    mono
+   735→                  />
+   736→                </SettingRow>
+   737→                
+   738→                <SettingRow label="Context Overflow" description="What to do when context exceeds limit">
+   739→                  <Select 
+   740→                    value="truncate"
+   741→                    onChange={() => {}}
+   742→                    options={[
+   743→                      { value: 'truncate', label: 'Truncate oldest' },
+   744→                      { value: 'summarize', label: 'Summarize' },
+   745→                      { value: 'error', label: 'Error' },
+   746→                    ]}
+   747→                    width="160px"
+   748→                  />
+   749→                </SettingRow>
+   750→              </Section>
+   751→            </>
+   752→          )}
+   753→          
+   754→          {activeSection === 'limits' && (
+   755→            <>
+   756→              <div style={{ marginBottom: '16px' }}>
+   757→                <h2 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+   758→                  Rate Limits
+   759→                </h2>
+   760→                <p style={{ fontSize: '11px', color: '#64748b' }}>
+   761→                  Protect against runaway costs and API abuse
+   762→                </p>
+   763→              </div>
+   764→              
+   765→              <Section title="Request Limits">
+   766→                <SettingRow label="Requests per Minute" description="Global rate limit across all agents" badge={<Tag color="#64748b">RPM</Tag>}>
+   767→                  <Input 
+   768→                    value={settings.rateLimitRpm}
+   769→                    onChange={(v) => updateSetting('rateLimitRpm', parseInt(v) || 0)}
+   770→                    type="number"
+   771→                    width="100px"
+   772→                    mono
+   773→                  />
+   774→                </SettingRow>
+   775→                
+   776→                <SettingRow label="Tokens per Minute" description="Global token throughput limit" badge={<Tag color="#64748b">TPM</Tag>}>
+   777→                  <Input 
+   778→                    value={settings.rateLimitTpm}
+   779→                    onChange={(v) => updateSetting('rateLimitTpm', parseInt(v) || 0)}
+   780→                    type="number"
+   781→                    width="100px"
+   782→                    mono
+   783→                  />
+   784→                </SettingRow>
+   785→              </Section>
+   786→              
+   787→              <Section title="Cost Controls">
+   788→                <SettingRow 
+   789→                  label="Daily Spend Limit" 
+   790→                  description="Pause all agents when daily spend exceeds this amount"
+   791→                  badge={<Tag color="#f59e0b">USD</Tag>}
+   792→                >
+   793→                  <Input 
+   794→                    value="50.00"
+   795→                    onChange={() => {}}
+   796→                    width="100px"
+   797→                    mono
+   798→                  />
+   799→                </SettingRow>
+   800→                
+   801→                <SettingRow 
+   802→                  label="Monthly Budget" 
+   803→                  description="Alert when approaching monthly budget"
+   804→                  badge={<Tag color="#f59e0b">USD</Tag>}
+   805→                >
+   806→                  <Input 
+   807→                    value="500.00"
+   808→                    onChange={() => {}}
+   809→                    width="100px"
+   810→                    mono
+   811→                  />
+   812→                </SettingRow>
+   813→                
+   814→                <SettingRow label="Budget Alert Threshold" description="Alert when this percentage of budget is used">
+   815→                  <Select 
+   816→                    value="80"
+   817→                    onChange={() => {}}
+   818→                    options={[
+   819→                      { value: '50', label: '50%' },
+   820→                      { value: '75', label: '75%' },
+   821→                      { value: '80', label: '80%' },
+   822→                      { value: '90', label: '90%' },
+   823→                    ]}
+   824→                    width="100px"
+   825→                  />
+   826→                </SettingRow>
+   827→              </Section>
+   828→              
+   829→              <Section title="Per-Agent Limits">
+   830→                <SettingRow label="Enable Per-Agent Limits" description="Apply individual rate limits to each agent">
+   831→                  <Toggle enabled={true} onChange={() => {}} />
+   832→                </SettingRow>
+   833→                
+   834→                <SettingRow label="Default Agent RPM" description="Default requests per minute for each agent">
+   835→                  <Input value="10" onChange={() => {}} type="number" width="80px" mono />
+   836→                </SettingRow>
+   837→              </Section>
+   838→            </>
+   839→          )}
+   840→          
+   841→          {activeSection === 'notifications' && (
+   842→            <>
+   843→              <div style={{ marginBottom: '16px' }}>
+   844→                <h2 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+   845→                  Notifications
+   846→                </h2>
+   847→                <p style={{ fontSize: '11px', color: '#64748b' }}>
+   848→                  Configure alerts and notification channels
+   849→                </p>
+   850→              </div>
+   851→              
+   852→              <Section title="Events">
+   853→                <SettingRow label="Agent Errors" description="Notify when an agent encounters an error">
+   854→                  <Toggle enabled={settings.notifyErrors} onChange={(v) => updateSetting('notifyErrors', v)} />
+   855→                </SettingRow>
+   856→                
+   857→                <SettingRow label="Task Completion" description="Notify when scheduled tasks complete">
+   858→                  <Toggle enabled={settings.notifyComplete} onChange={(v) => updateSetting('notifyComplete', v)} />
+   859→                </SettingRow>
+   860→                
+   861→                <SettingRow label="Budget Alerts" description="Notify when approaching spending limits">
+   862→                  <Toggle enabled={true} onChange={() => {}} />
+   863→                </SettingRow>
+   864→                
+   865→                <SettingRow label="System Alerts" description="Critical system notifications">
+   866→                  <Toggle enabled={true} onChange={() => {}} />
+   867→                </SettingRow>
+   868→              </Section>
+   869→              
+   870→              <Section title="Channels">
+   871→                <SettingRow label="Webhook URL" description="POST notifications to this URL">
+   872→                  <Input 
+   873→                    value={settings.webhookUrl}
+   874→                    onChange={(v) => updateSetting('webhookUrl', v)}
+   875→                    placeholder="https://..."
+   876→                    width="240px"
+   877→                    mono
+   878→                  />
+   879→                </SettingRow>
+   880→                
+   881→                <SettingRow label="Slack Integration" description="Send notifications to Slack" badge={<Tag color="#22c55e">connected</Tag>}>
+   882→                  <Button>Configure</Button>
+   883→                </SettingRow>
+   884→                
+   885→                <SettingRow label="Discord Integration" description="Send notifications to Discord">
+   886→                  <Button>Connect</Button>
+   887→                </SettingRow>
+   888→              </Section>
+   889→            </>
+   890→          )}
+   891→          
+   892→          {activeSection === 'data' && (
+   893→            <>
+   894→              <div style={{ marginBottom: '16px' }}>
+   895→                <h2 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+   896→                  Data & Storage
+   897→                </h2>
+   898→                <p style={{ fontSize: '11px', color: '#64748b' }}>
+   899→                  Manage conversation history, logs, and exports
+   900→                </p>
+   901→              </div>
+   902→              
+   903→              <Section title="Storage">
+   904→                <SettingRow label="Conversation Retention" description="How long to keep conversation history">
+   905→                  <Select 
+   906→                    value="30"
+   907→                    onChange={() => {}}
+   908→                    options={[
+   909→                      { value: '7', label: '7 days' },
+   910→                      { value: '30', label: '30 days' },
+   911→                      { value: '90', label: '90 days' },
+   912→                      { value: 'forever', label: 'Forever' },
+   913→                    ]}
+   914→                    width="120px"
+   915→                  />
+   916→                </SettingRow>
+   917→                
+   918→                <SettingRow label="Log Level" description="Verbosity of agent logs">
+   919→                  <Select 
+   920→                    value="info"
+   921→                    onChange={() => {}}
+   922→                    options={[
+   923→                      { value: 'error', label: 'Error' },
+   924→                      { value: 'warn', label: 'Warning' },
+   925→                      { value: 'info', label: 'Info' },
+   926→                      { value: 'debug', label: 'Debug' },
+   927→                    ]}
+   928→                    width="120px"
+   929→                  />
+   930→                </SettingRow>
+   931→                
+   932→                <SettingRow label="Auto-save Conversations" description="Automatically save conversation state">
+   933→                  <Toggle enabled={settings.autoSave} onChange={(v) => updateSetting('autoSave', v)} />
+   934→                </SettingRow>
+   935→              </Section>
+   936→              
+   937→              <Section title="Export">
+   938→                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+   939→                  <Button>Export All Agents</Button>
+   940→                  <Button>Export Conversations</Button>
+   941→                  <Button>Export Logs</Button>
+   942→                </div>
+   943→              </Section>
+   944→              
+   945→              <Section title="Danger Zone">
+   946→                <div style={{ 
+   947→                  backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+   948→                  border: '1px solid rgba(239, 68, 68, 0.3)',
+   949→                  borderRadius: '4px',
+   950→                  padding: '12px',
+   951→                }}>
+   952→                  <SettingRow label="Clear All Conversations" description="Permanently delete all conversation history">
+   953→                    <Button variant="danger">
+   954→                      <Trash2 size={12} />
+   955→                      Clear
+   956→                    </Button>
+   957→                  </SettingRow>
+   958→                  
+   959→                  <SettingRow label="Reset All Settings" description="Reset all settings to defaults">
+   960→                    <Button variant="danger">
+   961→                      <RotateCcw size={12} />
+   962→                      Reset
+   963→                    </Button>
+   964→                  </SettingRow>
+   965→                </div>
+   966→              </Section>
+   967→            </>
+   968→          )}
+   969→          
+   970→          {activeSection === 'advanced' && (
+   971→            <>
+   972→              <div style={{ marginBottom: '16px' }}>
+   973→                <h2 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+   974→                  Advanced Settings
+   975→                </h2>
+   976→                <p style={{ fontSize: '11px', color: '#64748b' }}>
+   977→                  Developer options and diagnostics
+   978→                </p>
+   979→              </div>
+   980→              
+   981→              <Section title="Developer">
+   982→                <SettingRow label="Debug Mode" description="Enable verbose logging and debug UI elements">
+   983→                  <Toggle enabled={settings.debugMode} onChange={(v) => updateSetting('debugMode', v)} />
+   984→                </SettingRow>
+   985→                
+   986→                <SettingRow label="Telemetry" description="Send anonymous usage data to help improve Familiar">
+   987→                  <Toggle enabled={settings.telemetry} onChange={(v) => updateSetting('telemetry', v)} />
+   988→                </SettingRow>
+   989→                
+   990→                <SettingRow label="API Endpoint" description="Override the default API endpoint" badge={<Tag color="#ef4444">advanced</Tag>}>
+   991→                  <Input 
+   992→                    value=""
+   993→                    onChange={() => {}}
+   994→                    placeholder="https://api.familiar.dev"
+   995→                    width="220px"
+   996→                    mono
+   997→                  />
+   998→                </SettingRow>
+   999→              </Section>
+  1000→              
+  1001→              <Section title="UI Preferences">
+  1002→                <SettingRow label="Compact Mode" description="Reduce spacing and padding throughout UI">
+  1003→                  <Toggle enabled={settings.compactMode} onChange={(v) => updateSetting('compactMode', v)} />
+  1004→                </SettingRow>
+  1005→                
+  1006→                <SettingRow label="Refresh Interval" description="How often to poll for updates" badge={<Tag color="#64748b">sec</Tag>}>
+  1007→                  <Select 
+  1008→                    value={settings.refreshInterval.toString()}
+  1009→                    onChange={(v) => updateSetting('refreshInterval', parseInt(v))}
+  1010→                    options={[
+  1011→                      { value: '1', label: '1s' },
+  1012→                      { value: '5', label: '5s' },
+  1013→                      { value: '10', label: '10s' },
+  1014→                      { value: '30', label: '30s' },
+  1015→                    ]}
+  1016→                    width="100px"
+  1017→                  />
+  1018→                </SettingRow>
+  1019→                
+  1020→                <SettingRow label="Theme" description="UI color scheme">
+  1021→                  <Select 
+  1022→                    value={settings.theme}
+  1023→                    onChange={(v) => updateSetting('theme', v)}
+  1024→                    options={[
+  1025→                      { value: 'dark', label: 'Dark' },
+  1026→                      { value: 'light', label: 'Light' },
+  1027→                      { value: 'system', label: 'System' },
+  1028→                    ]}
+  1029→                    width="120px"
+  1030→                  />
+  1031→                </SettingRow>
+  1032→              </Section>
+  1033→              
+  1034→              <Section title="Diagnostics">
+  1035→                <div style={{ 
+  1036→                  backgroundColor: '#0a0b0f', 
+  1037→                  border: '1px solid #1e293b', 
+  1038→                  borderRadius: '4px',
+  1039→                  padding: '12px',
+  1040→                  fontFamily: 'monospace',
+  1041→                  fontSize: '11px',
+  1042→                  color: '#64748b',
+  1043→                }}>
+  1044→                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+  1045→                    <span>Version</span>
+  1046→                    <span style={{ color: '#94a3b8' }}>0.4.2-beta</span>
+  1047→                  </div>
+  1048→                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+  1049→                    <span>Platform</span>
+  1050→                    <span style={{ color: '#94a3b8' }}>darwin-arm64</span>
+  1051→                  </div>
+  1052→                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+  1053→                    <span>Node</span>
+  1054→                    <span style={{ color: '#94a3b8' }}>v20.10.0</span>
+  1055→                  </div>
+  1056→                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+  1057→                    <span>Memory</span>
+  1058→                    <span style={{ color: '#94a3b8' }}>142 MB</span>
+  1059→                  </div>
+  1060→                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+  1061→                    <span>Uptime</span>
+  1062→                    <span style={{ color: '#94a3b8' }}>2h 34m</span>
+  1063→                  </div>
+  1064→                </div>
+  1065→                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+  1066→                  <Button>Copy Debug Info</Button>
+  1067→                  <Button>Open Logs Folder</Button>
+  1068→                </div>
+  1069→              </Section>
+  1070→            </>
+  1071→          )}
+  1072→        </main>
+  1073→      </div>
+  1074→    </div>
+  1075→  );
+  1076→}
+  1077→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

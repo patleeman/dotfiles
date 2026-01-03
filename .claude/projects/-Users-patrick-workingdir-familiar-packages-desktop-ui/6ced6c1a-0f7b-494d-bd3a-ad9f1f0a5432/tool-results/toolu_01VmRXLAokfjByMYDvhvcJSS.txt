@@ -1,0 +1,217 @@
+     1→import React, { useState, useEffect } from 'react';
+     2→import { clsx } from 'clsx';
+     3→import { useAgents } from '../../context/AgentContext';
+     4→import { useQuery, useQueryClient } from '@tanstack/react-query';
+     5→import { useNavigate } from 'react-router-dom';
+     6→import { api } from '../../lib/api';
+     7→import { ask } from '@tauri-apps/plugin-dialog';
+     8→import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from '../ui';
+     9→
+    10→export const TriggersView: React.FC = () => {
+    11→    const { listTriggers, deleteTrigger, renameTrigger, isExplorerCollapsed, agents, createAgent, selectAgent, setSidebarCollapsed } = useAgents();
+    12→    const navigate = useNavigate();
+    13→    const queryClient = useQueryClient();
+    14→    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, triggerId: string } | null>(null);
+    15→    const [isCreating, setIsCreating] = useState<string | null>(null);
+    16→
+    17→    useEffect(() => {
+    18→        const handleClick = () => setContextMenu(null);
+    19→        window.addEventListener('click', handleClick);
+    20→        return () => window.removeEventListener('click', handleClick);
+    21→    }, []);
+    22→
+    23→    const handleContextMenu = (e: React.MouseEvent, triggerId: string) => {
+    24→        e.preventDefault();
+    25→        setContextMenu({ x: e.clientX, y: e.clientY, triggerId });
+    26→    };
+    27→
+    28→    const { data: config } = useQuery({
+    29→        queryKey: ['config'],
+    30→        queryFn: () => api.getConfig(),
+    31→    });
+    32→
+    33→    const { data: triggersData, isLoading: triggersLoading } = useQuery({
+    34→        queryKey: ['triggers'],
+    35→        queryFn: async () => {
+    36→            const resp = await listTriggers();
+    37→            return Array.isArray(resp?.triggers) ? resp.triggers : [];
+    38→        }
+    39→    });
+    40→
+    41→    const handleTriggerClick = async (triggerId: string) => {
+    42→        // Find if there's an existing Trigger Architect agent for this trigger
+    43→        const architect = Object.values(agents).find(a =>
+    44→            a.name === `Trigger Architect: ${triggerId}` &&
+    45→            !a.is_internal
+    46→        );
+    47→
+    48→        if (architect) {
+    49→            selectAgent(architect.id);
+    50→            navigate(`/agent/${architect.id}`);
+    51→            return;
+    52→        }
+    53→
+    54→        setIsCreating(triggerId);
+    55→        try {
+    56→            const response = await createAgent(
+    57→                { provider: config?.inference?.chat?.provider, model: config?.inference?.chat?.model },
+    58→                "",
+    59→                { is_trigger_architect: true, trigger_id: triggerId }
+    60→            );
+    61→            if (response && response.id) {
+    62→                setSidebarCollapsed(true);
+    63→                selectAgent(response.id);
+    64→                navigate(`/agent/${response.id}`);
+    65→            }
+    66→        } catch (err) {
+    67→            console.error('Failed to create trigger architect:', err);
+    68→        } finally {
+    69→            setIsCreating(null);
+    70→        }
+    71→    };
+    72→
+    73→    const handleAction = async (triggerId: string, action: 'edit' | 'open' | 'rename' | 'delete') => {
+    74→        switch (action) {
+    75→            case 'edit':
+    76→                handleTriggerClick(triggerId);
+    77→                break;
+    78→            case 'open':
+    79→                try {
+    80→                    const workspacePath = await api.listWorkspace();
+    81→                    // Triggers are in configDir/triggers/triggerId
+    82→                    // Let's try to open the specific trigger folder, fallback to triggers root.
+    83→                    try {
+    84→                        await api.openPath(`${workspacePath.path}/triggers/${triggerId}`);
+    85→                    } catch {
+    86→                        await api.openPath(`${workspacePath.path}/triggers`);
+    87→                    }
+    88→                } catch (err) {
+    89→                    console.error('Failed to open triggers directory:', err);
+    90→                }
+    91→                break;
+    92→            case 'rename':
+    93→                const newName = window.prompt(`Enter new name for trigger "${triggerId}":`, triggerId);
+    94→                if (newName && newName !== triggerId) {
+    95→                    await renameTrigger(triggerId, newName);
+    96→                    queryClient.invalidateQueries({ queryKey: ['triggers'] });
+    97→                }
+    98→                break;
+    99→            case 'delete':
+   100→                const confirmed = await ask(`Are you sure you want to delete the trigger "${triggerId}"? This will permanently remove the trigger files. This cannot be undone.`, {
+   101→                    title: 'Delete Trigger',
+   102→                    kind: 'warning',
+   103→                });
+   104→                if (confirmed) {
+   105→                    await deleteTrigger(triggerId);
+   106→                    queryClient.invalidateQueries({ queryKey: ['triggers'] });
+   107→                }
+   108→                break;
+   109→        }
+   110→    };
+   111→
+   112→    return (
+   113→        <div className="flex flex-col h-full bg-background font-mono text-[12px] relative overflow-hidden select-none">
+   114→            {/* Triggers Header */}
+   115→            <div className="flex items-center justify-between px-4 py-2 border-b border-border/20 bg-surface/5 shrink-0 font-mono">
+   116→                <div className="flex items-center gap-3">
+   117→                    <h1 className="text-[11px] font-black text-accent uppercase tracking-[0.25em]">
+   118→                        {isExplorerCollapsed ? 'Triggers ' : null}
+   119→                        <span className={clsx("text-text-tertiary opacity-30 font-black", isExplorerCollapsed ? "ml-1" : "ml-0")}>
+   120→                            {triggersData?.length || 0} triggers
+   121→                        </span>
+   122→                    </h1>
+   123→                </div>
+   124→            </div>
+   125→
+   126→            <div className="flex-1 overflow-auto p-1 custom-scrollbar">
+   127→                <div className="w-full font-mono">
+   128→                    <div className="sticky top-0 z-10 grid grid-cols-[200px_1fr] gap-2 px-4 py-1.5 bg-background border-b border-border/40 text-[9px] font-black text-text-tertiary uppercase tracking-widest shadow-sm">
+   129→                        <div>Trigger</div>
+   130→                        <div>Type</div>
+   131→                    </div>
+   132→
+   133→                    <div className="flex flex-col">
+   134→                        {triggersLoading ? (
+   135→                            <div className="px-4 py-12 text-center">
+   136→                                <div className="flex flex-col items-center gap-2 text-text-tertiary/20">
+   137→                                    <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+   138→                                    <span className="uppercase tracking-[0.2em] text-[9px] font-black">Loading triggers...</span>
+   139→                                </div>
+   140→                            </div>
+   141→                        ) : (triggersData?.length || 0) === 0 ? (
+   142→                            <div className="px-4 py-12 text-center text-text-tertiary/30 uppercase tracking-[0.2em] text-[9px] font-black">
+   143→                                No triggers found
+   144→                            </div>
+   145→                        ) : (
+   146→                            [...(triggersData || [])]
+   147→                                .sort((a, b) => a.localeCompare(b))
+   148→                                .map((triggerId: string) => (
+   149→                                    <div
+   150→                                        key={triggerId}
+   151→                                        onClick={() => handleTriggerClick(triggerId)}
+   152→                                        onContextMenu={(e) => handleContextMenu(e, triggerId)}
+   153→                                        className={clsx(
+   154→                                            "grid grid-cols-[200px_1fr] gap-2 px-4 py-1 border-b border-border/5 hover:bg-surface/30 transition-all items-start group cursor-pointer",
+   155→                                            isCreating === triggerId && "opacity-50 pointer-events-none"
+   156→                                        )}
+   157→                                    >
+   158→                                        <div className="flex items-center gap-2 text-text-primary font-black uppercase tracking-tighter text-[10px]">
+   159→                                            {isCreating === triggerId && (
+   160→                                                <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+   161→                                            )}
+   162→                                            {triggerId}
+   163→                                        </div>
+   164→                                        <div className="text-text-secondary opacity-50 text-[10px] leading-relaxed uppercase tracking-tight font-black">
+   165→                                            System Event Source
+   166→                                        </div>
+   167→                                    </div>
+   168→                                ))
+   169→                        )}
+   170→                    </div>
+   171→                </div>
+   172→            </div>
+   173→
+   174→            <DropdownMenu
+   175→                isOpen={!!contextMenu}
+   176→                onClose={() => setContextMenu(null)}
+   177→                position={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : { x: 0, y: 0 }}
+   178→                title={contextMenu?.triggerId}
+   179→            >
+   180→                <DropdownMenuItem
+   181→                    onClick={() => {
+   182→                        if (contextMenu) handleAction(contextMenu.triggerId, 'edit');
+   183→                        setContextMenu(null);
+   184→                    }}
+   185→                >
+   186→                    Edit
+   187→                </DropdownMenuItem>
+   188→
+   189→                <DropdownMenuItem
+   190→                    onClick={() => {
+   191→                        if (contextMenu) handleAction(contextMenu.triggerId, 'open');
+   192→                        setContextMenu(null);
+   193→                    }}
+   194→                >
+   195→                    Open in Finder
+   196→                </DropdownMenuItem>
+   197→
+   198→                <DropdownMenuSeparator />
+   199→
+   200→                <DropdownMenuItem
+   201→                    variant="danger"
+   202→                    onClick={() => {
+   203→                        if (contextMenu) handleAction(contextMenu.triggerId, 'delete');
+   204→                        setContextMenu(null);
+   205→                    }}
+   206→                >
+   207→                    Delete
+   208→                </DropdownMenuItem>
+   209→            </DropdownMenu>
+   210→        </div>
+   211→    );
+   212→};
+   213→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

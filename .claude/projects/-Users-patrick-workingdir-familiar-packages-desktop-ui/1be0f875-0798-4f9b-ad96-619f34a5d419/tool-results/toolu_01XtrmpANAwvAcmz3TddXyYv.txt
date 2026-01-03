@@ -1,0 +1,225 @@
+     1→import React, { useState, useEffect } from 'react';
+     2→import { clsx } from 'clsx';
+     3→import { useAgents } from '../../context/AgentContext';
+     4→import { useQuery, useQueryClient } from '@tanstack/react-query';
+     5→import { useNavigate } from 'react-router-dom';
+     6→import { api } from '../../lib/api';
+     7→import { ask } from '@tauri-apps/plugin-dialog';
+     8→
+     9→export const TriggersView: React.FC = () => {
+    10→    const { listTriggers, deleteTrigger, renameTrigger, isExplorerCollapsed, agents, createAgent, selectAgent, setSidebarCollapsed } = useAgents();
+    11→    const navigate = useNavigate();
+    12→    const queryClient = useQueryClient();
+    13→    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, triggerId: string } | null>(null);
+    14→    const [isCreating, setIsCreating] = useState<string | null>(null);
+    15→
+    16→    useEffect(() => {
+    17→        const handleClick = () => setContextMenu(null);
+    18→        window.addEventListener('click', handleClick);
+    19→        return () => window.removeEventListener('click', handleClick);
+    20→    }, []);
+    21→
+    22→    const handleContextMenu = (e: React.MouseEvent, triggerId: string) => {
+    23→        e.preventDefault();
+    24→        setContextMenu({ x: e.clientX, y: e.clientY, triggerId });
+    25→    };
+    26→
+    27→    const { data: config } = useQuery({
+    28→        queryKey: ['config'],
+    29→        queryFn: () => api.getConfig(),
+    30→    });
+    31→
+    32→    const { data: triggersData, isLoading: triggersLoading } = useQuery({
+    33→        queryKey: ['triggers'],
+    34→        queryFn: async () => {
+    35→            const resp = await listTriggers();
+    36→            return Array.isArray(resp?.triggers) ? resp.triggers : [];
+    37→        }
+    38→    });
+    39→
+    40→    const handleTriggerClick = async (triggerId: string) => {
+    41→        // Find if there's an existing Trigger Architect agent for this trigger
+    42→        const architect = Object.values(agents).find(a =>
+    43→            a.name === `Trigger Architect: ${triggerId}` &&
+    44→            !a.is_internal
+    45→        );
+    46→
+    47→        if (architect) {
+    48→            selectAgent(architect.id);
+    49→            navigate(`/agent/${architect.id}`);
+    50→            return;
+    51→        }
+    52→
+    53→        setIsCreating(triggerId);
+    54→        try {
+    55→            const response = await createAgent(
+    56→                { provider: config?.inference?.chat?.provider, model: config?.inference?.chat?.model },
+    57→                "",
+    58→                { is_trigger_architect: true, trigger_id: triggerId }
+    59→            );
+    60→            if (response && response.id) {
+    61→                setSidebarCollapsed(true);
+    62→                selectAgent(response.id);
+    63→                navigate(`/agent/${response.id}`);
+    64→            }
+    65→        } catch (err) {
+    66→            console.error('Failed to create trigger architect:', err);
+    67→        } finally {
+    68→            setIsCreating(null);
+    69→        }
+    70→    };
+    71→
+    72→    const handleAction = async (triggerId: string, action: 'edit' | 'open' | 'rename' | 'delete') => {
+    73→        switch (action) {
+    74→            case 'edit':
+    75→                handleTriggerClick(triggerId);
+    76→                break;
+    77→            case 'open':
+    78→                try {
+    79→                    const workspacePath = await api.listWorkspace();
+    80→                    // Triggers are in configDir/triggers/triggerId
+    81→                    // Let's try to open the specific trigger folder, fallback to triggers root.
+    82→                    try {
+    83→                        await api.openPath(`${workspacePath.path}/triggers/${triggerId}`);
+    84→                    } catch {
+    85→                        await api.openPath(`${workspacePath.path}/triggers`);
+    86→                    }
+    87→                } catch (err) {
+    88→                    console.error('Failed to open triggers directory:', err);
+    89→                }
+    90→                break;
+    91→            case 'rename':
+    92→                const newName = window.prompt(`Enter new name for trigger "${triggerId}":`, triggerId);
+    93→                if (newName && newName !== triggerId) {
+    94→                    await renameTrigger(triggerId, newName);
+    95→                    queryClient.invalidateQueries({ queryKey: ['triggers'] });
+    96→                }
+    97→                break;
+    98→            case 'delete':
+    99→                const confirmed = await ask(`Are you sure you want to delete the trigger "${triggerId}"? This will permanently remove the trigger files. This cannot be undone.`, {
+   100→                    title: 'Delete Trigger',
+   101→                    kind: 'warning',
+   102→                });
+   103→                if (confirmed) {
+   104→                    await deleteTrigger(triggerId);
+   105→                    queryClient.invalidateQueries({ queryKey: ['triggers'] });
+   106→                }
+   107→                break;
+   108→        }
+   109→    };
+   110→
+   111→    return (
+   112→        <div className="flex flex-col h-full bg-background font-mono text-[12px] relative overflow-hidden select-none">
+   113→            {/* Triggers Header */}
+   114→            <div className="flex items-center justify-between px-4 py-2 border-b border-border/20 bg-surface/5 shrink-0 font-mono">
+   115→                <div className="flex items-center gap-3">
+   116→                    <h1 className="text-[11px] font-black text-accent uppercase tracking-[0.25em]">
+   117→                        {isExplorerCollapsed ? '/TRIGGERS ' : null}
+   118→                        <span className={clsx("text-text-tertiary opacity-30 font-black", isExplorerCollapsed ? "ml-1" : "ml-0")}>
+   119→                            [ {triggersData?.length || 0} SOURCES ]
+   120→                        </span>
+   121→                    </h1>
+   122→                </div>
+   123→            </div>
+   124→
+   125→            <div className="flex-1 overflow-auto p-1 custom-scrollbar">
+   126→                <div className="w-full font-mono">
+   127→                    <div className="sticky top-0 z-10 grid grid-cols-[200px_1fr] gap-2 px-4 py-1.5 bg-background border-b border-border/40 text-[9px] font-black text-text-tertiary uppercase tracking-widest shadow-sm">
+   128→                        <div>/TRIGGER_ID</div>
+   129→                        <div>/TYPE</div>
+   130→                    </div>
+   131→
+   132→                    <div className="flex flex-col">
+   133→                        {triggersLoading ? (
+   134→                            <div className="px-4 py-12 text-center">
+   135→                                <div className="flex flex-col items-center gap-2 text-text-tertiary/20">
+   136→                                    <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+   137→                                    <span className="uppercase tracking-[0.2em] text-[9px] font-black">[ SCANNING_SYSTEM... ]</span>
+   138→                                </div>
+   139→                            </div>
+   140→                        ) : (triggersData?.length || 0) === 0 ? (
+   141→                            <div className="px-4 py-12 text-center text-text-tertiary/30 uppercase tracking-[0.3em] text-[9px] font-black">
+   142→                                [ NO_TRIGGERS_FOUND ]
+   143→                            </div>
+   144→                        ) : (
+   145→                            [...(triggersData || [])]
+   146→                                .sort((a, b) => a.localeCompare(b))
+   147→                                .map((triggerId: string) => (
+   148→                                    <div
+   149→                                        key={triggerId}
+   150→                                        onClick={() => handleTriggerClick(triggerId)}
+   151→                                        onContextMenu={(e) => handleContextMenu(e, triggerId)}
+   152→                                        className={clsx(
+   153→                                            "grid grid-cols-[200px_1fr] gap-2 px-4 py-1 border-b border-border/5 hover:bg-surface/30 transition-all items-start group cursor-pointer",
+   154→                                            isCreating === triggerId && "opacity-50 pointer-events-none"
+   155→                                        )}
+   156→                                    >
+   157→                                        <div className="flex items-center gap-2 text-text-primary font-black uppercase tracking-tighter text-[10px]">
+   158→                                            {isCreating === triggerId ? (
+   159→                                                <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+   160→                                            ) : (
+   161→                                                <span>/</span>
+   162→                                            )}
+   163→                                            {triggerId}
+   164→                                        </div>
+   165→                                        <div className="text-text-secondary opacity-50 text-[10px] leading-relaxed uppercase tracking-tight font-black">
+   166→                                            System Event Source
+   167→                                        </div>
+   168→                                    </div>
+   169→                                ))
+   170→                        )}
+   171→                    </div>
+   172→                </div>
+   173→            </div>
+   174→
+   175→            {contextMenu && (
+   176→                <div
+   177→                    className="fixed z-[100] w-44 bg-[#0a0a0a] border border-[#333] font-mono text-[10px] overflow-hidden animate-in fade-in duration-75"
+   178→                    style={{ top: contextMenu.y, left: contextMenu.x }}
+   179→                    onClick={(e) => e.stopPropagation()}
+   180→                >
+   181→                    <div className="px-2 py-1 border-b border-[#333] bg-[#111] text-[#666]">
+   182→                        <span className="text-[8px] tracking-wider">
+   183→                            *** /{contextMenu.triggerId}
+   184→                        </span>
+   185→                    </div>
+   186→
+   187→                    <button
+   188→                        className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   189→                        onClick={() => {
+   190→                            handleAction(contextMenu.triggerId, 'edit');
+   191→                            setContextMenu(null);
+   192→                        }}
+   193→                    >
+   194→                        EDIT
+   195→                    </button>
+   196→
+   197→                    <button
+   198→                        className="w-full text-left px-2 py-1.5 text-[#0f0] hover:bg-[#0f0]/10 hover:text-[#0f0] transition-colors border-b border-[#222]"
+   199→                        onClick={() => {
+   200→                            handleAction(contextMenu.triggerId, 'open');
+   201→                            setContextMenu(null);
+   202→                        }}
+   203→                    >
+   204→                        OPEN
+   205→                    </button>
+   206→
+   207→                    <button
+   208→                        className="w-full text-left px-2 py-1.5 text-[#f44] hover:bg-[#f44]/10 hover:text-[#f44] transition-colors"
+   209→                        onClick={() => {
+   210→                            handleAction(contextMenu.triggerId, 'delete');
+   211→                            setContextMenu(null);
+   212→                        }}
+   213→                    >
+   214→                        DELETE
+   215→                    </button>
+   216→                </div>
+   217→            )}
+   218→        </div>
+   219→    );
+   220→};
+   221→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

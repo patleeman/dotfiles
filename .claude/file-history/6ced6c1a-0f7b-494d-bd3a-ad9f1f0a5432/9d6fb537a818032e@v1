@@ -1,0 +1,126 @@
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Unibar } from './Unibar';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAgents } from '../context/AgentContext';
+import { api } from '../lib/api';
+
+// Mock useAgents hook
+vi.mock('../context/AgentContext', () => ({
+  useAgents: vi.fn(),
+}));
+
+// Mock api
+vi.mock('../lib/api', () => ({
+  api: {
+    getConfig: vi.fn().mockResolvedValue({ ui: { hotkeys: { toggle_unibar: 'Cmd+K' } } }),
+    getApiKeys: vi.fn().mockResolvedValue([]),
+  },
+}));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
+});
+
+describe('Unibar Component', () => {
+  const mockSelectAgent = vi.fn();
+  const mockCreateAgent = vi.fn();
+
+  beforeEach(() => {
+    vi.mocked(useAgents).mockReturnValue({
+      agents: {},
+      selectAgent: mockSelectAgent,
+      createAgent: mockCreateAgent,
+    } as any);
+  });
+
+  it('renders correctly in closed state', async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/']}>
+          <Unibar />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Fleet')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Skills')).toBeInTheDocument();
+  });
+
+  it('opens on keyboard shortcut', async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <Unibar />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(api.getConfig)).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const event = new KeyboardEvent('keydown', {
+        key: 'K',
+        metaKey: isMac,
+        ctrlKey: !isMac,
+        bubbles: true,
+        cancelable: true,
+      } as any);
+      Object.defineProperty(event, 'metaKey', { value: isMac, configurable: true });
+      Object.defineProperty(event, 'ctrlKey', { value: !isMac, configurable: true });
+      window.dispatchEvent(event);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('search agents or commands...')).toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
+
+  it('filters commands based on query', async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <Unibar />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(api.getConfig)).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const event = new KeyboardEvent('keydown', {
+        key: 'K',
+        metaKey: isMac,
+        ctrlKey: !isMac,
+        bubbles: true,
+        cancelable: true,
+      } as any);
+      Object.defineProperty(event, 'metaKey', { value: isMac, configurable: true });
+      Object.defineProperty(event, 'ctrlKey', { value: !isMac, configurable: true });
+      window.dispatchEvent(event);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('search agents or commands...')).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    const input = screen.getByPlaceholderText('search agents or commands...');
+    fireEvent.change(input, { target: { value: 'settings' } });
+    
+    await waitFor(() => {
+      expect(screen.getByText('System Settings')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Tools & Skills')).not.toBeInTheDocument();
+  });
+});

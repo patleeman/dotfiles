@@ -1,0 +1,190 @@
+2026-01-03T00:47:11.917Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (16.9ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T00:47:11.937Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (19.2ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T00:47:11.977Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T00:47:11.977Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T00:47:11.977Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T00:47:11.980Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T00:47:11.980Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T00:47:11.980Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-03T00:47:11.987Z [DEBUG] Stats cache is up to date
+2026-01-03T00:47:11.990Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T00:47:11.990Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T00:47:12.058Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (66.5ms): ps aux | grep -E "Visual Studio Code|Code Helper|Cursor Helper|Windsurf Helper|IntelliJ IDEA|PyCharm
+2026-01-03T00:47:12.059Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2026-01-03T00:47:12.071Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T00:47:12.071Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T00:47:12.071Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T00:47:12.071Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767401232071-zg06j4.sh
+2026-01-03T00:47:12.071Z [DEBUG] Shell binary exists: true
+2026-01-03T00:47:12.071Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T00:47:12.072Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/457c902e-4f03-4c72-a7bf-b607b7e7e81c-agent-457c902e-4f03-4c72-a7bf-b607b7e7e81c.json.tmp.74302.1767401232072
+2026-01-03T00:47:12.077Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.1ms)
+2026-01-03T00:47:12.077Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T00:47:12.077Z [DEBUG] Renaming /Users/patrick/.claude/todos/457c902e-4f03-4c72-a7bf-b607b7e7e81c-agent-457c902e-4f03-4c72-a7bf-b607b7e7e81c.json.tmp.74302.1767401232072 to /Users/patrick/.claude/todos/457c902e-4f03-4c72-a7bf-b607b7e7e81c-agent-457c902e-4f03-4c72-a7bf-b607b7e7e81c.json
+2026-01-03T00:47:12.078Z [DEBUG] File /Users/patrick/.claude/todos/457c902e-4f03-4c72-a7bf-b607b7e7e81c-agent-457c902e-4f03-4c72-a7bf-b607b7e7e81c.json written atomically
+2026-01-03T00:47:12.081Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-01-03T00:47:12.081Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T00:47:12.081Z [DEBUG] Total plugin commands loaded: 0
+2026-01-03T00:47:12.081Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-03T00:47:12.086Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T00:47:12.086Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2026-01-03T00:47:12.086Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2026-01-03T00:47:12.133Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-03T00:47:12.133Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-03T00:47:12.133Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-03T00:47:12.133Z [DEBUG] Path /Users/patrick/workingdir/familiar already tracked for repo patleeman/familiar
+2026-01-03T00:47:12.165Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2026-01-03T00:47:12.225Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401232225
+2026-01-03T00:47:12.226Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:47:12.230Z [DEBUG] Temp file written successfully, size: 56492 bytes
+2026-01-03T00:47:12.230Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:47:12.230Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401232225 to /Users/patrick/.claude.json
+2026-01-03T00:47:12.231Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:47:12.346Z [DEBUG] Shell snapshot created successfully (42810 bytes)
+2026-01-03T00:47:12.807Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.2ms)
+2026-01-03T00:47:12.807Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T00:47:12.807Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-03T00:47:18.466Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401238466
+2026-01-03T00:47:18.466Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:47:18.474Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (7.9ms)
+2026-01-03T00:47:18.474Z [DEBUG] Temp file written successfully, size: 56876 bytes
+2026-01-03T00:47:18.474Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:47:18.474Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401238466 to /Users/patrick/.claude.json
+2026-01-03T00:47:18.475Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:47:18.684Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T00:47:18.700Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2026-01-03T00:47:18.704Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401238704
+2026-01-03T00:47:18.704Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:47:18.710Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.6ms)
+2026-01-03T00:47:18.710Z [DEBUG] Temp file written successfully, size: 56876 bytes
+2026-01-03T00:47:18.710Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:47:18.710Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401238704 to /Users/patrick/.claude.json
+2026-01-03T00:47:18.711Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:47:18.715Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-03T00:47:18.715Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T00:47:18.715Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-03T00:47:18.721Z [DEBUG] Skills and commands included in Skill tool:
+2026-01-03T00:47:18.753Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401238753
+2026-01-03T00:47:18.753Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:47:18.758Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.5ms)
+2026-01-03T00:47:18.758Z [DEBUG] Temp file written successfully, size: 56803 bytes
+2026-01-03T00:47:18.758Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:47:18.758Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401238753 to /Users/patrick/.claude.json
+2026-01-03T00:47:18.759Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:47:18.761Z [DEBUG] Official marketplace auto-install skipped: already_attempted
+2026-01-03T00:47:18.761Z [DEBUG] performStartupChecks called
+2026-01-03T00:47:18.762Z [DEBUG] Starting background plugin installations
+2026-01-03T00:47:18.762Z [DEBUG] performBackgroundPluginInstallations called
+2026-01-03T00:47:18.766Z [DEBUG] AutoUpdaterWrapper: Installation type: npm-global
+2026-01-03T00:47:18.767Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401238767
+2026-01-03T00:47:18.767Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:47:18.773Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.1ms)
+2026-01-03T00:47:18.773Z [DEBUG] Temp file written successfully, size: 56876 bytes
+2026-01-03T00:47:18.773Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:47:18.773Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401238767 to /Users/patrick/.claude.json
+2026-01-03T00:47:18.774Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:47:18.774Z [DEBUG] Setting installation status: 0 marketplaces, 0 installable plugins, 0 uninstallable plugins
+2026-01-03T00:47:18.775Z [DEBUG] Loaded plugins - Enabled: 0, Disabled: 0, Commands: 0, Agents: 0, Errors: 0
+2026-01-03T00:47:18.780Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-03T00:47:18.780Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T00:47:18.780Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-03T00:47:18.782Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-03T00:47:18.782Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T00:47:18.782Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-03T00:47:18.793Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:18.803Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401238803
+2026-01-03T00:47:18.803Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:47:18.807Z [DEBUG] Temp file written successfully, size: 57057 bytes
+2026-01-03T00:47:18.807Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:47:18.807Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401238803 to /Users/patrick/.claude.json
+2026-01-03T00:47:18.808Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:47:18.824Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.6ms)
+2026-01-03T00:47:18.830Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.5ms)
+2026-01-03T00:47:19.183Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:19.394Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:19.672Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:19.760Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:19.962Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:19.983Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:20.279Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401240279
+2026-01-03T00:47:20.279Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:47:20.286Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (7.3ms)
+2026-01-03T00:47:20.286Z [DEBUG] Temp file written successfully, size: 57244 bytes
+2026-01-03T00:47:20.286Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:47:20.286Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401240279 to /Users/patrick/.claude.json
+2026-01-03T00:47:20.287Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:47:20.300Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:20.530Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:20.876Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:21.100Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:21.523Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:21.693Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:21.748Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T00:47:21.748Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T00:47:21.748Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T00:47:22.324Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:22.546Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:22.693Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:22.898Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:23.110Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:23.836Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:24.017Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:24.913Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:25.535Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:26.928Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:27.219Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:27.769Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:27.995Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:28.445Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:28.593Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:29.074Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:29.297Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:29.718Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:47:29.943Z [DEBUG] Summarizing all 2 messages (~0 tokens)
+2026-01-03T00:47:30.341Z [DEBUG] Stream started - received first chunk
+2026-01-03T00:48:08.497Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T00:48:08.497Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T00:48:08.497Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T00:48:15.725Z [DEBUG] Install counts cache does not exist
+2026-01-03T00:48:15.725Z [DEBUG] Fetching install counts from https://raw.githubusercontent.com/anthropics/claude-plugins-official/refs/heads/stats/stats/plugin-installs.json
+2026-01-03T00:48:15.756Z [DEBUG] Install counts cache saved successfully
+2026-01-03T00:48:24.065Z [DEBUG] Caching plugin from source: "/Users/patrick/.claude/plugins/marketplaces/claude-plugins-official/plugins/ralph-wiggum" to temporary path /Users/patrick/.claude/plugins/cache/temp_local_1767401304065_8et20l
+2026-01-03T00:48:24.070Z [DEBUG] Successfully cached plugin ralph-wiggum to /Users/patrick/.claude/plugins/cache/ralph-wiggum
+2026-01-03T00:48:24.101Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (9.2ms)
+2026-01-03T00:48:24.101Z [DEBUG] Saved 1 installed plugins to /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T00:48:24.101Z [DEBUG] Added installed plugin: ralph-wiggum@claude-plugins-official (scope: project)
+2026-01-03T00:48:24.102Z [DEBUG] Writing to temp file: /Users/patrick/workingdir/familiar/.claude/settings.json.tmp.74302.1767401304102
+2026-01-03T00:48:24.110Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (8.0ms)
+2026-01-03T00:48:24.110Z [DEBUG] Temp file written successfully, size: 79 bytes
+2026-01-03T00:48:24.110Z [DEBUG] Renaming /Users/patrick/workingdir/familiar/.claude/settings.json.tmp.74302.1767401304102 to /Users/patrick/workingdir/familiar/.claude/settings.json
+2026-01-03T00:48:24.110Z [DEBUG] File /Users/patrick/workingdir/familiar/.claude/settings.json written atomically
+2026-01-03T00:48:24.114Z [DEBUG] Loading plugin ralph-wiggum from source: "./plugins/ralph-wiggum"
+2026-01-03T00:48:24.129Z [DEBUG] FileHistory: Added snapshot for 64d8acc0-b5e6-4fcb-aff8-487a215fed2f, tracking 0 files
+2026-01-03T00:48:24.134Z [DEBUG] UserCommandMessage rendering: "plugin" (args: "install ralph-wiggum@anthropics")
+2026-01-03T00:48:24.134Z [DEBUG] isSkillFormat: false
+2026-01-03T00:48:24.139Z [DEBUG] AutoUpdaterWrapper: Installation type: npm-global
+2026-01-03T00:48:24.142Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T00:48:24.142Z [DEBUG] Copying source directory ./plugins/ralph-wiggum for plugin ralph-wiggum@claude-plugins-official
+2026-01-03T00:48:24.144Z [DEBUG] Successfully cached plugin ralph-wiggum@claude-plugins-official at /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T00:48:24.144Z [DEBUG] Copied local plugin ralph-wiggum to versioned cache: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T00:48:24.145Z [DEBUG] Loaded hooks from standard location for plugin ralph-wiggum: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/hooks/hooks.json
+2026-01-03T00:48:24.145Z [DEBUG] Found 1 plugins (1 enabled, 0 disabled)
+2026-01-03T00:48:24.146Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T00:48:24.146Z [DEBUG] Loaded 3 commands from plugin ralph-wiggum default directory
+2026-01-03T00:48:24.146Z [DEBUG] Total plugin commands loaded: 3
+2026-01-03T00:48:24.154Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401304154
+2026-01-03T00:48:24.154Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:48:24.159Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.0ms)
+2026-01-03T00:48:24.159Z [DEBUG] Temp file written successfully, size: 57269 bytes
+2026-01-03T00:48:24.159Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:48:24.159Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401304154 to /Users/patrick/.claude.json
+2026-01-03T00:48:24.159Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:48:24.166Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74302.1767401304166
+2026-01-03T00:48:24.166Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T00:48:24.171Z [DEBUG] Temp file written successfully, size: 57293 bytes
+2026-01-03T00:48:24.171Z [DEBUG] Applied original permissions to temp file
+2026-01-03T00:48:24.171Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74302.1767401304166 to /Users/patrick/.claude.json
+2026-01-03T00:48:24.171Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T00:48:31.568Z [DEBUG] Getting matching hook commands for SessionEnd with query: prompt_input_exit
+2026-01-03T00:48:31.568Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T00:48:31.568Z [DEBUG] Matched 0 unique hooks for query "prompt_input_exit" (0 before deduplication)

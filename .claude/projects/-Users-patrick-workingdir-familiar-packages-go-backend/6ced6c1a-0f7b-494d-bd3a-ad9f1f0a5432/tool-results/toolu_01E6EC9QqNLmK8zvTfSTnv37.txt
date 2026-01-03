@@ -1,0 +1,54 @@
+     1→package tools
+     2→
+     3→import (
+     4→	"context"
+     5→	"os"
+     6→	"strings"
+     7→	"testing"
+     8→)
+     9→
+    10→func TestSpawnSubAgentTool(t *testing.T) {
+    11→	spawnerCalled := false
+    12→	spawner := func(parentID string, name string, prompt string, objective string, engine string, workingDir string) (string, error) {
+    13→		spawnerCalled = true
+    14→		if name != "TestAgent" {
+    15→			t.Errorf("expected name TestAgent, got %s", name)
+    16→		}
+    17→		if engine != "internal" {
+    18→			t.Errorf("expected default engine 'internal', got %s", engine)
+    19→		}
+    20→		if workingDir != "/tmp/work" {
+    21→			t.Errorf("expected working directory /tmp/work, got %s", workingDir)
+    22→		}
+    23→		return "sub-123", nil
+    24→	}
+    25→
+    26→	tool := NewSpawnSubAgentTool(nil, spawner)
+    27→	args := map[string]interface{}{
+    28→		"name":              "TestAgent",
+    29→		"prompt":            "Test Prompt",
+    30→		"objective":         "Test Objective",
+    31→		"engine":            "internal",
+    32→		"working_directory": "/tmp/work",
+    33→	}
+    34→	toolCtx := map[string]interface{}{
+    35→		"agent_id": "parent-456",
+    36→	}
+    37→
+    38→	res, err := tool.Execute(context.Background(), args, toolCtx)
+    39→	if err != nil {
+    40→		t.Fatalf("Execute failed: %v", err)
+    41→	}
+    42→
+    43→	if !spawnerCalled {
+    44→		t.Error("spawner was not called")
+    45→	}
+    46→
+    47→	if res.Metadata["sub_agent_id"] != "sub-123" {
+    48→		t.Errorf("expected sub_agent_id sub-123, got %v", res.Metadata["sub_agent_id"])
+    49→	}
+    50→}
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

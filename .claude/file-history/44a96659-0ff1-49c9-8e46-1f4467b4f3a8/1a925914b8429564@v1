@@ -1,0 +1,8 @@
+# Claude Code Task Queue
+# Lines starting with # are comments
+# Each non-empty line is a task that will be executed sequentially
+
+# Example tasks:
+Fix the type error in src/components/Button.tsx
+Add unit tests for the auth service
+Refactor the API client to use async/await

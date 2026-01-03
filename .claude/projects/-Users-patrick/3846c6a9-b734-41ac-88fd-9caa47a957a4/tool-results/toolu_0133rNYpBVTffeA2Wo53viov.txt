@@ -1,0 +1,28 @@
+Web search results for query: "opencode github anomalyco OAuth PKCE claude subscription provider source code"
+
+Links: [{"title":"GitHub | OpenCode","url":"https://opencode.ai/docs/github/"},{"title":"Providers | OpenCode","url":"https://opencode.ai/docs/providers/"},{"title":"GitHub - anomalyco/opencode: The open source coding agent.","url":"https://github.com/anomalyco/opencode"},{"title":"How can I authenticate the opencode GitHub Action with Anthropic using Oauth? · Issue #3467 · sst/opencode","url":"https://github.com/sst/opencode/issues/3467"},{"title":"Question: How does opencode work with Claude Code OAuth tokens when AI SDK fails? · Issue #417 · sst/opencode","url":"https://github.com/sst/opencode/issues/417"},{"title":"Support Claude Pro/Max Plans via OAuth Authentication · Issue #4799 · RooCodeInc/Roo-Code","url":"https://github.com/RooCodeInc/Roo-Code/issues/4799"},{"title":"anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/6551"},{"title":"GitHub - numman-ali/opencode-openai-codex-auth: OAuth authentication plugin for personal coding assistance with ChatGPT Plus/Pro subscriptions - uses OpenAI's official authentication method","url":"https://github.com/numman-ali/opencode-openai-codex-auth"},{"title":"GitHub - code-yeongyu/oh-my-opencode: #1 OpenCode Plugin- Battery included. ASYNC SUBAGENTS (YES LIKE CLAUDE CODE) · Curated agents with proper models · Crafted tools like LSP/AST included · Curated MCPs · Claude Code Compatible Layer — Steroids for your OpenCode. The Best LLM Agent Experience is Here.","url":"https://github.com/code-yeongyu/oh-my-opencode"},{"title":"Opencode calls 'Claude 3.5 Haiku' on session start, despite selecting a custom model · Issue #1243 · anomalyco/opencode","url":"https://github.com/anomalyco/opencode/issues/1243"}]
+
+Based on my search, here's what I found about OpenCode's OAuth PKCE implementation for Claude subscription authentication:
+
+## OpenCode GitHub Repository
+
+OpenCode is described as "very similar to Claude Code in terms of capability" with key differences including that it's "not coupled to any provider." Although they recommend the models provided through OpenCode Zen, OpenCode can be used with Claude, OpenAI, Google or even local models.
+
+## OAuth PKCE Implementation for Claude Pro/Max
+
+The documentation recommends signing up for Claude Pro or Max. Once signed up, users run the `/connect` command and select Anthropic, where they can select the Claude Pro/Max option and it'll open the browser to authenticate.
+
+### Source Code Location
+
+The OAuth implementation source code is located at `https://github.com/sst/opencode/blob/dev/packages/opencode/src/auth/anthropic.ts`.(no content)The implementation uses OAuth 2.0 authentication, implementing a PKCE OAuth flow using Anthropic's endpoints with a specific client ID: `9d1c250a-e61b-44d9-88ed-5944d1962f5e`.
+
+### Provider Implementation
+
+The provider integration code is implemented in `/packages/opencode/src/provider/provider.ts` lines 42-71.
+
+## Related Issues
+
+There's a GitHub issue noting that "Claude Code uses CLAUDE_CODE_OAUTH_TOKEN, but opencode seems to only support ANTHROPIC_API_KEY" for GitHub Actions, with users asking how to use OAuth with their Anthropic Max plan.(no content)Some users attempting to replicate OpenCode's approach encounter errors stating "This credential is only authorized for use with Claude Code and cannot be used for other API requests," while OpenCode successfully uses these tokens.(no content)Questions have been raised about whether OpenCode uses a different API endpoint, special headers, or if OpenCode is specifically whitelisted by Anthropic to use Claude Code OAuth tokens.
+
+
+REMINDER: You MUST include the sources above in your response to the user using markdown hyperlinks.

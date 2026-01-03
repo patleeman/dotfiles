@@ -1,0 +1,75 @@
+2026-01-03T03:32:22.564Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (18.7ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T03:32:22.584Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (19.8ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T03:32:22.600Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude, /Users/patrick/workingdir/familiar/.claude, /Users/patrick/workingdir/familiar/.claude...
+2026-01-03T03:32:22.610Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T03:32:22.610Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T03:32:22.610Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T03:32:22.611Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'userSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T03:32:22.611Z [DEBUG] Applying permission update: Adding 12 allow rule(s) to destination 'localSettings': ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)"]
+2026-01-03T03:32:22.611Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T03:32:22.611Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T03:32:22.612Z [DEBUG] Loading plugin ralph-wiggum from source: "./plugins/ralph-wiggum"
+2026-01-03T03:32:22.631Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-03T03:32:22.631Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-03T03:32:22.631Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-03T03:32:22.631Z [DEBUG] Path /Users/patrick/workingdir/familiar already tracked for repo patleeman/familiar
+2026-01-03T03:32:22.631Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T03:32:22.631Z [DEBUG] Plugin ralph-wiggum@claude-plugins-official version 6d3752c000e2 already cached at /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T03:32:22.631Z [DEBUG] Copied local plugin ralph-wiggum to versioned cache: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T03:32:22.631Z [DEBUG] Loaded hooks from standard location for plugin ralph-wiggum: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/hooks/hooks.json
+2026-01-03T03:32:22.631Z [DEBUG] Found 1 plugins (1 enabled, 0 disabled)
+2026-01-03T03:32:22.638Z [DEBUG] Stats cache is up to date
+2026-01-03T03:32:22.640Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T03:32:22.640Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T03:32:22.792Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (151.1ms): cursor --version
+2026-01-03T03:32:22.793Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T03:32:22.804Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T03:32:22.804Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T03:32:22.804Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T03:32:22.805Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767411142804-zx64i8.sh
+2026-01-03T03:32:22.805Z [DEBUG] Shell binary exists: true
+2026-01-03T03:32:22.805Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T03:32:22.805Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/8f26499a-639c-4e7e-948c-be5288cb9997-agent-8f26499a-639c-4e7e-948c-be5288cb9997.json.tmp.79701.1767411142805
+2026-01-03T03:32:22.806Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T03:32:22.806Z [DEBUG] Renaming /Users/patrick/.claude/todos/8f26499a-639c-4e7e-948c-be5288cb9997-agent-8f26499a-639c-4e7e-948c-be5288cb9997.json.tmp.79701.1767411142805 to /Users/patrick/.claude/todos/8f26499a-639c-4e7e-948c-be5288cb9997-agent-8f26499a-639c-4e7e-948c-be5288cb9997.json
+2026-01-03T03:32:22.806Z [DEBUG] File /Users/patrick/.claude/todos/8f26499a-639c-4e7e-948c-be5288cb9997-agent-8f26499a-639c-4e7e-948c-be5288cb9997.json written atomically
+2026-01-03T03:32:22.809Z [DEBUG] getPluginSkills: Processing 1 enabled plugins
+2026-01-03T03:32:22.809Z [DEBUG] Checking plugin ralph-wiggum: skillsPath=none, skillsPaths=0 paths
+2026-01-03T03:32:22.809Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T03:32:22.810Z [DEBUG] Loading hooks from plugin: ralph-wiggum
+2026-01-03T03:32:22.810Z [DEBUG] Registered 1 hooks from 1 plugins
+2026-01-03T03:32:22.811Z [DEBUG] Loaded 3 commands from plugin ralph-wiggum default directory
+2026-01-03T03:32:22.811Z [DEBUG] Total plugin commands loaded: 3
+2026-01-03T03:32:22.813Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T03:32:22.817Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.79701.1767411142817
+2026-01-03T03:32:22.817Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:32:22.817Z [DEBUG] Temp file written successfully, size: 58907 bytes
+2026-01-03T03:32:22.817Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:32:22.817Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.79701.1767411142817 to /Users/patrick/.claude.json
+2026-01-03T03:32:22.817Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:32:22.822Z [DEBUG] Protecting locked version from cleanup: 2.0.67
+2026-01-03T03:32:22.823Z [DEBUG] Acquired mtime-based lock on running version: /Users/patrick/.local/share/claude/versions/2.0.76
+2026-01-03T03:32:22.824Z [DEBUG] Loaded 1 unique skills (managed: 0, user: 0, project: 0, legacy commands: 1)
+2026-01-03T03:32:22.824Z [DEBUG] getSkills returning: 1 skill dir commands, 0 plugin skills
+2026-01-03T03:32:22.983Z [DEBUG] Metrics opt-out API response: enabled=true, vcsLinking=false
+2026-01-03T03:32:23.144Z [DEBUG] Shell snapshot created successfully (42941 bytes)
+2026-01-03T03:32:23.232Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T03:32:23.237Z [DEBUG] All plugins already exist, skipping migration
+2026-01-03T03:32:23.239Z [DEBUG] Initialized versioned plugins system with 1 plugins
+2026-01-03T03:32:23.241Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.79701.1767411143241
+2026-01-03T03:32:23.241Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:32:23.241Z [DEBUG] Temp file written successfully, size: 58907 bytes
+2026-01-03T03:32:23.241Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:32:23.241Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.79701.1767411143241 to /Users/patrick/.claude.json
+2026-01-03T03:32:23.242Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:32:23.554Z [DEBUG] Summarizing all 3 messages (~0 tokens)
+2026-01-03T03:32:23.558Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-03T03:32:23.558Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T03:32:23.558Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-03T03:32:23.560Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-03T03:32:23.560Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T03:32:23.560Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-03T03:32:23.561Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/Users/patrick/.local/share/claude/versions/2.0.76)
+2026-01-03T03:32:23.562Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T03:32:23.562Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-03T03:32:23.570Z [DEBUG] Skills and commands included in Skill tool: commit-and-push, ralph-wiggum:help, ralph-wiggum:cancel-ralph, ralph-wiggum:ralph-loop

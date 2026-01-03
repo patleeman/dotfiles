@@ -1,0 +1,20 @@
+packages/go-backend/cmd/server/main.go:3:import (
+packages/go-backend/cmd/server/main.go:42:	port := flag.String("port", "18080", "Server port")
+packages/go-backend/cmd/server/main.go:171:		Addr:    ":" + *port,
+packages/go-backend/cmd/server/main.go:176:		slog.Info("Server starting", "port", *port, "total_boot_duration", time.Since(bootStart))
+packages/go-backend/cmd/server/tools.go:3:import (
+packages/go-backend/cmd/server/tools.go:113:				eventType = "sub_agent_report" // Keep legacy type for parent-focused UI if needed, or unify
+packages/go-backend/cmd/server/handlers.go:3:import (
+packages/go-backend/cmd/server/handlers.go:1363:				err = fmt.Errorf("login trigger not supported on this OS")
+packages/go-backend/cmd/server/handlers.go:1370:				err = fmt.Errorf("login trigger not supported on this OS")
+packages/go-backend/cmd/server/agents.go:3:import (
+packages/go-backend/cmd/server/agents.go:428:				systemPrompt = `You are the Feedback Collector for Familiar. Your goal is to help users report bugs, suggest features, or provide general feedback.
+packages/go-backend/cmd/server/agents.go:438:2. If appropriate (e.g. reporting a UI bug), offer to take a screenshot using 'screenshot_take'.
+packages/go-backend/cmd/server/agents.go:553:			systemPrompt = `You are the Feedback Collector for Familiar. Your goal is to help users report bugs, suggest features, or provide general feedback.
+packages/go-backend/cmd/server/agents.go:563:2. If appropriate (e.g. reporting a UI bug), offer to take a screenshot using 'screenshot_take'.
+packages/go-backend/cmd/server/agents.go:700:		logID, _ := s.db.AppendAgentLog(parentID, "sub_agent_report", payload)
+packages/go-backend/cmd/server/agents.go:706:			"event_type": "sub_agent_report",
+packages/go-backend/cmd/server/agents.go:972:		Content:    "# Objective\nExecute the user request directly.\n\n# Plan\n1. Receive user instruction.\n2. Execute relevant tools/skills to satisfy the request.\n3. Report results back to the user.",
+packages/go-backend/cmd/server/server.go:3:import (
+packages/go-backend/cmd/server/server.go:538:		// but if we want to support full deletion of a provider from available_models,
+packages/go-backend/cmd/server/server.go:571:	// Apply custom_providers update explicitly if present to support deletion

@@ -1,0 +1,166 @@
+2025-12-30T18:31:31.268Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (18.1ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2025-12-30T18:31:31.290Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2025-12-30T18:31:31.290Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2025-12-30T18:31:31.290Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2025-12-30T18:31:31.292Z [DEBUG] LSP server manager initialized successfully
+2025-12-30T18:31:31.292Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2025-12-30T18:31:31.293Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-30T18:31:31.302Z [DEBUG] Stats cache is up to date
+2025-12-30T18:31:31.304Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2025-12-30T18:31:31.626Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (320.3ms): cursor --version
+2025-12-30T18:31:31.627Z [DEBUG] installed_plugins.json doesn't exist, returning empty V2 object
+2025-12-30T18:31:31.646Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2025-12-30T18:31:31.646Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2025-12-30T18:31:31.646Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2025-12-30T18:31:31.647Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767119491646-tkg3jm.sh
+2025-12-30T18:31:31.647Z [DEBUG] Shell binary exists: true
+2025-12-30T18:31:31.647Z [DEBUG] Execution timeout: 10000ms
+2025-12-30T18:31:31.649Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/471c4db7-8647-4f93-a51f-c2fb59d06539-agent-471c4db7-8647-4f93-a51f-c2fb59d06539.json.tmp.2639.1767119491649
+2025-12-30T18:31:31.656Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.1ms)
+2025-12-30T18:31:31.656Z [DEBUG] Temp file written successfully, size: 2 bytes
+2025-12-30T18:31:31.656Z [DEBUG] Renaming /Users/patrick/.claude/todos/471c4db7-8647-4f93-a51f-c2fb59d06539-agent-471c4db7-8647-4f93-a51f-c2fb59d06539.json.tmp.2639.1767119491649 to /Users/patrick/.claude/todos/471c4db7-8647-4f93-a51f-c2fb59d06539-agent-471c4db7-8647-4f93-a51f-c2fb59d06539.json
+2025-12-30T18:31:31.656Z [DEBUG] File /Users/patrick/.claude/todos/471c4db7-8647-4f93-a51f-c2fb59d06539-agent-471c4db7-8647-4f93-a51f-c2fb59d06539.json written atomically
+2025-12-30T18:31:31.749Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2025-12-30T18:31:31.749Z [DEBUG] Total plugin skills loaded: 0
+2025-12-30T18:31:31.749Z [DEBUG] Total plugin commands loaded: 0
+2025-12-30T18:31:31.749Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-30T18:31:31.753Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, legacy commands: 0)
+2025-12-30T18:31:31.753Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2025-12-30T18:31:31.769Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2025-12-30T18:31:31.769Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2025-12-30T18:31:31.769Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2025-12-30T18:31:31.769Z [DEBUG] Path /Users/patrick/workingdir/personal-agent already tracked for repo patleeman/familiar
+2025-12-30T18:31:31.779Z [DEBUG] Total plugin agents loaded: 0
+2025-12-30T18:31:31.784Z [DEBUG] Initialized versioned plugins system with 0 plugins
+2025-12-30T18:31:31.785Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2025-12-30T18:31:31.785Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:31:31.785Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2025-12-30T18:31:31.793Z [DEBUG] Total plugin output styles loaded: 0
+2025-12-30T18:31:31.799Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2025-12-30T18:31:31.799Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:31:31.799Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2025-12-30T18:31:31.799Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2025-12-30T18:31:31.799Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:31:31.799Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2025-12-30T18:31:31.806Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-30T18:31:31.807Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-30T18:31:31.807Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-30T18:31:31.807Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-30T18:31:31.808Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2025-12-30T18:31:31.808Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:31:31.808Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T18:31:31.809Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2025-12-30T18:31:31.814Z [DEBUG] Skills and commands included in Skill tool:
+2025-12-30T18:31:31.954Z [DEBUG] Shell snapshot created successfully (43335 bytes)
+2025-12-30T18:31:34.463Z [DEBUG] Remote settings: No settings found (404)
+2025-12-30T18:31:34.464Z [DEBUG] Programmatic settings change notification for policySettings
+2025-12-30T18:31:34.464Z [DEBUG] Plugin hooks: reloading due to policySettings change
+2025-12-30T18:31:34.465Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2025-12-30T18:31:34.467Z [DEBUG] Registered 0 hooks from 0 plugins
+2025-12-30T18:31:34.787Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.2639.1767119494787
+2025-12-30T18:31:34.787Z [DEBUG] Preserving file permissions: 100600
+2025-12-30T18:31:34.795Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (8.0ms)
+2025-12-30T18:31:34.795Z [DEBUG] Temp file written successfully, size: 53256 bytes
+2025-12-30T18:31:34.795Z [DEBUG] Applied original permissions to temp file
+2025-12-30T18:31:34.795Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.2639.1767119494787 to /Users/patrick/.claude.json
+2025-12-30T18:31:34.795Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2025-12-30T18:31:36.929Z [DEBUG] Stream started - received first chunk
+2025-12-30T18:31:38.329Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-30T18:31:38.329Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:31:38.329Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T18:31:44.838Z [ERROR] Error streaming, falling back to non-streaming mode: Request timed out.
+2025-12-30T18:31:46.764Z [ERROR] Error: Error: 1P event logging: 41 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:555:9)
+    at process.processTimers (node:internal/timers:529:7)
+2025-12-30T18:31:46.764Z [ERROR] Error: Error: {"stack":"Error: Failed to export 41 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at listOnTimeout (node:internal/timers:555:9)\n    at process.processTimers (node:internal/timers:529:7)","message":"Failed to export 41 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:555:9)
+    at process.processTimers (node:internal/timers:529:7)
+2025-12-30T18:31:50.499Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-30T18:31:58.334Z [ERROR] AxiosError: AxiosError: timeout of 5000ms exceeded
+    at VU.<anonymous> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:57:10436)
+    at VU.emit (node:events:519:28)
+    at VU.emit (node:domain:488:12)
+    at Timeout.<anonymous> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:56:5600)
+    at listOnTimeout (node:internal/timers:594:17)
+    at process.processTimers (node:internal/timers:529:7)
+    at fzA.request (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:59:2130)
+    at async zR0 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4868:4053)
+2025-12-30T18:32:01.773Z [ERROR] Error: Error: 1P event logging: 9 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+2025-12-30T18:32:01.774Z [ERROR] Error: Error: {"stack":"Error: Failed to export 9 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)","message":"Failed to export 9 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+2025-12-30T18:32:02.765Z [ERROR] Error: Error: Connection error.
+    at OT.makeRequest (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:857:4542)
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:4211
+    at async file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2262
+    at async gT3 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1006:16947)
+    at async bmB (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1007:2195)
+    at async RyA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:52)
+    at async _yA (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2161:261)
+    at async py2 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:2171:530)
+2025-12-30T18:32:10.995Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2025-12-30T18:32:10.995Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:32:10.995Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T18:32:17.794Z [DEBUG] executePreToolHooks called for tool: Bash
+2025-12-30T18:32:17.795Z [DEBUG] Getting matching hook commands for PreToolUse with query: Bash
+2025-12-30T18:32:17.795Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:32:17.795Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2025-12-30T18:32:17.798Z [DEBUG] tree-sitter: WASM files not found
+2025-12-30T18:32:17.803Z [DEBUG] No session environment scripts found
+2025-12-30T18:32:17.850Z [DEBUG] Getting matching hook commands for PostToolUse with query: Bash
+2025-12-30T18:32:17.850Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:32:17.850Z [DEBUG] Matched 0 unique hooks for query "Bash" (0 before deduplication)
+2025-12-30T18:32:17.866Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2025-12-30T18:32:17.866Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2025-12-30T18:32:17.866Z [DEBUG] Hooks: Found 0 total hooks in registry
+2025-12-30T18:32:17.866Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2025-12-30T18:32:27.875Z [ERROR] Error streaming, falling back to non-streaming mode: Request timed out.
+2025-12-30T18:32:31.002Z [ERROR] AxiosError: AxiosError: timeout of 5000ms exceeded
+    at VU.<anonymous> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:57:10436)
+    at VU.emit (node:events:519:28)
+    at VU.emit (node:domain:488:12)
+    at Timeout.<anonymous> (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:56:5600)
+    at listOnTimeout (node:internal/timers:594:17)
+    at process.processTimers (node:internal/timers:529:7)
+    at fzA.request (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:59:2130)
+    at async zR0 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:4868:4053)
+2025-12-30T18:32:33.084Z [ERROR] Error streaming, falling back to non-streaming mode: Connection error.
+2025-12-30T18:32:33.983Z [ERROR] Error: Error: 1P event logging: 21 events failed to export
+    at yp1.queueFailedEvents (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:39698)
+    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38794)
+2025-12-30T18:32:33.984Z [ERROR] Error: Error: {"stack":"Error: Failed to export 21 events\n    at yp1.doExport (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:38885)","message":"Failed to export 21 events","name":"Error"}
+    at rK0.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:1683:34862)
+    at sm1.error (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:33126)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64151
+    at ty8 (file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:239:64697)
+    at file:///opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/cli.js:240:20245
+2025-12-30T18:32:48.693Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2025-12-30T18:32:48.693Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:32:48.693Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2025-12-30T18:32:48.694Z [DEBUG] Getting matching hook commands for SessionEnd with query: other
+2025-12-30T18:32:48.694Z [DEBUG] Found 0 hook matchers in settings
+2025-12-30T18:32:48.694Z [DEBUG] Matched 0 unique hooks for query "other" (0 before deduplication)
+2025-12-30T18:32:48.697Z [DEBUG] Cleaned up session snapshot: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767119491646-tkg3jm.sh
+2025-12-30T18:32:48.697Z [DEBUG] LSP server manager shut down successfully
+2025-12-30T18:32:50.699Z [ERROR] OpenTelemetry telemetry flush timed out after 2000ms
+
+To resolve this issue, you can:
+1. Increase the timeout by setting CLAUDE_CODE_OTEL_SHUTDOWN_TIMEOUT_MS env var (e.g., 5000 for 5 seconds)
+2. Check if your OpenTelemetry backend is experiencing scalability issues
+3. Disable OpenTelemetry by unsetting CLAUDE_CODE_ENABLE_TELEMETRY env var
+
+Current timeout: 2000ms

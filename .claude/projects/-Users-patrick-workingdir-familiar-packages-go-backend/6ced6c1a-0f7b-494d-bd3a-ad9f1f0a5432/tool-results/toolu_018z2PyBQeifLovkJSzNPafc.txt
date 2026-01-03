@@ -1,0 +1,99 @@
+     1→package config
+     2→
+     3→import (
+     4→	"fmt"
+     5→	"regexp"
+     6→	"strings"
+     7→	"sync"
+     8→)
+     9→
+    10→var (
+    11→	vaultRegex = regexp.MustCompile(`\{\{vault:([a-zA-Z0-9_-]+)\}\}`)
+    12→	mockVault  = make(map[string]string)
+    13→	mockMu     sync.RWMutex
+    14→)
+    15→
+    16→const VaultAccountPrefix = "vault-secret-"
+    17→
+    18→// SetMockVaultSecret sets a secret in the mock vault (for testing/mock mode).
+    19→func SetMockVaultSecret(name, value string) {
+    20→	mockMu.Lock()
+    21→	defer mockMu.Unlock()
+    22→	mockVault[name] = value
+    23→}
+    24→
+    25→// ReplaceVaultSecrets finds {{vault:NAME}} placeholders and replaces them with values from the Keychain.
+    26→// Returns an error if a placeholder is found but the secret is not in the vault.
+    27→func ReplaceVaultSecrets(text string) (string, error) {
+    28→	var err error
+    29→	result := vaultRegex.ReplaceAllStringFunc(text, func(match string) string {
+    30→		name := vaultRegex.FindStringSubmatch(match)[1]
+    31→
+    32→		var val string
+    33→		if MockMode {
+    34→			mockMu.RLock()
+    35→			val = mockVault[name]
+    36→			mockMu.RUnlock()
+    37→		}
+    38→
+    39→		if val == "" {
+    40→			val = GetKeychainPassword(VaultAccountPrefix + name)
+    41→		}
+    42→
+    43→		if val == "" {
+    44→			err = fmt.Errorf("vault secret '%s' not found", name)
+    45→			return match
+    46→		}
+    47→		return val
+    48→	})
+    49→
+    50→	if err != nil {
+    51→		return text, err
+    52→	}
+    53→	return result, nil
+    54→}
+    55→
+    56→// MaskSecrets replaces actual secret values with ******** in text.
+    57→func MaskSecrets(text string, secrets []string) string {
+    58→	if len(secrets) == 0 {
+    59→		return text
+    60→	}
+    61→	
+    62→	res := text
+    63→	for _, s := range secrets {
+    64→		if s == "" {
+    65→			continue
+    66→		}
+    67→		res = strings.ReplaceAll(res, s, "********")
+    68→	}
+    69→	return res
+    70→}
+    71→
+    72→// GetVaultSecretValues retrieves all secret values currently in the vault.
+    73→// This is useful for masking output.
+    74→func GetVaultSecretValues(names []string) []string {
+    75→	var values []string
+    76→	for _, name := range names {
+    77→		var val string
+    78→		if MockMode {
+    79→			mockMu.RLock()
+    80→			val = mockVault[name]
+    81→			mockMu.RUnlock()
+    82→		}
+    83→
+    84→		if val == "" {
+    85→			val = GetKeychainPassword(VaultAccountPrefix + name)
+    86→		}
+    87→
+    88→		if val != "" {
+    89→			values = append(values, val)
+    90→		}
+    91→	}
+    92→	return values
+    93→}
+    94→
+    95→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

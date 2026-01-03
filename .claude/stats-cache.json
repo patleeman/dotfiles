@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "lastComputedDate": "2026-01-02",
+  "dailyActivity": [
+    {
+      "date": "2025-12-28",
+      "messageCount": 4,
+      "sessionCount": 2,
+      "toolCallCount": 0
+    },
+    {
+      "date": "2025-12-29",
+      "messageCount": 450,
+      "sessionCount": 224,
+      "toolCallCount": 0
+    },
+    {
+      "date": "2025-12-30",
+      "messageCount": 1442,
+      "sessionCount": 562,
+      "toolCallCount": 190
+    },
+    {
+      "date": "2025-12-31",
+      "messageCount": 1061,
+      "sessionCount": 338,
+      "toolCallCount": 227
+    },
+    {
+      "date": "2026-01-01",
+      "messageCount": 934,
+      "sessionCount": 467,
+      "toolCallCount": 0
+    },
+    {
+      "date": "2026-01-02",
+      "messageCount": 372,
+      "sessionCount": 186,
+      "toolCallCount": 0
+    }
+  ],
+  "dailyModelTokens": [
+    {
+      "date": "2025-12-30",
+      "tokensByModel": {
+        "claude-sonnet-4-5-20250929": 16462
+      }
+    },
+    {
+      "date": "2025-12-31",
+      "tokensByModel": {
+        "claude-sonnet-4-5-20250929": 15692
+      }
+    }
+  ],
+  "modelUsage": {
+    "claude-sonnet-4-5-20250929": {
+      "inputTokens": 3060,
+      "outputTokens": 29094,
+      "cacheReadInputTokens": 14127038,
+      "cacheCreationInputTokens": 984949,
+      "webSearchRequests": 0,
+      "costUSD": 0,
+      "contextWindow": 0
+    }
+  },
+  "totalSessions": 1779,
+  "totalMessages": 4263,
+  "longestSession": {
+    "sessionId": "2972c202-1362-4a3d-a1e1-93f7578f7d90",
+    "duration": 3291329,
+    "messageCount": 2,
+    "timestamp": "2025-12-29T20:51:07.926Z"
+  },
+  "firstSessionDate": "2025-12-28T21:42:24.031Z",
+  "hourCounts": {
+    "0": 51,
+    "1": 35,
+    "2": 34,
+    "3": 35,
+    "4": 34,
+    "5": 120,
+    "6": 112,
+    "7": 74,
+    "8": 68,
+    "9": 61,
+    "10": 55,
+    "11": 66,
+    "12": 24,
+    "13": 90,
+    "14": 83,
+    "15": 67,
+    "16": 67,
+    "17": 93,
+    "18": 91,
+    "19": 127,
+    "20": 149,
+    "21": 123,
+    "22": 55,
+    "23": 65
+  }
+}

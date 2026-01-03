@@ -1,0 +1,209 @@
+Exit code 2
+cd packages/go-backend && go test -v ./...
+?   	github.com/patrick/familiar/packages/go-backend/cmd/server	[no test files]
+2026/01/03 06:31:00 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+=== RUN   TestAgentWithAttachments
+--- PASS: TestAgentWithAttachments (0.00s)
+=== RUN   TestCountTokens
+--- PASS: TestCountTokens (0.00s)
+=== RUN   TestNeedsCompaction
+--- PASS: TestNeedsCompaction (0.00s)
+=== RUN   TestCompactMessages
+2026/01/03 06:31:00 INFO Compacting messages tokens=84 max=10 target=5 forced=false
+2026/01/03 06:31:00 INFO Compaction complete final_tokens=70 target=5
+--- PASS: TestCompactMessages (0.00s)
+=== RUN   TestAgentLifecycleIntegration
+2026/01/03 06:31:00 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestAgentLifecycleIntegration (0.50s)
+=== RUN   TestLoaderDebug
+Loaded 0 triggers
+--- PASS: TestLoaderDebug (0.00s)
+=== RUN   TestScopeDocumentParsing
+--- PASS: TestScopeDocumentParsing (0.00s)
+=== RUN   TestScopeDocumentParsingWithFences
+=== RUN   TestScopeDocumentParsingWithFences/wrapped_in_backticks
+=== RUN   TestScopeDocumentParsingWithFences/with_filler_and_backticks
+--- PASS: TestScopeDocumentParsingWithFences (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/wrapped_in_backticks (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/with_filler_and_backticks (0.00s)
+=== RUN   TestPermissionCheck
+--- PASS: TestPermissionCheck (0.00s)
+=== RUN   TestValidateScopeDocument
+=== RUN   TestValidateScopeDocument/Valid_document
+=== RUN   TestValidateScopeDocument/Missing_section
+=== RUN   TestValidateScopeDocument/Missing_frontmatter
+--- PASS: TestValidateScopeDocument (0.00s)
+    --- PASS: TestValidateScopeDocument/Valid_document (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_section (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_frontmatter (0.00s)
+=== RUN   TestStateMachine
+--- PASS: TestStateMachine (0.00s)
+=== RUN   TestStreamingEvents
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:31:01 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestStreamingEvents (0.00s)
+=== RUN   TestExtractVaultSaveKeys
+=== RUN   TestExtractVaultSaveKeys/keys_array_in_args
+=== RUN   TestExtractVaultSaveKeys/object_entries_inside_args_array
+=== RUN   TestExtractVaultSaveKeys/single_key_field
+=== RUN   TestExtractVaultSaveKeys/comma_separated_string
+=== RUN   TestExtractVaultSaveKeys/raw_secret_keys_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_array_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_single_string_fallback
+=== RUN   TestExtractVaultSaveKeys/deduplicate_and_trim
+=== RUN   TestExtractVaultSaveKeys/secret_names_alias
+=== RUN   TestExtractVaultSaveKeys/no_keys_available
+--- PASS: TestExtractVaultSaveKeys (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/keys_array_in_args (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/object_entries_inside_args_array (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/single_key_field (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/comma_separated_string (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_secret_keys_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_array_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_single_string_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/deduplicate_and_trim (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/secret_names_alias (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/no_keys_available (0.00s)
+=== RUN   TestNewTriggerManager
+--- PASS: TestNewTriggerManager (0.00s)
+=== RUN   TestTriggerManager_Register
+--- PASS: TestTriggerManager_Register (0.00s)
+=== RUN   TestTriggerManager_Unregister
+--- PASS: TestTriggerManager_Unregister (0.00s)
+=== RUN   TestTriggerManager_UnregisterNonExistent
+--- PASS: TestTriggerManager_UnregisterNonExistent (0.00s)
+=== RUN   TestTriggerManager_Start
+--- PASS: TestTriggerManager_Start (0.05s)
+=== RUN   TestTriggerManager_Emit
+--- PASS: TestTriggerManager_Emit (0.05s)
+=== RUN   TestTriggerManager_Emit_NoOutput
+--- PASS: TestTriggerManager_Emit_NoOutput (0.05s)
+=== RUN   TestTriggerManager_Emit_StoreError
+--- PASS: TestTriggerManager_Emit_StoreError (0.05s)
+=== RUN   TestTriggerManager_ListAvailableTriggers
+--- PASS: TestTriggerManager_ListAvailableTriggers (0.00s)
+=== RUN   TestTriggerManager_Clear
+--- PASS: TestTriggerManager_Clear (0.00s)
+=== RUN   TestTriggerManager_Emit_MultipleSubscriptions
+--- PASS: TestTriggerManager_Emit_MultipleSubscriptions (0.05s)
+=== RUN   TestTriggerManager_Emit_EmptyOutput
+--- PASS: TestTriggerManager_Emit_EmptyOutput (0.05s)
+PASS
+ok  	github.c
+
+... [38083 characters truncated] ...
+
+v>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"fixed inset-0 z-50 flex items-start justify-center"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"w-full bg-[#0a0b0f] border-b border-[#6366f1]/30 shadow-2xl flex flex-col relative"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center px-4 h-9 border-b border-[#1e293b]"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search text-[#64748b] mr-2"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"12"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"12"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.34-4.34"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"flex-1 bg-transparent border-none outline-none text-[12px] text-[#e2e8f0] placeholder:text-[#475569]"[39m
+              [33mplaceholder[39m=[32m"Search agents or commands..."[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m"settings"[39m
+            [36m/>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-4 ml-4"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-[10px] text-[#475569]"[39m
+              [36m>[39m
+                [0m↑↓ Navigate[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-[10px] text-[#475569]"[39m
+              [36m>[39m
+                [0m↵ Select[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-[10px] text-[#475569]"[39m
+              [36m>[39m
+                [0mEsc Close[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"max-h-[280px] overflow-y-auto"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center px-4 py-2 cursor-pointer transition-colors bg-[#6366f1]/20"[39m
+              [33mstyle[39m=[32m"padding-left: 16px;"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex-1 min-w-0 flex items-center gap-3"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-[12px] text-[#a5b4fc]"[39m
+                [36m>[39m
+                  [0mSettings[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+[90m [2m❯[22m Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:[2m163:27[22m[39m
+[36m [2m❯[22m src/components/Unibar.test.tsx:[2m121:11[22m[39m
+    [90m119| [39m    fireEvent[33m.[39m[34mchange[39m(input[33m,[39m { target[33m:[39m { value[33m:[39m [32m'settings'[39m } })[33m;[39m
+    [90m120| [39m    
+    [90m121| [39m    [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m   | [39m          [31m^[39m
+    [90m122| [39m      [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([32m'System Settings'[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+    [90m123| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (8)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m121 passed[39m[22m[2m | [22m[33m10 skipped[39m[90m (132)[39m
+[2m   Start at [22m 06:45:15
+[2m   Duration [22m 2.16s[2m (transform 647ms, setup 556ms, import 954ms, tests 2.84s, environment 1.55s)[22m
+
+make: *** [test-ui] Error 1

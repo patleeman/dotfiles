@@ -1,0 +1,3 @@
+113:            const confirmed = await ask("No LLM provider is enabled. You must enable at least one provider in Settings to create agents. Would you like to go to Settings now?", {
+198:    { id: 'settings', label: 'Settings', path: '/settings' },
+286:    { id: 'settings', label: 'Settings', path: '/settings' },

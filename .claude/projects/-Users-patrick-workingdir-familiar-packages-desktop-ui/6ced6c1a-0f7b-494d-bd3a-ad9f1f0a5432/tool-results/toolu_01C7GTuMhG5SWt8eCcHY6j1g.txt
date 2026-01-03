@@ -1,0 +1,19 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/TriggersView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   145→                        ) : (
+   146→                            [...(triggersData || [])]
+   147→                                .sort((a, b) => a.localeCompare(b))
+   148→                                .map((triggerId: string) => (
+   149→                                    <div
+   150→                                        key={triggerId}
+   151→                                        data-testid="trigger-item"
+   152→                                        onClick={() => handleTriggerClick(triggerId)}
+   153→                                        onContextMenu={(e) => handleContextMenu(e, triggerId)}
+   154→                                        className={clsx(
+   155→                                            "grid grid-cols-[200px_1fr] gap-2 px-4 py-1 border-b border-border/5 hover:bg-surface/30 transition-all items-start group cursor-pointer",
+   156→                                            isCreating === triggerId && "opacity-50 pointer-events-none"
+   157→                                        )}
+   158→                                    >
+   159→                                        <div className="flex items-center gap-2 text-text-primary font-black uppercase tracking-tighter text-[10px]">
+   160→                                            {isCreating === triggerId && (
+   161→                                                <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+   162→                                            )}

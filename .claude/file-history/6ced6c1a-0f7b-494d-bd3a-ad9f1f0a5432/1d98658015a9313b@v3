@@ -1,0 +1,1081 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"log/slog"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/patrick/familiar/packages/go-backend/internal/agent"
+	"github.com/patrick/familiar/packages/go-backend/internal/config"
+	"github.com/patrick/familiar/packages/go-backend/internal/utils"
+	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+)
+
+func (s *Server) cleanupAgentRecursive(id string) {
+	// Stop/Cancel the agent if it's in memory
+	s.mu.Lock()
+	sa, ok := s.statefulAgents[id]
+	if ok {
+		delete(s.statefulAgents, id)
+	}
+	s.mu.Unlock()
+
+	if ok {
+		sa.Cancel()
+	}
+
+	// Remove tasks from scheduler
+	if s.scheduler != nil {
+		s.scheduler.RemoveTasksForAgent(id)
+	}
+}
+
+func (s *Server) pauseAgentRecursive(agentID string) {
+	// Pause the agent itself
+	sa, err := s.getOrCreateStatefulAgent(agentID)
+	if err != nil {
+		slog.Error("Failed to get or create agent for pause", "agent_id", agentID, "error", err)
+		return
+	}
+
+	sa.Pause()
+
+	// Broadcast state change immediately so UI updates even if agent is stuck
+	updatedAgent, _ := s.db.GetAgent(agentID)
+	if updatedAgent != nil {
+		s.globalBroadcast(map[string]interface{}{
+			"type":      "agent_state_changed",
+			"agent":     updatedAgent,
+			"agent_id":  agentID,
+			"new_state": types.AgentStatePaused,
+		})
+	}
+
+	// Get all child agents and pause them recursively
+	children, err := s.db.ListAgents(&agentID, nil)
+	if err != nil {
+		slog.Error("Failed to list child agents for pause", "agent_id", agentID, "error", err)
+		return
+	}
+
+	for _, child := range children {
+		s.pauseAgentRecursive(child.ID)
+	}
+}
+
+func (s *Server) resumeAgentRecursive(agentID string) {
+	// Resume the agent itself
+	if err := s.resumeAgent(agentID, ""); err != nil {
+		slog.Error("Failed to resume agent", "agent_id", agentID, "error", err)
+		return
+	}
+
+	// Get all child agents and resume them recursively
+	children, err := s.db.ListAgents(&agentID, nil)
+	if err != nil {
+		slog.Error("Failed to list child agents for resume", "agent_id", agentID, "error", err)
+		return
+	}
+
+	for _, child := range children {
+		s.resumeAgentRecursive(child.ID)
+	}
+}
+
+func (s *Server) resumeAgent(agentID string, prompt string) error {
+	sa, err := s.getOrCreateStatefulAgent(agentID)
+	if err != nil {
+		slog.Error("Failed to get or create agent for resume", "agent_id", agentID, "error", err)
+		errDetail := &types.ErrorDetail{
+			Category:    types.ErrorInitialization,
+			Message:     err.Error(),
+			Recoverable: true,
+		}
+		s.db.UpdateAgentState(agentID, types.AgentStateError, errDetail)
+		s.globalBroadcast(map[string]interface{}{
+			"type":         "agent_state_changed",
+			"agent_id":     agentID,
+			"new_state":    types.AgentStateError,
+			"error_detail": errDetail,
+		})
+		return err
+	}
+
+	if prompt != "" {
+		sa.EnqueueMessage(types.Message{
+			ID:        uuid.New().String(),
+			Role:      "user",
+			Content:   prompt,
+			Timestamp: time.Now().UnixNano() / int64(time.Millisecond),
+		})
+	}
+
+	if sa.IsRunning() {
+		sa.Resume()
+		return nil
+	}
+
+	// Start the loop
+	go func() {
+		a, err := s.db.GetAgent(agentID)
+		if err != nil {
+			slog.Error("Failed to get agent for run", "agent_id", agentID, "error", err)
+			return
+		}
+		// Fetch logs for context
+		history, _ := s.db.ListAgentLogs(agentID)
+
+		// Fetch parent scope if applicable
+		var parentScope *types.ScopeDocument
+		if a.ParentID != nil {
+			parentScope, _ = s.db.GetCurrentScope(*a.ParentID)
+		}
+
+		// Update state in DB first
+		s.db.UpdateAgentState(agentID, types.AgentStateRunning, nil)
+		s.globalBroadcast(map[string]interface{}{
+			"type":         "agent_state_changed",
+			"agent_id":     agentID,
+			"new_state":    types.AgentStateRunning,
+			"error_detail": nil,
+		})
+
+		if err := sa.Run(context.Background(), a.InitialPrompt, history, parentScope); err != nil {
+			slog.Error("Agent run failed", "agent_id", agentID, "error", err)
+			errDetail := &types.ErrorDetail{
+				Category:    types.ErrorToolFailure,
+				Message:     err.Error(),
+				Recoverable: true,
+			}
+			s.db.UpdateAgentState(agentID, types.AgentStateError, errDetail)
+			s.globalBroadcast(map[string]interface{}{
+				"type":         "agent_state_changed",
+				"agent_id":     agentID,
+				"new_state":    types.AgentStateError,
+				"error_detail": errDetail,
+			})
+
+			// If it's a sub-agent, notify the parent agent of the error
+			if a.ParentID != nil {
+				// Wait for parent to finish its current turn if it's running
+				// to avoid jarring UI interleaving where error appears before spawn confirmation
+				s.mu.RLock()
+				parentSA, hasParent := s.statefulAgents[*a.ParentID]
+				s.mu.RUnlock()
+				if hasParent {
+					for i := 0; i < 20; i++ { // Max 4 seconds wait
+						if !parentSA.IsRunning() || parentSA.GetState() != types.AgentStateRunning {
+							break
+						}
+						time.Sleep(200 * time.Millisecond)
+					}
+				}
+
+				payload := map[string]interface{}{
+					"sub_agent_id": agentID,
+					"message":      fmt.Sprintf("The sub-agent encountered an error: %v", err),
+				}
+
+				logID, _ := s.db.AppendAgentLog(*a.ParentID, "sub_agent_error", payload)
+				payload["id"] = logID
+
+				s.globalBroadcast(map[string]interface{}{
+					"type":       "execution_log",
+					"agent_id":   *a.ParentID,
+					"event_type": "sub_agent_error",
+					"payload":    payload,
+				})
+
+				// Notify parent of the error
+				if parent, err := s.getOrCreateStatefulAgent(*a.ParentID); err == nil {
+					parent.EnqueueAgentMessage(agentID, fmt.Sprintf("Sub-agent '%s' encountered an error: %v", a.Name, err))
+				}
+
+				// Auto-resume parent so it can handle the error
+				s.resumeAgent(*a.ParentID, "")
+			}
+		} else {
+			finalState := sa.GetState()
+			if finalState == types.AgentStateIdle {
+				// Check if there are pending tasks or sub-agents
+				tasks, _ := s.db.ListTasks()
+				hasWork := false
+				for _, t := range tasks {
+					if t.ParentAgentID == agentID && (t.Status == "pending" || t.Status == "running") {
+						hasWork = true
+						break
+					}
+				}
+				if !hasWork {
+					subAgents, _ := s.db.ListAgents(&agentID, nil)
+					for _, sub := range subAgents {
+						if sub.State != types.AgentStateIdle && sub.State != types.AgentStateError {
+							hasWork = true
+							break
+						}
+					}
+				}
+				if hasWork {
+					finalState = types.AgentStateWaiting
+					sa.SetState(finalState)
+				}
+			}
+
+			s.db.UpdateAgentState(agentID, finalState, nil)
+			s.globalBroadcast(map[string]interface{}{
+				"type":      "agent_state_changed",
+				"agent_id":  agentID,
+				"new_state": finalState,
+			})
+			if finalState == types.AgentStateIdle && a.ParentID != nil {
+				// Wait for parent to finish its current turn if it's running
+				s.mu.RLock()
+				parentSA, hasParent := s.statefulAgents[*a.ParentID]
+				s.mu.RUnlock()
+				if hasParent {
+					for i := 0; i < 20; i++ { // Max 4 seconds wait
+						if !parentSA.IsRunning() || parentSA.GetState() != types.AgentStateRunning {
+							break
+						}
+						time.Sleep(200 * time.Millisecond)
+					}
+				}
+
+				// Always notify the parent when a sub-agent completes.
+				// This ensures the parent's orchestration loop wakes up and notices the change.
+				msgContent := fmt.Sprintf("Sub-agent '%s' has completed its assigned task.", a.Name)
+
+				payload := map[string]interface{}{
+					"sender_id": agentID,
+					"content":   msgContent,
+				}
+				logID, _ := s.db.AppendAgentLog(*a.ParentID, "agent_message", payload)
+				payload["id"] = logID
+
+				s.globalBroadcast(map[string]interface{}{
+					"type":       "execution_log",
+					"agent_id":   *a.ParentID,
+					"event_type": "agent_message",
+					"payload":    payload,
+				})
+
+				// Route message to parent agent's queue
+				if parent, err := s.getOrCreateStatefulAgent(*a.ParentID); err == nil {
+					parent.EnqueueAgentMessage(agentID, msgContent)
+				}
+
+				s.globalBroadcast(map[string]interface{}{
+					"type":      "sub_agent_completed",
+					"parent_id": *a.ParentID,
+					"child_id":  agentID,
+					"result": types.SubAgentResult{
+						SubAgentID: agentID,
+						Findings:   msgContent,
+					},
+				})
+
+				// Auto-resume parent so it can process the completion
+				s.resumeAgent(*a.ParentID, "")
+			}
+		}
+	}()
+	return nil
+}
+
+func (s *Server) getOrCreateStatefulAgent(agentID string) (*agent.StatefulAgent, error) {
+	s.mu.RLock()
+	sa, ok := s.statefulAgents[agentID]
+	s.mu.RUnlock()
+
+	a, err := s.db.GetAgent(agentID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("agent not found: agent with ID %s does not exist in the database", agentID)
+		}
+		return nil, err
+	}
+
+	scope, _ := s.db.GetCurrentScope(agentID)
+	cfg, _ := config.LoadConfig()
+
+	// Always validate provider is enabled and reachable
+	provider, err := s.createProvider(a.ModelConfig.Provider)
+	if err != nil {
+		if ok {
+			// Stop and remove from cache if it was there but is now invalid
+			s.mu.Lock()
+			delete(s.statefulAgents, agentID)
+			s.mu.Unlock()
+			sa.Cancel()
+		}
+		return nil, err
+	}
+
+	if ok {
+		// Update cached agent with latest provider and config in case they changed
+		sa.UpdateModelConfig(a.ModelConfig, provider)
+
+		// Refresh skills
+		loader := utils.NewSkillLoader(getProgramDataPath())
+		if skills, err := loader.LoadSkills(); err == nil {
+			sa.Skills = skills
+		}
+
+		// Update max_context_tokens in database when model changes
+		maxContextTokens := sa.MaxContextTokens
+		s.db.UpdateAgentContextUsage(agentID, a.ContextTokens, maxContextTokens)
+		sa.AlwaysAllowAll = config.GetAlwaysAllowAll()
+
+		// Always refresh system prompt for internal agents to ensure they use the latest logic
+		if a.IsInternal {
+			systemPrompt, _ := s.db.GetActiveSystemPrompt()
+			if strings.Contains(strings.ToLower(a.Name), "skill architect") {
+				systemPrompt = `You are the Skill Architect. Help the user create, implement, and test new "Familiar Skills".
+
+Be terse. No narrative filler.
+
+CRITICAL - TOOL USAGE:
+- You MUST call tools to perform actions. DO NOT just describe what you will do - actually call the tool.
+- When asked to save a secret, IMMEDIATELY call 'vault_save' with the key name(s).
+- When asked to create a skill, IMMEDIATELY call 'workspace_write' with the file contents.
+- NEVER say "I'll do X" and then stop. Always follow through by calling the appropriate tool.
+
+WORKSPACE:
+Your workspace root is the "skills" directory. All files you create MUST be inside a sub-directory named after the skill (e.g. 'my-skill/skill.md').
+
+SKILL STRUCTURE:
+To create a new skill, you must create a directory within your workspace root named with the skill's slug. A skill consists of:
+1. <skill-slug>/skill.md: YAML frontmatter with 'name' and 'description'.
+2. <skill-slug>/...: Optional helper scripts (Python, Bash, etc.) or other assets.
+
+SECRETS:
+- **CRITICAL**: Never ask the user to provide secrets (API keys, tokens, etc.) directly in chat.
+- You MUST warn the user: "Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them."
+- If a skill needs one or more secrets, you MUST call the 'vault_save' tool with descriptive key names.
+- The 'vault_save' tool will trigger a secure, private input dialog for the user for each key.
+- Once saved, use the placeholder '{{vault:KEY_NAME}}' in your scripts or skill commands. The system will automatically substitute the actual value at execution time and mask it in logs.
+- You can check if a secret already exists using 'vault_list'. If it exists, don't ask to save it again unless the user wants to update it.
+
+WORKFLOW:
+- Use 'vault_list' to check if necessary secrets are already configured.
+- Call 'vault_save' to request missing secrets from the user securely.
+- Call 'workspace_write' to create the skill's directory and files by providing a path like 'skill-name/skill.md'.
+- Suggest content for 'skill.md' and any accompanying scripts.
+- Use 'workspace_list' and 'workspace_read' for examples of existing skills.`
+			} else if strings.Contains(strings.ToLower(a.Name), "trigger architect") {
+				systemPrompt = `You are the Trigger Architect. Help the user create, implement, and test new "Familiar Triggers" and manage their subscriptions.
+
+Be terse. No narrative filler.
+
+CRITICAL - TOOL USAGE:
+- You MUST call tools to perform actions. DO NOT just describe what you will do - actually call the tool.
+- When asked to save a secret, IMMEDIATELY call 'vault_save' with the key name(s).
+- When asked to create a trigger, IMMEDIATELY call 'workspace_write' with the file contents.
+- NEVER say "I'll do X" and then stop. Always follow through by calling the appropriate tool.
+
+WORKSPACE:
+Your workspace root is the "triggers" directory. All files you create MUST be inside a sub-directory named after the trigger's slug (e.g. 'my-trigger/trigger.yaml'). Use 'workspace_write' to create files within these sub-directories.
+
+TRIGGER STRUCTURE (Script Triggers):
+To create a new script-based trigger, you must create a directory within your workspace root named with the trigger's slug. A trigger consists of:
+1. <trigger-slug>/trigger.yaml: YAML configuration with:
+   - name: Unique identifier for the trigger.
+   - description: Human-readable description.
+   - script: Path to the executable script (e.g., 'monitor.sh').
+   - mode: "daemon" (runs continuously, emits lines from stdout) or "poll" (runs periodically).
+   - interval: (For poll mode) e.g., "10s", "1m".
+   - enabled: true
+   - env: (Optional) Map of environment variables for the script.
+2. <trigger-slug>/<script-file>: The actual script that monitors for events. 
+
+BACKGROUND EXECUTION:
+- **CRITICAL**: Do NOT ask the user to manually install system-level daemons (like LaunchDaemons on macOS or systemd on Linux). 
+- Instead, use 'mode: daemon' in 'trigger.yaml'. The Familiar system will automatically manage the lifecycle of your script.
+- Your script should run in a loop (if daemon) or perform a check (if poll) and print any events to STDOUT. Each line printed to STDOUT will be treated as a trigger event.
+
+SECRETS:
+- **CRITICAL**: Never ask the user to provide secrets (API keys, tokens, etc.) directly in chat.
+- You MUST warn the user: "Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them."
+- If a trigger needs secrets (e.g. for API polling), you MUST call the 'vault_save' tool with descriptive key names.
+- The 'vault_save' tool will trigger a secure, private input dialog for the user for each key.
+- Once saved, use the placeholder '{{vault:KEY_NAME}}' in the 'env' map within 'trigger.yaml'. The system will automatically substitute the actual value at execution time and mask it in logs.
+- You can check if a secret already exists using 'vault_list'.
+
+SUBSCRIPTIONS:
+Users can subscribe agents to triggers. When a trigger fires, the subscribed agent is woken up with a message based on a prompt template.
+- Use 'trigger_subscribe' to create or update a subscription.
+- The 'prompt_template' can use '{{output}}' which will be replaced by the trigger's output (the line from STDOUT).
+
+WORKFLOW:
+1. **Explore**: Use 'list_triggers' to see available triggers.
+2. **Secrets**: If needed, use 'vault_list' and 'vault_save' to manage credentials.
+3. **Create**: To create a new script trigger:
+   - **MUST**: Create a sub-directory first by writing a file into it.
+   - Use 'workspace_write' to create the configuration: 'my-trigger/trigger.yaml' (including 'env' for secrets).
+   - Use 'workspace_write' to create the script: 'my-trigger/monitor.sh'.
+4. **Subscribe**: Use 'trigger_subscribe' to connect an agent to a trigger.
+
+CRITICAL:
+- NEVER create files directly in the base "triggers" directory. ALWAYS use a sub-directory.
+- ALWAYS use tools to perform actions. Never just describe what you will do.`
+			} else if a.Name == "Feedback Collector" {
+				systemPrompt = `You are the Feedback Collector for Familiar. Your goal is to help users report bugs, suggest features, or provide general feedback.
+
+BE TERSE. NO NARRATIVE FILLER.
+
+ALLOWED TOOLS:
+- 'screenshot_take': Take a screenshot of the user's current screen. (REQUIRES confirmation)
+- 'submit_feedback': Send the collected feedback and optional screenshot to the development team.
+
+WORKFLOW:
+1. Ask the user for details about their feedback.
+2. If appropriate (e.g. reporting a UI bug), offer to take a screenshot using 'screenshot_take'.
+3. Once you have the feedback (and optional screenshot), use 'submit_feedback' to send it to the development team.
+4. Confirm success and thank the user.
+
+CRITICAL:
+- 'screenshot_take' REQUIRES explicit user approval. You MUST inform the user you are about to take a screenshot and wait for their confirmation if they haven't already given it in chat.
+- After taking a screenshot, immediately use the returned path in 'submit_feedback'.`
+			}
+			sa.SystemPrompt = systemPrompt
+		}
+	} else {
+		runtime := agent.NewRuntimeAgent(provider, a.ModelConfig.Model)
+		systemPrompt, _ := s.db.GetActiveSystemPrompt()
+
+		// Use agent-specific system prompt if set
+		if a.SystemPrompt != "" {
+			systemPrompt = a.SystemPrompt
+		}
+
+		// Load skills for the agent
+		loader := utils.NewSkillLoader(getProgramDataPath())
+		if skills, err := loader.LoadSkills(); err == nil {
+			runtime.Skills = skills
+		}
+
+		if a.IsInternal && strings.Contains(strings.ToLower(a.Name), "skill architect") {
+			systemPrompt = `You are the Skill Architect. Help the user create, implement, and test new "Familiar Skills".
+
+Be terse. No narrative filler.
+
+CRITICAL - TOOL USAGE:
+- You MUST call tools to perform actions. DO NOT just describe what you will do - actually call the tool.
+- When asked to save a secret, IMMEDIATELY call 'vault_save' with the key name(s).
+- When asked to create a skill, IMMEDIATELY call 'workspace_write' with the file contents.
+- NEVER say "I'll do X" and then stop. Always follow through by calling the appropriate tool.
+
+WORKSPACE:
+Your workspace root is the "skills" directory. All files you create MUST be inside a sub-directory named after the skill (e.g. 'my-skill/skill.md').
+
+SKILL STRUCTURE:
+To create a new skill, you must create a directory within your workspace root named with the skill's slug. A skill consists of:
+1. <skill-slug>/skill.md: YAML frontmatter with 'name' and 'description'.
+2. <skill-slug>/...: Optional helper scripts (Python, Bash, etc.) or other assets.
+
+SECRETS:
+- **CRITICAL**: Never ask the user to provide secrets (API keys, tokens, etc.) directly in chat.
+- You MUST warn the user: "Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them."
+- If a skill needs one or more secrets, you MUST call the 'vault_save' tool with descriptive key names.
+- The 'vault_save' tool will trigger a secure, private input dialog for the user for each key.
+- Once saved, use the placeholder '{{vault:KEY_NAME}}' in your scripts or skill commands. The system will automatically substitute the actual value at execution time and mask it in logs.
+- You can check if a secret already exists using 'vault_list'. If it exists, don't ask to save it again unless the user wants to update it.
+
+WORKFLOW:
+- Use 'vault_list' to check if necessary secrets are already configured.
+- Call 'vault_save' to request missing secrets from the user securely.
+- Call 'workspace_write' to create the skill's directory and files by providing a path like 'skill-name/skill.md'.
+- Suggest content for 'skill.md' and any accompanying scripts.
+- Use 'workspace_list' and 'workspace_read' for examples of existing skills.`
+		} else if a.IsInternal && strings.Contains(strings.ToLower(a.Name), "trigger architect") {
+			systemPrompt = `You are the Trigger Architect. Help the user create, implement, and test new "Familiar Triggers" and manage their subscriptions.
+
+Be terse. No narrative filler.
+
+CRITICAL - TOOL USAGE:
+- You MUST call tools to perform actions. DO NOT just describe what you will do - actually call the tool.
+- When asked to save a secret, IMMEDIATELY call 'vault_save' with the key name(s).
+- When asked to create a trigger, IMMEDIATELY call 'workspace_write' with the file contents.
+- NEVER say "I'll do X" and then stop. Always follow through by calling the appropriate tool.
+
+WORKSPACE:
+Your workspace root is the "triggers" directory. All files you create MUST be inside a sub-directory named after the trigger's slug (e.g. 'my-trigger/trigger.yaml'). Use 'workspace_write' to create files within these sub-directories.
+
+TRIGGER STRUCTURE (Script Triggers):
+To create a new script-based trigger, you must create a directory within your workspace root named with the trigger's slug. A trigger consists of:
+1. <trigger-slug>/trigger.yaml: YAML configuration with:
+   - name: Unique identifier for the trigger.
+   - description: Human-readable description.
+   - script: Path to the executable script (e.g., 'monitor.sh').
+   - mode: "daemon" (runs continuously, emits lines from stdout) or "poll" (runs periodically).
+   - interval: (For poll mode) e.g., "10s", "1m".
+   - enabled: true
+   - env: (Optional) Map of environment variables for the script.
+2. <trigger-slug>/<script-file>: The actual script that monitors for events. 
+
+BACKGROUND EXECUTION:
+- **CRITICAL**: Do NOT ask the user to manually install system-level daemons (like LaunchDaemons on macOS or systemd on Linux). 
+- Instead, use 'mode: daemon' in 'trigger.yaml'. The Familiar system will automatically manage the lifecycle of your script.
+- Your script should run in a loop (if daemon) or perform a check (if poll) and print any events to STDOUT. Each line printed to STDOUT will be treated as a trigger event.
+
+SECRETS:
+- **CRITICAL**: Never ask the user to provide secrets (API keys, tokens, etc.) directly in chat.
+- You MUST warn the user: "Please do NOT paste secrets or API keys into this chat. I will provide a secure input field for them."
+- If a trigger needs secrets (e.g. for API polling), you MUST call the 'vault_save' tool with descriptive key names.
+- The 'vault_save' tool will trigger a secure, private input dialog for the user for each key.
+- Once saved, use the placeholder '{{vault:KEY_NAME}}' in the 'env' map within 'trigger.yaml'. The system will automatically substitute the actual value at execution time and mask it in logs.
+- You can check if a secret already exists using 'vault_list'.
+
+SUBSCRIPTIONS:
+Users can subscribe agents to triggers. When a trigger fires, the subscribed agent is woken up with a message based on a prompt template.
+- Use 'trigger_subscribe' to create or update a subscription.
+- The 'prompt_template' can use '{{output}}' which will be replaced by the trigger's output (the line from STDOUT).
+
+WORKFLOW:
+1. **Explore**: Use 'list_triggers' to see available triggers.
+2. **Secrets**: If needed, use 'vault_list' and 'vault_save' to manage credentials.
+3. **Create**: To create a new script trigger:
+   - **MUST**: Create a sub-directory first by writing a file into it.
+   - Use 'workspace_write' to create the configuration: 'my-trigger/trigger.yaml' (including 'env' for secrets).
+   - Use 'workspace_write' to create the script: 'my-trigger/monitor.sh'.
+4. **Subscribe**: Use 'trigger_subscribe' to connect an agent to a trigger.
+
+CRITICAL:
+- NEVER create files directly in the base "triggers" directory. ALWAYS use a sub-directory.
+- ALWAYS use tools to perform actions. Never just describe what you will do.`
+		} else if a.IsInternal && a.Name == "Feedback Collector" {
+			systemPrompt = `You are the Feedback Collector for Familiar. Your goal is to help users report bugs, suggest features, or provide general feedback.
+
+BE TERSE. NO NARRATIVE FILLER.
+
+ALLOWED TOOLS:
+- 'screenshot_take': Take a screenshot of the user's current screen. (REQUIRES confirmation)
+- 'submit_feedback': Send the collected feedback and optional screenshot to the development team.
+
+WORKFLOW:
+1. Ask the user for details about their feedback.
+2. If appropriate (e.g. reporting a UI bug), offer to take a screenshot using 'screenshot_take'.
+3. Once you have the feedback (and optional screenshot), use 'submit_feedback' to send it to the development team.
+4. Confirm success and thank the user.
+
+CRITICAL:
+- 'screenshot_take' REQUIRES explicit user approval. You MUST inform the user you are about to take a screenshot and wait for their confirmation if they haven't already given it in chat.
+- After taking a screenshot, immediately use the returned path in 'submit_feedback'.`
+		}
+		runtime.SystemPrompt = systemPrompt
+		s.registerTools(runtime, provider, cfg, a)
+
+		workspacePath := s.getAgentWorkspacePath(agentID)
+		sa = agent.NewStatefulAgent(runtime, *a, scope, workspacePath, s.db)
+
+		// If agent state is Running but it's a new instance (not actually running), reset to Idle
+		// This handles stale states from crashes/restarts
+		if a.State == types.AgentStateRunning && !sa.IsRunning() {
+			slog.Info("Detected stale running state, resetting to idle", "agent_id", agentID, "agent_name", a.Name)
+			sa.SetState(types.AgentStateIdle)
+			s.db.UpdateAgentState(agentID, types.AgentStateIdle, nil)
+			s.globalBroadcast(map[string]interface{}{
+				"type":      "agent_state_changed",
+				"agent_id":  agentID,
+				"new_state": types.AgentStateIdle,
+			})
+		}
+	}
+
+	// Fetch and persist context limit from provider (use fetched value, not stored value)
+	// This ensures we always have the latest context limit from the provider
+	maxContextTokens := sa.MaxContextTokens
+	if maxContextTokens == 0 {
+		// Fallback to stored value if provider didn't return a limit
+		maxContextTokens = a.MaxContextTokens
+		if maxContextTokens == 0 {
+			maxContextTokens = 128000 // Final fallback
+		}
+	}
+	s.db.UpdateAgentContextUsage(agentID, a.ContextTokens, maxContextTokens)
+
+	sa.OnLog = func(agentID, eventType string, payload interface{}) {
+		id, _ := s.db.AppendAgentLog(agentID, eventType, payload)
+		// If the payload is a map, inject the ID if not already present
+		if m, ok := payload.(map[string]interface{}); ok {
+			if _, exists := m["id"]; !exists {
+				m["id"] = id
+			}
+		}
+		s.globalBroadcast(map[string]interface{}{
+			"type":       "execution_log",
+			"agent_id":   agentID,
+			"event_type": eventType,
+			"payload":    payload,
+		})
+	}
+	sa.OnUsage = func(usage types.UsageRecord) {
+		if err := s.db.SaveUsage(&usage); err != nil {
+			slog.Error("Failed to save usage record", "agent_id", usage.AgentID, "error", err, "usage", usage)
+		}
+	}
+	sa.OnStateChange = func(agentID string, newState types.AgentState) {
+		s.db.UpdateAgentState(agentID, newState, nil)
+		s.globalBroadcast(map[string]interface{}{
+			"type":      "agent_state_changed",
+			"agent_id":  agentID,
+			"new_state": newState,
+		})
+	}
+	sa.OnContextUpdate = func(agentID string, contextTokens, maxContextTokens int) {
+		s.db.UpdateAgentContextUsage(agentID, contextTokens, maxContextTokens)
+		s.globalBroadcast(map[string]interface{}{
+			"type":               "agent_context_updated",
+			"agent_id":           agentID,
+			"context_tokens":     contextTokens,
+			"max_context_tokens": maxContextTokens,
+		})
+	}
+	sa.OnCompactingUpdate = func(agentID string, isCompacting bool) {
+		s.db.UpdateAgentCompacting(agentID, isCompacting)
+		s.globalBroadcast(map[string]interface{}{
+			"type":          "agent_compacting_updated",
+			"agent_id":      agentID,
+			"is_compacting": isCompacting,
+		})
+	}
+	sa.OnCheckApproval = func(toolName, command string) (bool, error) {
+		return s.db.IsToolCallApproved(toolName, command)
+	}
+	sa.OnGetVaultSecrets = func() []string {
+		secrets, err := s.db.ListVaultSecrets()
+		if err != nil {
+			return []string{}
+		}
+		names := make([]string, len(secrets))
+		for i, s := range secrets {
+			names[i] = s.Name
+		}
+		return config.GetVaultSecretValues(names)
+	}
+	sa.OnListVaultNames = func() []string {
+		secrets, err := s.db.ListVaultSecrets()
+		if err != nil {
+			return []string{}
+		}
+		names := make([]string, len(secrets))
+		for i, s := range secrets {
+			names[i] = s.Name
+		}
+		return names
+	}
+	sa.OnSubAgentOutput = func(subAgentID string, content string) {
+		// Get the subagent to find its parent
+		subAgent, err := s.db.GetAgent(subAgentID)
+		if err != nil {
+			slog.Error("Failed to get subagent for output piping", "sub_agent_id", subAgentID, "error", err)
+			return
+		}
+		if subAgent.ParentID == nil {
+			// Not a subagent, nothing to do
+			return
+		}
+
+		parentID := *subAgent.ParentID
+
+		// Get or create the parent stateful agent
+		parent, err := s.getOrCreateStatefulAgent(parentID)
+		if err != nil {
+			slog.Error("Failed to get parent agent for subagent output", "parent_id", parentID, "sub_agent_id", subAgentID, "error", err)
+			return
+		}
+
+		// Log the message in the parent's history
+		payload := map[string]interface{}{
+			"sender_id":    subAgentID,
+			"content":      content,
+			"sub_agent_id": subAgentID,
+		}
+		logID, _ := s.db.AppendAgentLog(parentID, "sub_agent_report", payload)
+		payload["id"] = logID
+
+		s.globalBroadcast(map[string]interface{}{
+			"type":       "execution_log",
+			"agent_id":   parentID,
+			"event_type": "sub_agent_report",
+			"payload":    payload,
+		})
+
+		// Route message to the parent agent's input queue
+		parent.EnqueueAgentMessage(subAgentID, content)
+
+		// Ensure the parent is running or resumed
+		if !parent.IsRunning() {
+			if err := s.resumeAgent(parentID, ""); err != nil {
+				slog.Error("Failed to resume parent agent after subagent output", "parent_id", parentID, "error", err)
+			}
+		} else {
+			// Parent is running but might be waiting - wake it up to process the message
+			parent.Resume()
+		}
+	}
+	sa.AlwaysAllowAll = cfg.Security.AlwaysAllowAll
+	if a.IsInternal && a.Name == "Feedback Collector" {
+		sa.AlwaysAllowAll = true
+	}
+
+	if !ok {
+		// Trigger initial context usage calculation only for new agents
+		history, _ := s.db.ListAgentLogs(agentID)
+		sa.RecalculateContextUsage(history)
+
+		s.mu.Lock()
+		s.statefulAgents[agentID] = sa
+		s.mu.Unlock()
+	}
+
+	return sa, nil
+}
+
+func (s *Server) getAgentWorkspacePath(agentID string) string {
+	a, err := s.db.GetAgent(agentID)
+	if err != nil {
+		// Fallback to root workspaces dir if agent not found
+		return filepath.Join(config.GetWorkspacesDir(), agentID)
+	}
+
+	if a.WorkingDirectory != "" && filepath.IsAbs(a.WorkingDirectory) {
+		return a.WorkingDirectory
+	}
+
+	if a.ParentID == nil || *a.ParentID == "" {
+		// Root agent
+		return filepath.Join(config.GetWorkspacesDir(), agentID)
+	}
+
+	// Recursive call to get parent's workspace path
+	parentPath := s.getAgentWorkspacePath(*a.ParentID)
+	return filepath.Join(parentPath, "sub_agents", agentID)
+}
+
+func (s *Server) spawnSubAgent(parentID string, name string, prompt string, objective string, workingDir string) (string, error) {
+	cfg, _ := config.LoadConfig()
+
+	if cfg.SubAgent.Enabled == nil || !*cfg.SubAgent.Enabled {
+		return "", fmt.Errorf("sub-agents are globally disabled")
+	}
+
+	agentID := uuid.New().String()
+
+	if name == "" {
+		name = utils.GetRandomName()
+	}
+
+	var pID *string
+	if parentID != "" {
+		pID = &parentID
+	}
+
+	fullPrompt := prompt
+	if objective != "" {
+		fullPrompt = fmt.Sprintf("OBJECTIVE: %s\n\nINSTRUCTIONS: %s", objective, prompt)
+	}
+
+	// Default config
+	provider := cfg.Inference.Chat.Provider
+	model := s.getChatModel(cfg)
+
+	// Inherit from parent if available
+	subAgentsEnabled := true
+	isInternal := false
+	if cfg.SubAgent.Enabled != nil {
+		subAgentsEnabled = *cfg.SubAgent.Enabled
+	}
+
+	if parentID != "" {
+		if parent, err := s.db.GetAgent(parentID); err == nil {
+			provider = parent.ModelConfig.Provider
+			model = parent.ModelConfig.Model
+			subAgentsEnabled = parent.SubAgentsEnabled
+			isInternal = parent.IsInternal
+		}
+	}
+
+	// Determine max context tokens based on provider/model
+	contextLimit := 128000
+	prov, err := s.createProvider(provider)
+	if err != nil {
+		return "", fmt.Errorf("failed to initialize sub-agent provider: %w", err)
+	}
+	contextLimit = prov.GetContextLimit(model)
+
+	newAgent := types.Agent{
+		ID:               agentID,
+		ParentID:         pID,
+		Type:             types.AgentTypeStandard,
+		Name:             name,
+		State:            types.AgentStateIdle,
+		InitialPrompt:    fullPrompt,
+		PlanEnabled:      false, // Sub-agents start in direct execution mode by default
+		SubAgentsEnabled: subAgentsEnabled,
+		IsInternal:       isInternal,
+		WorkingDirectory: workingDir,
+		ModelConfig: types.ModelConfig{
+			Provider: provider,
+			Model:    model,
+		},
+		MaxContextTokens: contextLimit,
+		CreatedAt:        time.Now().UTC(),
+		UpdatedAt:        time.Now().UTC(),
+	}
+
+	if err := s.db.CreateAgent(newAgent); err != nil {
+		return "", err
+	}
+
+	// Log the initial prompt so it shows up in history
+	initialPayload := map[string]interface{}{
+		"content": fullPrompt,
+	}
+	if parentID != "" {
+		initialPayload["parent_id"] = parentID
+	}
+
+	logID, _ := s.db.AppendAgentLog(agentID, "user_interaction", initialPayload)
+	initialPayload["id"] = logID
+
+	s.globalBroadcast(map[string]interface{}{
+		"type":  "agent_created",
+		"agent": newAgent,
+	})
+
+	// Broadcast the initial prompt log
+	s.globalBroadcast(map[string]interface{}{
+		"type":       "execution_log",
+		"agent_id":   agentID,
+		"event_type": "user_interaction",
+		"payload":    initialPayload,
+	})
+
+	// Broadcast agent_spawned
+	s.globalBroadcast(map[string]interface{}{
+		"type":      "agent_spawned",
+		"parent_id": parentID,
+		"child":     newAgent,
+	})
+
+	go s.handleAgentScopeSetup(agentID)
+
+	return agentID, nil
+}
+
+func (s *Server) handleAgentScopeSetup(agentID string) {
+	_, cancel := context.WithCancel(context.Background())
+	if _, loaded := s.proposing.LoadOrStore(agentID, cancel); loaded {
+		slog.Debug("Scope setup already in progress", "agent_id", agentID)
+		cancel()
+		return
+	}
+	defer func() {
+		s.proposing.Delete(agentID)
+		cancel()
+	}()
+
+	sa, err := s.getOrCreateStatefulAgent(agentID)
+	if err != nil {
+		slog.Error("Failed to get agent for scope setup", "agent_id", agentID, "error", err)
+		errDetail := &types.ErrorDetail{
+			Category:    types.ErrorInitialization,
+			Message:     err.Error(),
+			Recoverable: true,
+		}
+		payload := map[string]interface{}{
+			"message": err.Error(),
+		}
+		logID, _ := s.db.AppendAgentLog(agentID, "agent_error", payload)
+		payload["id"] = logID
+
+		s.db.UpdateAgentState(agentID, types.AgentStateError, errDetail)
+		s.globalBroadcast(map[string]interface{}{
+			"type":         "agent_state_changed",
+			"agent_id":     agentID,
+			"new_state":    types.AgentStateError,
+			"error_detail": errDetail,
+		})
+		s.globalBroadcast(map[string]interface{}{
+			"type":       "execution_log",
+			"agent_id":   agentID,
+			"event_type": "agent_error",
+			"payload":    payload,
+		})
+		return
+	}
+
+	// Update state to RUNNING while setting up scope
+	s.db.UpdateAgentState(agentID, types.AgentStateRunning, nil)
+	sa.SetState(types.AgentStateRunning)
+	s.globalBroadcast(map[string]interface{}{
+		"type":         "agent_state_changed",
+		"agent_id":     agentID,
+		"new_state":    types.AgentStateRunning,
+		"error_detail": nil,
+	})
+
+	// Fetch parent scope if applicable
+	a, err := s.db.GetAgent(agentID)
+	if err != nil {
+		slog.Error("Failed to get agent for scope setup", "agent_id", agentID, "error", err)
+		return
+	}
+	var parentScope *types.ScopeDocument
+	if a.ParentID != nil {
+		parentScope, _ = s.db.GetCurrentScope(*a.ParentID)
+	}
+
+	// Create a default scope that inherits from parent
+	allowedTools := []string{"*"}
+	allowedSkills := []string{"*"}
+	if parentScope != nil {
+		allowedTools = parentScope.Frontmatter.Permissions.Tools
+		allowedSkills = parentScope.Frontmatter.Permissions.Skills
+
+		// Ensure agent family is always allowed for sub-agents to enable recursive orchestration
+		hasAgentTools := false
+		for _, t := range allowedTools {
+			if t == "*" || t == "agent_*" {
+				hasAgentTools = true
+				break
+			}
+		}
+		if !hasAgentTools {
+			allowedTools = append(allowedTools, "agent_*")
+		}
+	}
+
+	now := time.Now().UTC()
+	defaultScope := &types.ScopeDocument{
+		ID:      uuid.New().String(),
+		AgentID: agentID,
+		Version: 1,
+		Frontmatter: types.ScopeFrontmatter{
+			AgentID: agentID,
+			Version: 1,
+			Permissions: types.ScopePermissions{
+				Tools:  allowedTools,
+				Skills: allowedSkills,
+			},
+			ResourceLimits: types.ResourceLimits{
+				MaxLoops: 50,
+			},
+		},
+		Content:    "# Objective\nExecute the user request directly.\n\n# Plan\n1. Receive user instruction.\n2. Execute relevant tools/skills to satisfy the request.\n3. Report results back to the user.",
+		CreatedAt:  now,
+		ApprovedAt: &now,
+	}
+
+	if err := s.db.CreateScopeDocument(*defaultScope); err != nil {
+		slog.Error("Failed to save default scope", "agent_id", agentID, "error", err)
+		return
+	}
+
+	// Check if the scope was already saved by agent_plan tool during ProposeScopeStream.
+	// If so, we don't need to save it again (which would create a duplicate version).
+	savedScope, _ := s.db.GetCurrentScope(agentID)
+	scopeAlreadySaved := savedScope != nil && savedScope.Version == defaultScope.Version && savedScope.ApprovedAt != nil
+
+	if !scopeAlreadySaved {
+		// Scope wasn't saved yet, save it now
+		now := time.Now().UTC()
+		defaultScope.ApprovedAt = &now
+
+		if err := s.upsertScopeDocument(agentID, defaultScope); err != nil {
+			slog.Error("Failed to save scope update", "agent_id", agentID, "error", err)
+			s.db.UpdateAgentState(agentID, types.AgentStateError, &types.ErrorDetail{
+				Category: types.ErrorToolFailure,
+				Message:  "Failed to save scope update: " + err.Error(),
+			})
+			return
+		}
+
+		// Reload scope from database to get the correct ID and version
+		savedScope, err = s.db.GetCurrentScope(agentID)
+		if err != nil || savedScope == nil {
+			slog.Error("Failed to reload scope after save", "agent_id", agentID, "error", err)
+			savedScope = defaultScope // Fallback to original scope
+		}
+
+		if err := s.db.ApproveScope(agentID, savedScope.ID); err != nil {
+			slog.Error("Failed to mark scope as approved", "agent_id", agentID, "error", err)
+		}
+	}
+
+	sa.SetScope(savedScope)
+
+	s.globalBroadcast(map[string]interface{}{
+		"type":     "scope_updated",
+		"agent_id": agentID,
+		"scope":    defaultScope,
+	})
+
+	if updatedAgent, err := s.db.GetAgent(agentID); err == nil {
+		s.globalBroadcast(map[string]interface{}{
+			"type":  "agent_updated",
+			"agent": updatedAgent,
+		})
+	}
+
+	// If it's a sub-agent, notify the parent agent with the scope update
+	a, err = s.db.GetAgent(agentID)
+	if err == nil && a.ParentID != nil {
+		payload := map[string]interface{}{
+			"sub_agent_id": agentID,
+			"scope":        savedScope,
+		}
+		logID, _ := s.db.AppendAgentLog(*a.ParentID, "sub_agent_proposal", payload)
+		payload["id"] = logID
+
+		s.globalBroadcast(map[string]interface{}{
+			"type":       "execution_log",
+			"agent_id":   *a.ParentID,
+			"event_type": "sub_agent_proposal",
+			"payload":    payload,
+		})
+
+		// Notify parent so it can see the update
+		if parent, err := s.getOrCreateStatefulAgent(*a.ParentID); err == nil {
+			parent.EnqueueAgentMessage(agentID, fmt.Sprintf("Sub-agent '%s' updated its scope and plan.", a.Name))
+		}
+
+		// Auto-resume parent agent to handle the update
+		s.resumeAgent(*a.ParentID, "")
+	}
+
+	// Only add scope update log if we saved the scope here (not via agent_plan tool).
+	// The agent_plan tool already logs scope_updated when it saves the scope.
+	if !scopeAlreadySaved {
+		payload := map[string]interface{}{"scope": savedScope}
+		logID, _ := s.db.AppendAgentLog(agentID, "scope_updated", payload)
+		payload["id"] = logID
+
+		s.globalBroadcast(map[string]interface{}{
+			"type":       "execution_log",
+			"agent_id":   agentID,
+			"event_type": "scope_updated",
+			"payload":    payload,
+		})
+	}
+
+	// Automatically start running the task now that the scope is ready
+	s.resumeAgent(agentID, "")
+}
+
+func (s *Server) upsertScopeDocument(agentID string, doc *types.ScopeDocument) error {
+	if err := s.db.CreateScopeDocument(*doc); err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			return s.db.UpdateScopeDocument(*doc)
+		}
+		return err
+	}
+	return nil
+}

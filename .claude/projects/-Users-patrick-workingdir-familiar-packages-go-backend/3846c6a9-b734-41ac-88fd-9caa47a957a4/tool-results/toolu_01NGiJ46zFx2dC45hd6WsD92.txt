@@ -1,0 +1,23 @@
+# Claude Max Integration in OpenCode
+
+Based on the documentation provided, here's what I found about Claude authentication:
+
+## Authentication Methods
+
+OpenCode supports multiple ways to connect Claude:
+
+1. **Claude Pro/Max Subscription**: "Once you've signed up, run the `/connect` command and select Anthropic. Here you can select the **Claude Pro/Max** option and it'll open your browser and ask you to authenticate." This browser-based OAuth approach allows subscription holders to authenticate directly.
+
+2. **API Key Creation**: Users can alternatively "select **Create an API Key** if you don't have a Pro/Max subscription. It'll also open your browser and ask you to login to Anthropic and give you a code you can paste in your terminal."
+
+3. **Manual Entry**: A third option lets users "select **Manually enter API Key** and paste it in your terminal."
+
+## Key Details
+
+- Credentials are stored in `~/.local/share/opencode/auth.json`
+- After authentication, "all the Anthropic models should be available when you use the `/models` command"
+- Base URLs can be customized via configuration for proxy services
+
+## What's Not Covered
+
+The documentation doesn't specify rate limits, subscription tier differences, or detailed OAuth token refresh mechanisms—these implementation details aren't included in this provider guide.

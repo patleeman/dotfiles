@@ -1,0 +1,503 @@
+package inference
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
+	"strings"
+	"sync"
+
+	"github.com/google/uuid"
+	"github.com/patrick/familiar/packages/go-backend/internal/config"
+	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+	"google.golang.org/genai"
+)
+
+type GeminiProvider struct {
+	client         *genai.Client
+	defaultContext int
+	contextLimits  map[string]int
+	mu             sync.RWMutex
+}
+
+func NewGeminiProvider(apiKey string) (*GeminiProvider, error) {
+	if apiKey == "" {
+		apiKey = config.GetKeychainPassword("gemini-api-key")
+	}
+	if apiKey == "" {
+		return nil, errors.New("api key required for gemini")
+	}
+
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  apiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
+	}
+
+	return &GeminiProvider{
+		client:         client,
+		defaultContext: 1048576,
+		contextLimits: map[string]int{
+			"gemini-1.5-flash": 1048576,
+			"gemini-1.5-pro":   1048576,
+			"gemini-2.0":       1048576,
+			"gemini-2.5":       1048576,
+		},
+	}, nil
+}
+
+func (p *GeminiProvider) Name() string {
+	return "gemini"
+}
+
+func (p *GeminiProvider) ListModels(ctx context.Context) ([]string, error) {
+	return nil, nil
+}
+
+func (p *GeminiProvider) GetContextLimit(model string) int {
+	p.mu.RLock()
+	for prefix, limit := range p.contextLimits {
+		if strings.HasPrefix(model, prefix) {
+			p.mu.RUnlock()
+			return limit
+		}
+	}
+	p.mu.RUnlock()
+
+	// Try to fetch from API if not in hardcoded list and client is available
+	if p.client != nil {
+		ctx := context.Background()
+		m, err := p.client.Models.Get(ctx, model, nil)
+		if err == nil && m.InputTokenLimit > 0 {
+			limit := int(m.InputTokenLimit)
+			// Cache it
+			p.mu.Lock()
+			p.contextLimits[model] = limit
+			p.mu.Unlock()
+			return limit
+		}
+	}
+
+	return p.defaultContext
+}
+
+func (p *GeminiProvider) convertMessages(messages []types.Message) []*genai.Content {
+	var contents []*genai.Content
+
+	for _, msg := range messages {
+		var parts []*genai.Part
+
+		// Handle content
+		if c, ok := msg.Content.(string); ok && c != "" {
+			parts = append(parts, genai.NewPartFromText(c))
+		} else if contentParts, ok := msg.Content.([]interface{}); ok {
+			for _, part := range contentParts {
+				if pMap, ok := part.(map[string]interface{}); ok {
+					partType, _ := pMap["type"].(string)
+					if partType == "text" {
+						if text, ok := pMap["text"].(string); ok {
+							parts = append(parts, genai.NewPartFromText(text))
+						}
+					} else if partType == "image_url" {
+						if imgUrl, ok := pMap["image_url"].(map[string]interface{}); ok {
+							if url, ok := imgUrl["url"].(string); ok {
+								// Handle base64 data URLs
+								if strings.HasPrefix(url, "data:") {
+									// Parse data URL: data:image/png;base64,xxxxx
+									urlParts := strings.SplitN(url, ",", 2)
+									if len(urlParts) == 2 {
+										mimeType := "image/png"
+										if strings.Contains(urlParts[0], "image/jpeg") {
+											mimeType = "image/jpeg"
+										} else if strings.Contains(urlParts[0], "image/gif") {
+											mimeType = "image/gif"
+										} else if strings.Contains(urlParts[0], "image/webp") {
+											mimeType = "image/webp"
+										}
+										if data, err := base64.StdEncoding.DecodeString(urlParts[1]); err == nil {
+											parts = append(parts, &genai.Part{
+												InlineData: &genai.Blob{
+													MIMEType: mimeType,
+													Data:     data,
+												},
+											})
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Handle attachments
+		for _, att := range msg.Attachments {
+			if att.Type == "image" && att.Data != "" {
+				data, err := base64.StdEncoding.DecodeString(att.Data)
+				if err == nil {
+					parts = append(parts, &genai.Part{
+						InlineData: &genai.Blob{
+							MIMEType: att.MimeType,
+							Data:     data,
+						},
+					})
+				}
+			}
+		}
+
+		if len(parts) == 0 {
+			continue
+		}
+
+		// Map roles
+		role := genai.RoleUser
+		if msg.Role == "assistant" || msg.Role == "model" {
+			role = genai.RoleModel
+		}
+
+		// Skip system messages for now - they're handled separately in Gemini
+		if msg.Role == "system" {
+			continue
+		}
+
+		contents = append(contents, &genai.Content{
+			Role:  role,
+			Parts: parts,
+		})
+	}
+
+	return contents
+}
+
+func (p *GeminiProvider) getSystemInstruction(messages []types.Message) string {
+	var systemParts []string
+	for _, msg := range messages {
+		if msg.Role == "system" {
+			if c, ok := msg.Content.(string); ok && c != "" {
+				systemParts = append(systemParts, c)
+			}
+		}
+	}
+	return strings.Join(systemParts, "\n\n")
+}
+
+func (p *GeminiProvider) convertTools(tools []interface{}) []*genai.Tool {
+	if len(tools) == 0 {
+		return nil
+	}
+
+	var geminiTools []*genai.Tool
+	var funcDecls []*genai.FunctionDeclaration
+
+	for _, t := range tools {
+		if tMap, ok := t.(map[string]interface{}); ok {
+			fn, _ := tMap["function"].(map[string]interface{})
+			name, _ := fn["name"].(string)
+			desc, _ := fn["description"].(string)
+			params, _ := fn["parameters"].(map[string]interface{})
+
+			// Convert parameters to Gemini schema
+			schema := p.convertSchema(params)
+
+			funcDecls = append(funcDecls, &genai.FunctionDeclaration{
+				Name:        name,
+				Description: desc,
+				Parameters:  schema,
+			})
+		}
+	}
+
+	if len(funcDecls) > 0 {
+		geminiTools = append(geminiTools, &genai.Tool{
+			FunctionDeclarations: funcDecls,
+		})
+	}
+
+	return geminiTools
+}
+
+func (p *GeminiProvider) convertSchema(params map[string]interface{}) *genai.Schema {
+	if params == nil {
+		return nil
+	}
+
+	schema := &genai.Schema{}
+
+	if t, ok := params["type"].(string); ok {
+		switch t {
+		case "object":
+			schema.Type = genai.TypeObject
+		case "array":
+			schema.Type = genai.TypeArray
+		case "string":
+			schema.Type = genai.TypeString
+		case "number":
+			schema.Type = genai.TypeNumber
+		case "integer":
+			schema.Type = genai.TypeInteger
+		case "boolean":
+			schema.Type = genai.TypeBoolean
+		}
+	}
+
+	if props, ok := params["properties"].(map[string]interface{}); ok {
+		schema.Properties = make(map[string]*genai.Schema)
+		for name, prop := range props {
+			if propMap, ok := prop.(map[string]interface{}); ok {
+				schema.Properties[name] = p.convertSchema(propMap)
+			}
+		}
+	}
+
+	if required, ok := params["required"].([]interface{}); ok {
+		for _, r := range required {
+			if s, ok := r.(string); ok {
+				schema.Required = append(schema.Required, s)
+			}
+		}
+	}
+
+	if desc, ok := params["description"].(string); ok {
+		schema.Description = desc
+	}
+
+	if items, ok := params["items"].(map[string]interface{}); ok {
+		schema.Items = p.convertSchema(items)
+	}
+
+	return schema
+}
+
+func (p *GeminiProvider) ChatCompletion(ctx context.Context, messages []types.Message, model string, tools []interface{}, options map[string]interface{}) (*types.ChatResponse, error) {
+	// Parse thinking configuration from model string
+	baseModel, reasoningLevel := ParseThinkingModel(model)
+
+	contents := p.convertMessages(messages)
+	systemInstruction := p.getSystemInstruction(messages)
+	geminiTools := p.convertTools(tools)
+
+	config := &genai.GenerateContentConfig{}
+	if systemInstruction != "" {
+		config.SystemInstruction = genai.NewContentFromText(systemInstruction, genai.RoleUser)
+	}
+	if len(geminiTools) > 0 {
+		config.Tools = geminiTools
+	}
+
+	// Set thinking_level if level is set
+	if reasoningLevel != ReasoningNone {
+		var thinkingLevel genai.ThinkingLevel
+		switch reasoningLevel {
+		case ReasoningLow:
+			thinkingLevel = genai.ThinkingLevelLow
+		case ReasoningMedium:
+			thinkingLevel = genai.ThinkingLevelMedium
+		case ReasoningHigh:
+			thinkingLevel = genai.ThinkingLevelHigh
+		default:
+			thinkingLevel = genai.ThinkingLevelUnspecified
+		}
+		
+		config.ThinkingConfig = &genai.ThinkingConfig{
+			ThinkingLevel: thinkingLevel,
+		}
+		slog.Debug("Gemini: Enabling thinking", "model", baseModel, "level", reasoningLevel)
+	}
+
+	result, err := p.client.Models.GenerateContent(ctx, baseModel, contents, config)
+	if err != nil {
+		return nil, fmt.Errorf("gemini generate content failed: %w", err)
+	}
+
+	if len(result.Candidates) == 0 {
+		return nil, errors.New("gemini returned no candidates")
+	}
+
+	candidate := result.Candidates[0]
+	var content string
+	var toolCalls []types.ToolCall
+
+	for _, part := range candidate.Content.Parts {
+		if part.Text != "" {
+			content += part.Text
+		}
+		if part.FunctionCall != nil {
+			// Convert function call args to JSON string
+			argsJSON := "{}"
+			if part.FunctionCall.Args != nil {
+				// Args is map[string]any, need to serialize
+				if argsBytes, err := json.Marshal(part.FunctionCall.Args); err == nil {
+					argsJSON = string(argsBytes)
+				}
+			}
+			toolCalls = append(toolCalls, types.ToolCall{
+				ID:   uuid.New().String(),
+				Type: "function",
+				Function: types.ToolFunction{
+					Name:      part.FunctionCall.Name,
+					Arguments: argsJSON,
+				},
+			})
+		}
+	}
+
+	var usage types.Usage
+	if result.UsageMetadata != nil {
+		usage = types.Usage{
+			InputTokens:  int(result.UsageMetadata.PromptTokenCount),
+			OutputTokens: int(result.UsageMetadata.CandidatesTokenCount),
+			TotalTokens:  int(result.UsageMetadata.TotalTokenCount),
+		}
+	}
+
+	return &types.ChatResponse{
+		Content:   content,
+		ToolCalls: toolCalls,
+		Usage:     usage,
+	}, nil
+}
+
+func (p *GeminiProvider) ChatCompletionStream(ctx context.Context, messages []types.Message, model string, tools []interface{}, options map[string]interface{}) (<-chan types.ChatStreamChunk, <-chan error) {
+	chunkCh := make(chan types.ChatStreamChunk)
+	errCh := make(chan error, 1)
+
+	go func() {
+		defer close(chunkCh)
+		defer close(errCh)
+
+		// Parse thinking configuration from model string
+		baseModel, reasoningLevel := ParseThinkingModel(model)
+
+		contents := p.convertMessages(messages)
+		systemInstruction := p.getSystemInstruction(messages)
+		geminiTools := p.convertTools(tools)
+
+		config := &genai.GenerateContentConfig{}
+		if systemInstruction != "" {
+			config.SystemInstruction = genai.NewContentFromText(systemInstruction, genai.RoleUser)
+		}
+		if len(geminiTools) > 0 {
+			config.Tools = geminiTools
+		}
+
+		// Set thinking_level if level is set
+		if reasoningLevel != ReasoningNone {
+			var thinkingLevel genai.ThinkingLevel
+			switch reasoningLevel {
+			case ReasoningLow:
+				thinkingLevel = genai.ThinkingLevelLow
+			case ReasoningMedium:
+				thinkingLevel = genai.ThinkingLevelMedium
+			case ReasoningHigh:
+				thinkingLevel = genai.ThinkingLevelHigh
+			default:
+				thinkingLevel = genai.ThinkingLevelUnspecified
+			}
+			
+			config.ThinkingConfig = &genai.ThinkingConfig{
+				ThinkingLevel: thinkingLevel,
+			}
+			slog.Debug("Gemini: Enabling thinking (stream)", "model", baseModel, "level", reasoningLevel)
+		}
+
+		stream := p.client.Models.GenerateContentStream(ctx, baseModel, contents, config)
+
+		var toolCallsAccumulated []types.ToolCall
+		seenToolCalls := make(map[string]bool) // Track seen tool calls to deduplicate
+		var lastUsage *types.Usage
+
+		for chunk, err := range stream {
+			if err != nil {
+				errCh <- fmt.Errorf("gemini stream error: %w", err)
+				return
+			}
+
+			if chunk == nil || len(chunk.Candidates) == 0 {
+				continue
+			}
+
+			candidate := chunk.Candidates[0]
+			var content string
+			var toolCallChunks []types.ToolCallChunk
+
+			for _, part := range candidate.Content.Parts {
+				if part.Text != "" {
+					content += part.Text
+				}
+				if part.FunctionCall != nil {
+					argsJSON := "{}"
+					if part.FunctionCall.Args != nil {
+						if argsBytes, err := json.Marshal(part.FunctionCall.Args); err == nil {
+							argsJSON = string(argsBytes)
+						}
+					}
+
+					// Deduplicate tool calls - Gemini may send the same call in multiple chunks
+					callKey := part.FunctionCall.Name + ":" + argsJSON
+					if seenToolCalls[callKey] {
+						continue
+					}
+					seenToolCalls[callKey] = true
+
+					idx := len(toolCallsAccumulated)
+					tc := types.ToolCall{
+						ID:   uuid.New().String(),
+						Type: "function",
+						Function: types.ToolFunction{
+							Name:      part.FunctionCall.Name,
+							Arguments: argsJSON,
+						},
+					}
+					toolCallsAccumulated = append(toolCallsAccumulated, tc)
+					toolCallChunks = append(toolCallChunks, types.ToolCallChunk{
+						Index: &idx,
+						ID:    tc.ID,
+						Type:  tc.Type,
+						Function: types.FunctionChunk{
+							Name:      tc.Function.Name,
+							Arguments: tc.Function.Arguments,
+						},
+					})
+				}
+			}
+
+			var usage *types.Usage
+			if chunk.UsageMetadata != nil {
+				usage = &types.Usage{
+					InputTokens:  int(chunk.UsageMetadata.PromptTokenCount),
+					OutputTokens: int(chunk.UsageMetadata.CandidatesTokenCount),
+					TotalTokens:  int(chunk.UsageMetadata.TotalTokenCount),
+				}
+				lastUsage = usage
+			}
+
+			if content != "" || len(toolCallChunks) > 0 {
+				chunkCh <- types.ChatStreamChunk{
+					Content:   content,
+					ToolCalls: toolCallChunks,
+					Usage:     usage,
+				}
+			}
+		}
+
+		// Send final usage if we have it and haven't sent it yet
+		if lastUsage != nil {
+			chunkCh <- types.ChatStreamChunk{
+				Usage: lastUsage,
+			}
+		}
+	}()
+
+	return chunkCh, errCh
+}
+
+func (p *GeminiProvider) Close() error {
+	return nil
+}

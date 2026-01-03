@@ -1,0 +1,14 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Unibar.test.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   110→      Object.defineProperty(event, 'ctrlKey', { value: !isMac, configurable: true });
+   111→      window.dispatchEvent(event);
+   112→    });
+   113→
+   114→    await waitFor(() => {
+   115→      expect(screen.getByPlaceholderText('Search agents or commands...')).toBeInTheDocument();
+   116→    }, { timeout: 3000 });
+   117→
+   118→    const input = screen.getByPlaceholderText('Search agents or commands...');
+   119→    fireEvent.change(input, { target: { value: 'settings' } });
+   120→    
+   121→    await waitFor(() => {
+   122→      expect(screen.getByText('System Settings')).toBeInTheDocument();

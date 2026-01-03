@@ -1,0 +1,618 @@
+import React, { useEffect } from 'react';
+import { useAgents } from '../../context/AgentContext';
+import { useQuery } from '@tanstack/react-query';
+import { api, type Agent } from '../../lib/api';
+import { clsx } from 'clsx';
+import { Bot, Shield, Zap, Activity, Trash2, Check, X } from 'lucide-react';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { useNavigate } from 'react-router-dom';
+import { Toggle, Button, Section, SettingRow } from '../ui';
+
+interface AgentSettingsProps {
+  agent: Agent;
+  onSavingChange?: (isSaving: boolean) => void;
+  onSuccessChange?: (showSuccess: boolean) => void;
+}
+
+const CheckboxItem: React.FC<{
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+}> = ({ label, checked, onToggle, disabled }) => (
+  <button
+    onClick={onToggle}
+    disabled={disabled}
+    className={clsx(
+      "flex items-center gap-2 p-1.5 transition-all text-left group rounded hover:bg-[#1e293b]/30",
+      disabled && "opacity-50 cursor-not-allowed"
+    )}
+  >
+    <div className={clsx(
+      "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+      checked ? "bg-[#6366f1] border-[#6366f1]" : "border-[#1e293b] bg-transparent"
+    )}>
+      {checked && <Check size={10} className="text-white" />}
+    </div>
+    <span className={clsx(
+      "text-[11px] transition-colors truncate",
+      checked ? "text-[#e2e8f0]" : "text-[#94a3b8]"
+    )}>
+      {label}
+    </span>
+  </button>
+);
+
+export const AgentSettings: React.FC<AgentSettingsProps> = ({ agent, onSavingChange, onSuccessChange }) => {
+  const { scopeProposals, updateScope, updateAgentConfig, listTools, listSkills, deleteAgent, updateAgentState, selectAgent, clearConversation, setActiveTab, listTriggers, listAgentSubscriptions, saveTriggerSubscription, deleteTriggerSubscription } = useAgents();
+  const navigate = useNavigate();
+  const proposal = scopeProposals[agent.id];
+
+  const { data: config } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => api.getConfig(),
+  });
+
+  const { data: apiKeys } = useQuery({
+    queryKey: ['apiKeys'],
+    queryFn: () => api.getApiKeys(),
+  });
+
+  const { data: skillsData } = useQuery({
+    queryKey: ['skills'],
+    queryFn: async () => {
+      const resp = await listSkills();
+      return Array.isArray(resp?.skills) ? resp.skills : [];
+    }
+  });
+  const availableSkills = skillsData || [];
+
+  const { data: toolsData } = useQuery({
+    queryKey: ['tools'],
+    queryFn: async () => {
+      const resp = await listTools();
+      return Array.isArray(resp?.tools) ? resp.tools : [];
+    }
+  });
+  const availableTools = toolsData || [];
+
+  const [selectedProvider, setSelectedProvider] = React.useState(agent.model_config.provider);
+  const [selectedModel, setSelectedModel] = React.useState(agent.model_config.model);
+  const [subAgentsEnabled, setSubAgentsEnabled] = React.useState(agent.sub_agents_enabled);
+  const [claudeCodeEnabled, setClaudeCodeEnabled] = React.useState(agent.claude_code_enabled);
+  const [codexEnabled, setCodexEnabled] = React.useState(agent.codex_enabled);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
+
+  const { data: triggersData } = useQuery({
+    queryKey: ['triggers'],
+    queryFn: async () => {
+      const resp = await listTriggers();
+      return Array.isArray(resp?.triggers) ? resp.triggers : [];
+    }
+  });
+
+  const { data: subscriptionsData, refetch: refetchSubscriptions } = useQuery({
+    queryKey: ['agent_subscriptions', agent.id],
+    queryFn: async () => {
+      const resp = await listAgentSubscriptions(agent.id);
+      return Array.isArray(resp?.subscriptions) ? resp.subscriptions : [];
+    }
+  });
+
+  useEffect(() => {
+    onSavingChange?.(isSaving);
+  }, [isSaving, onSavingChange]);
+
+  useEffect(() => {
+    onSuccessChange?.(showSuccess);
+  }, [showSuccess, onSuccessChange]);
+
+  const saveTimeoutRef = React.useRef<any>(null);
+
+  // Frontmatter settings
+  const activeScope = proposal || agent.current_scope;
+  const [tools, setTools] = React.useState<string[]>(activeScope?.frontmatter?.permissions?.tools || ["*"]);
+  const [skills, setSkills] = React.useState<string[]>(activeScope?.frontmatter?.permissions?.skills || ["*"]);
+  const [maxLoops, setMaxLoops] = React.useState(activeScope?.frontmatter?.resource_limits?.max_loops || 20);
+
+  useEffect(() => {
+    setSelectedProvider(agent.model_config.provider);
+    setSelectedModel(agent.model_config.model);
+    setSubAgentsEnabled(agent.sub_agents_enabled);
+    setClaudeCodeEnabled(agent.claude_code_enabled);
+    setCodexEnabled(agent.codex_enabled);
+  }, [agent.id, agent.model_config.provider, agent.model_config.model, agent.sub_agents_enabled, agent.claude_code_enabled, agent.codex_enabled]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const scope = proposal || agent.current_scope;
+    if (scope?.frontmatter) {
+      setTools(scope.frontmatter.permissions.tools || ["*"]);
+      setSkills(scope.frontmatter.permissions.skills || ["*"]);
+      setMaxLoops(scope.frontmatter.resource_limits.max_loops || 20);
+    }
+  }, [agent.id, proposal?.id, agent.current_scope_id]);
+
+  const enabledProviders = Object.keys(config?.available_models || {
+    anthropic: {},
+    openai: {},
+    openrouter: {},
+    gemini: {},
+    ollama: {},
+    lmstudio: {},
+    custom: {},
+  }).filter(p => {
+    const key = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+    return key?.enabled === true;
+  });
+  const providers = enabledProviders.includes(agent.model_config.provider)
+    ? enabledProviders
+    : (agent.model_config.provider ? [...enabledProviders, agent.model_config.provider] : enabledProviders);
+
+  const availableModels = config?.available_models?.[selectedProvider]?.chat || [];
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setShowSuccess(false);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    try {
+      // 1. Update model config (if changed)
+      if (selectedProvider !== agent.model_config.provider ||
+        selectedModel !== agent.model_config.model ||
+        subAgentsEnabled !== agent.sub_agents_enabled ||
+        claudeCodeEnabled !== agent.claude_code_enabled ||
+        codexEnabled !== agent.codex_enabled) {
+        await updateAgentConfig(agent.id, {
+          ...agent.model_config,
+          provider: selectedProvider,
+          model: selectedModel,
+        }, agent.plan_enabled, subAgentsEnabled, claudeCodeEnabled, codexEnabled);
+      }
+
+      // 2. Update scope settings (frontmatter)
+      const scope = proposal || agent.current_scope;
+      const hasScopeChanges =
+        JSON.stringify(tools) !== JSON.stringify(scope?.frontmatter?.permissions?.tools) ||
+        JSON.stringify(skills) !== JSON.stringify(scope?.frontmatter?.permissions?.skills) ||
+        maxLoops !== scope?.frontmatter?.resource_limits?.max_loops;
+
+      if (scope && hasScopeChanges) {
+        const newFrontmatter = {
+          ...scope.frontmatter,
+          permissions: {
+            tools,
+            skills,
+          },
+          resource_limits: {
+            max_loops: maxLoops,
+          }
+        };
+        await updateScope(agent.id, scope.content, newFrontmatter);
+      }
+
+      setShowSuccess(true);
+      saveTimeoutRef.current = setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleItem = (list: string[], item: string, setList: (l: string[]) => void, allItems: string[]) => {
+    if (item === "*") {
+      setList(["*"]);
+      return;
+    }
+
+    let newList: string[];
+    if (list.includes("*")) {
+      // If "Allow All" is active and we click an item, we are deselecting it
+      // from the implicit full set.
+      newList = allItems.filter(i => i !== item);
+    } else if (list.includes(item)) {
+      newList = list.filter(i => i !== item);
+    } else {
+      newList = [...list, item];
+    }
+    setList(newList);
+  };
+
+  const hasChanges =
+    selectedProvider !== agent.model_config.provider ||
+    selectedModel !== agent.model_config.model ||
+    subAgentsEnabled !== agent.sub_agents_enabled ||
+    claudeCodeEnabled !== agent.claude_code_enabled ||
+    codexEnabled !== agent.codex_enabled ||
+    JSON.stringify(tools) !== JSON.stringify(activeScope?.frontmatter?.permissions?.tools) ||
+    JSON.stringify(skills) !== JSON.stringify(activeScope?.frontmatter?.permissions?.skills) ||
+    maxLoops !== activeScope?.frontmatter?.resource_limits?.max_loops;
+
+  useEffect(() => {
+    if (hasChanges && !isSaving) {
+      const timer = setTimeout(() => {
+        handleSave();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    hasChanges,
+    selectedProvider,
+    selectedModel,
+    subAgentsEnabled,
+    claudeCodeEnabled,
+    codexEnabled,
+    tools,
+    skills,
+    maxLoops
+  ]);
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div className="max-w-2xl mx-auto space-y-6 pb-12">
+          <div className="flex items-center justify-end">
+            <button
+              onClick={() => setActiveTab('workspace')}
+              className="p-2 bg-[#0a0b0f] border border-[#1e293b] text-[#64748b] hover:text-[#e2e8f0] hover:border-[#6366f1] rounded-lg transition-all active:scale-95"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* Agent Mode */}
+          <div className="border border-[#1e293b] bg-[#0a0b0f] rounded-lg overflow-hidden">
+            <div className="h-12 border-b border-[#1e293b] bg-[#0f1117] flex items-center px-4 justify-between">
+              <div className="flex items-center gap-2">
+                <Activity size={14} className="text-[#6366f1]" />
+                <span className="text-[13px] font-medium text-[#e2e8f0]">Agent Mode</span>
+              </div>
+              {agent.type === 'cli' && (
+                <span className="text-[10px] bg-[#6366f1]/20 text-[#6366f1] px-2 py-1 rounded font-medium">External CLI</span>
+              )}
+            </div>
+            <div className="px-4 py-3 border-b border-[#1e293b]/50">
+              <p className="text-[11px] text-[#94a3b8] leading-relaxed">
+                Configure the execution environment and delegation permissions for this agent.
+              </p>
+            </div>
+            <div className="p-4 space-y-4">
+              {agent.type === 'cli' && agent.cli_config && (
+                <div className="space-y-2 mb-4 p-3 bg-[#0f1117] border border-[#1e293b] rounded-lg">
+                  <div className="text-[10px] font-medium text-[#64748b]">CLI Command</div>
+                  <div className="text-[11px] font-mono text-[#e2e8f0] break-all">
+                    <span className="text-[#6366f1] mr-2">$</span>
+                    {agent.cli_config.command} {agent.cli_config.args.join(' ')}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="text-[11px] font-medium text-[#e2e8f0]">Sub-Agent Engine Permissions</div>
+                  <p className="text-[10px] text-[#64748b] max-w-[400px] leading-relaxed">
+                    Control which external CLI engines this agent is allowed to delegate to. Native Go orchestration is always available as a fallback.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setClaudeCodeEnabled(!claudeCodeEnabled)}
+                    className={clsx(
+                      "px-3 py-1.5 text-[11px] transition-all border rounded flex items-center gap-2",
+                      claudeCodeEnabled
+                        ? "bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1]"
+                        : "bg-[#0f1117] border-[#1e293b] text-[#64748b] hover:border-[#6366f1] hover:text-[#e2e8f0]"
+                    )}
+                  >
+                    <div className={clsx("w-2 h-2 rounded-full", claudeCodeEnabled ? "bg-[#6366f1]" : "bg-[#64748b]")} />
+                    Claude Code
+                  </button>
+                  <button
+                    onClick={() => setCodexEnabled(!codexEnabled)}
+                    className={clsx(
+                      "px-3 py-1.5 text-[11px] transition-all border rounded flex items-center gap-2",
+                      codexEnabled
+                        ? "bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1]"
+                        : "bg-[#0f1117] border-[#1e293b] text-[#64748b] hover:border-[#6366f1] hover:text-[#e2e8f0]"
+                    )}
+                  >
+                    <div className={clsx("w-2 h-2 rounded-full", codexEnabled ? "bg-[#6366f1]" : "bg-[#64748b]")} />
+                    Codex
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Model Selection */}
+          <div className="border border-[#1e293b] bg-[#0a0b0f] rounded-lg overflow-hidden">
+            <div className="h-12 border-b border-[#1e293b] bg-[#0f1117] flex items-center px-4 justify-between">
+              <div className="flex items-center gap-2">
+                <Zap size={14} className="text-[#6366f1]" />
+                <span className="text-[13px] font-medium text-[#e2e8f0]">Inference Model</span>
+              </div>
+              <span className="text-[10px] text-[#64748b] bg-[#1e293b]/50 px-2 py-1 rounded">Chat Mode</span>
+            </div>
+            <div className="px-4 py-3 border-b border-[#1e293b]/50">
+              <p className="text-[11px] text-[#94a3b8] leading-relaxed">
+                Select the LLM provider and specific model to power this agent's reasoning.
+              </p>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-medium text-[#64748b]">Provider</label>
+                <div className="relative">
+                  <select
+                    value={selectedProvider}
+                    onChange={(e) => {
+                      const newProvider = e.target.value;
+                      if (!newProvider) return;
+                      setSelectedProvider(newProvider);
+                      const models = config?.available_models?.[newProvider]?.chat || [];
+                      if (models.length > 0) setSelectedModel(models[0]);
+                    }}
+                    className="w-full bg-[#0f1117] border border-[#1e293b] rounded px-3 py-2 text-[11px] text-[#e2e8f0] focus:outline-none focus:border-[#6366f1] appearance-none cursor-pointer"
+                  >
+                    {enabledProviders.length > 0 ? (
+                      providers.map(p => (
+                        <option key={p} value={p}>
+                          {p}{!enabledProviders.includes(p) ? ' (Disabled)' : ''}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        {agent.model_config.provider && (
+                          <option value={agent.model_config.provider} disabled>{agent.model_config.provider} (Disabled)</option>
+                        )}
+                        <option value="" disabled>No providers enabled</option>
+                      </>
+                    )}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748b] text-[10px]">▼</div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-medium text-[#64748b]">Model</label>
+                <div className="relative">
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      setSelectedModel(e.target.value);
+                    }}
+                    className="w-full bg-[#0f1117] border border-[#1e293b] rounded px-3 py-2 text-[11px] text-[#e2e8f0] focus:outline-none focus:border-[#6366f1] appearance-none cursor-pointer"
+                  >
+                    {availableModels.length > 0 ? (
+                      availableModels.map((m: string) => (
+                        <option key={m} value={m}>{m.split('/').pop()}</option>
+                      ))
+                    ) : (
+                      <option value="" disabled>No models available</option>
+                    )}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748b] text-[10px]">▼</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Permissions */}
+          <div className="border border-[#1e293b] bg-[#0a0b0f] rounded-lg overflow-hidden">
+            <div className="h-12 border-b border-[#1e293b] bg-[#0f1117] flex items-center px-4">
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-[#6366f1]" />
+                <span className="text-[13px] font-medium text-[#e2e8f0]">Skills & Permissions</span>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-b border-[#1e293b]/50">
+              <p className="text-[11px] text-[#94a3b8] leading-relaxed">
+                Define the scope of actions this agent can perform by enabling or disabling specific tools and skills.
+              </p>
+            </div>
+            <div className="p-4 space-y-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-2 border-b border-[#1e293b]/50">
+                  <label className="text-[10px] font-medium text-[#64748b]">Allowed Tools</label>
+                  <button
+                    onClick={() => setTools(tools.includes("*") ? [] : ["*"])}
+                    className={clsx(
+                      "text-[10px] transition-all px-2 py-1 rounded",
+                      tools.includes("*") ? "text-[#6366f1] bg-[#6366f1]/10" : "text-[#64748b] hover:text-[#e2e8f0]"
+                    )}
+                  >
+                    {tools.includes("*") ? "Disallow All" : "Allow All"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  {Array.isArray(availableTools) && availableTools.map(tool => {
+                    const toolName = typeof tool === 'string' ? tool : tool.name;
+                    return (
+                      <CheckboxItem
+                        key={toolName}
+                        label={toolName}
+                        checked={tools.includes("*") || tools.includes(toolName)}
+                        onToggle={() => toggleItem(tools, toolName, setTools, availableTools.map(t => typeof t === 'string' ? t : t.name))}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-2 border-b border-[#1e293b]/50">
+                  <label className="text-[10px] font-medium text-[#64748b]">Allowed Skills</label>
+                  <button
+                    onClick={() => setSkills(skills.includes("*") ? [] : ["*"])}
+                    className={clsx(
+                      "text-[10px] transition-all px-2 py-1 rounded",
+                      skills.includes("*") ? "text-[#6366f1] bg-[#6366f1]/10" : "text-[#64748b] hover:text-[#e2e8f0]"
+                    )}
+                  >
+                    {skills.includes("*") ? "Disallow All" : "Allow All"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  {Array.isArray(availableSkills) && availableSkills.map(skill => {
+                    const skillName = typeof skill === 'string' ? skill : skill.name;
+                    return (
+                      <CheckboxItem
+                        key={skillName}
+                        label={skillName}
+                        checked={skills.includes("*") || skills.includes(skillName)}
+                        onToggle={() => toggleItem(skills, skillName, setSkills, availableSkills.map(s => typeof s === 'string' ? s : s.name))}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Resource Limits */}
+          <div className="border border-[#1e293b] bg-[#0a0b0f] rounded-lg overflow-hidden">
+            <div className="h-12 border-b border-[#1e293b] bg-[#0f1117] flex items-center px-4">
+              <div className="flex items-center gap-2">
+                <Activity size={14} className="text-[#6366f1]" />
+                <span className="text-[13px] font-medium text-[#e2e8f0]">Resource Guardrails</span>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-b border-[#1e293b]/50">
+              <p className="text-[11px] text-[#94a3b8] leading-relaxed">
+                Set execution limits to prevent infinite loops or excessive resource consumption.
+              </p>
+            </div>
+            <div className="p-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-medium text-[#64748b]">Max Loops</label>
+                <input
+                  type="number"
+                  value={maxLoops}
+                  onChange={(e) => setMaxLoops(parseInt(e.target.value) || 0)}
+                  className="w-full bg-[#0f1117] border border-[#1e293b] rounded px-3 py-2 text-[11px] text-[#e2e8f0] focus:outline-none focus:border-[#6366f1]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Triggers & Subscriptions */}
+          <div className="border border-[#1e293b] bg-[#0a0b0f] rounded-lg overflow-hidden">
+            <div className="h-12 border-b border-[#1e293b] bg-[#0f1117] flex items-center px-4">
+              <div className="flex items-center gap-2">
+                <Bot size={14} className="text-[#6366f1]" />
+                <span className="text-[13px] font-medium text-[#e2e8f0]">Triggers & Subscriptions</span>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-b border-[#1e293b]/50">
+              <p className="text-[11px] text-[#94a3b8] leading-relaxed">
+                Subscribe this agent to system triggers. When a trigger fires, the agent will react based on its North Star and mission.
+              </p>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-1 gap-2">
+                {(triggersData || []).map(triggerId => {
+                  const sub = (subscriptionsData || []).find(s => s.trigger_name === triggerId);
+                  const isEnabled = sub?.enabled || false;
+
+                  return (
+                    <div key={triggerId} className="flex items-center justify-between p-3 bg-[#0f1117] border border-[#1e293b] rounded-lg hover:border-[#6366f1]/30 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className={clsx("w-2 h-2 rounded-full", isEnabled ? "bg-[#6366f1] shadow-[0_0_8px_rgba(99,102,241,0.5)]" : "bg-[#64748b] opacity-30")} />
+                        <span className={clsx("text-[11px]", isEnabled ? "text-[#e2e8f0] font-medium" : "text-[#64748b]")}>
+                          {triggerId}
+                        </span>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (sub) {
+                            if (isEnabled) {
+                              await deleteTriggerSubscription(sub.id);
+                            } else {
+                              await saveTriggerSubscription({ ...sub, enabled: true });
+                            }
+                          } else {
+                            await saveTriggerSubscription({
+                              agent_id: agent.id,
+                              trigger_name: triggerId,
+                              prompt_template: "",
+                              enabled: true
+                            });
+                          }
+                          refetchSubscriptions();
+                        }}
+                        className={clsx(
+                          "px-3 py-1.5 text-[10px] transition-all border rounded",
+                          isEnabled
+                            ? "bg-[#6366f1]/10 border-[#6366f1] text-[#6366f1]"
+                            : "bg-[#0f1117] border-[#1e293b] text-[#64748b] hover:border-[#6366f1] hover:text-[#e2e8f0]"
+                        )}
+                      >
+                        {isEnabled ? "Active" : "Attach"}
+                      </button>
+                    </div>
+                  );
+                })}
+                {(triggersData || []).length === 0 && (
+                  <div className="py-8 text-center text-[#64748b] text-[11px]">
+                    No system triggers available
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div className="border border-[#ef4444]/30 bg-[#ef4444]/5 rounded-lg p-4">
+            <div className="flex items-center justify-between gap-6">
+              <div className="min-w-0">
+                <h4 className="text-[13px] font-medium text-[#ef4444] flex items-center gap-2">
+                  <Trash2 size={14} />
+                  Danger Zone
+                </h4>
+                <p className="text-[11px] text-[#ef4444]/70 mt-1 leading-relaxed">
+                  Permanently delete this agent, its sub-agents, and all history. This action cannot be undone.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  const confirmed = await ask("Are you sure you want to delete this agent? This will permanently remove all logs, settings, and ALL SUB-AGENTS created by this agent.", {
+                    title: 'Delete Agent',
+                    kind: 'warning',
+                  });
+                  if (confirmed) {
+                    const parentId = agent.parent_id;
+                    const agentId = agent.id;
+
+                    if (parentId) {
+                      selectAgent(parentId);
+                      navigate(`/agent/${parentId}`, { replace: true });
+                    } else {
+                      selectAgent(null);
+                      navigate('/', { replace: true });
+                    }
+
+                    deleteAgent(agentId);
+                  }
+                }}
+                className="px-4 py-2 text-[#ef4444] hover:text-white hover:bg-[#ef4444] border border-[#ef4444]/30 rounded text-[11px] font-medium transition-all shrink-0 active:scale-95"
+                title="Permanently delete this agent and all associated data."
+              >
+                Delete Agent
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,481 @@
+     1→import React, { useState, useEffect, useRef } from 'react';
+     2→import { useAgents } from '../../context/AgentContext';
+     3→import { Settings, Folder, X, Trash2, PanelRight, PanelLeft, ChevronDown } from 'lucide-react';
+     4→import { clsx } from 'clsx';
+     5→import { api, isSubAgentManagedCLI } from '../../lib/api';
+     6→import { useQuery } from '@tanstack/react-query';
+     7→import { useNavigate, useLocation } from 'react-router-dom';
+     8→
+     9→export const StatusBar: React.FC = () => {
+    10→    const navigate = useNavigate();
+    11→    const location = useLocation();
+    12→    const {
+    13→        agents,
+    14→        tasks,
+    15→        activeAgentId,
+    16→        renameAgent,
+    17→        updateAgentState,
+    18→        updateAgentConfig,
+    19→        isSidebarCollapsed,
+    20→        toggleSidebar,
+    21→        isExplorerCollapsed,
+    22→        toggleExplorer,
+    23→        activeTab,
+    24→        setActiveTab,
+    25→        deleteTask,
+    26→        openWorkspace,
+    27→        listAgentSubscriptions,
+    28→    } = useAgents();
+    29→
+    30→    const [isEditingProvider, setIsEditingProvider] = useState(false);
+    31→    const [isEditingModel, setIsEditingModel] = useState(false);
+    32→    const [isRenaming, setIsRenaming] = useState(false);
+    33→    const [tempName, setTempName] = useState('');
+    34→    const [showTriggersPopover, setShowTriggersPopover] = useState(false);
+    35→
+    36→    const triggersRef = useRef<HTMLDivElement>(null);
+    37→    const renameInputRef = useRef<HTMLInputElement>(null);
+    38→    const triggersHoverTimeoutRef = useRef<any>(null);
+    39→
+    40→    const agent = activeAgentId ? agents[activeAgentId] : null;
+    41→    const isSkillArchitect = agent?.name?.toLowerCase().includes('skill architect') || agent?.initial_prompt?.includes('Skill Architect');
+    42→    const isTriggerArchitect = agent?.name?.toLowerCase().includes('trigger architect') || agent?.initial_prompt?.includes('Trigger Architect');
+    43→
+    44→    const handleTriggersMouseEnter = () => {
+    45→        if (triggersHoverTimeoutRef.current) clearTimeout(triggersHoverTimeoutRef.current);
+    46→        setShowTriggersPopover(true);
+    47→    };
+    48→
+    49→    const handleTriggersMouseLeave = () => {
+    50→        triggersHoverTimeoutRef.current = setTimeout(() => {
+    51→            setShowTriggersPopover(false);
+    52→        }, 200);
+    53→    };
+    54→
+    55→    const { data: config } = useQuery({
+    56→        queryKey: ['config'],
+    57→        queryFn: () => api.getConfig(),
+    58→    });
+    59→
+    60→    const { data: apiKeys } = useQuery({
+    61→        queryKey: ['apiKeys'],
+    62→        queryFn: () => api.getApiKeys(),
+    63→    });
+    64→
+    65→    const { data: subscriptionsData, refetch: refetchSubscriptions } = useQuery({
+    66→        queryKey: ['agent_subscriptions', activeAgentId],
+    67→        queryFn: async () => {
+    68→            if (!activeAgentId) return [];
+    69→            const resp = await listAgentSubscriptions(activeAgentId);
+    70→            return Array.isArray(resp?.subscriptions) ? resp.subscriptions : [];
+    71→        },
+    72→        enabled: !!activeAgentId
+    73→    });
+    74→
+    75→    useEffect(() => {
+    76→        if (isRenaming && renameInputRef.current) {
+    77→            renameInputRef.current.focus();
+    78→            renameInputRef.current.select();
+    79→        }
+    80→    }, [isRenaming]);
+    81→
+    82→    const handleRenameStart = (e: React.MouseEvent) => {
+    83→        e.stopPropagation();
+    84→        if (!agent) return;
+    85→        setTempName(agent.name || agent.id.slice(0, 8));
+    86→        setIsRenaming(true);
+    87→    };
+    88→
+    89→    const handleRenameSave = async () => {
+    90→        if (!agent) return;
+    91→        const trimmedName = tempName.trim();
+    92→        if (trimmedName && trimmedName !== agent.name) {
+    93→            await renameAgent(agent.id, trimmedName);
+    94→        }
+    95→        setIsRenaming(false);
+    96→    };
+    97→
+    98→    const handleRenameCancel = () => {
+    99→        setIsRenaming(false);
+   100→    };
+   101→
+   102→    const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+   103→        if (e.key === 'Enter') {
+   104→            handleRenameSave();
+   105→        } else if (e.key === 'Escape') {
+   106→            handleRenameCancel();
+   107→        }
+   108→    };
+   109→
+   110→    const handleOpenBaseFolder = async (folder: 'skills' | 'triggers') => {
+   111→        try {
+   112→            await api.openFolder(folder);
+   113→        } catch (err) {
+   114→            console.error(`Failed to open ${folder} directory:`, err);
+   115→        }
+   116→    };
+   117→
+   118→    const isFleetPage = location.pathname === '/' || location.pathname.endsWith('/');
+   119→    const isSettingsPage = location.pathname === '/settings';
+   120→    const isSkillsPage = location.pathname === '/skills';
+   121→    const isTriggersPage = location.pathname === '/triggers';
+   122→    const isUsagePage = location.pathname === '/usage';
+   123→
+   124→    if (!agent && !isFleetPage && !isSettingsPage && !isSkillsPage && !isTriggersPage && !isUsagePage) return null;
+   125→
+   126→    const enabledProviders = Object.keys(config?.available_models || {}).filter(p => {
+   127→        const key = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+   128→        return key?.enabled === true;
+   129→    });
+   130→
+   131→    const providers = agent
+   132→        ? (enabledProviders.includes(agent.model_config.provider)
+   133→            ? enabledProviders
+   134→            : (agent.model_config.provider ? [...enabledProviders, agent.model_config.provider] : enabledProviders))
+   135→        : enabledProviders;
+   136→
+   137→    const currentProvider = agent?.model_config.provider || providers[0] || '';
+   138→    const availableModels = config?.available_models?.[currentProvider]?.chat || [];
+   139→
+   140→    const agentTasks = agent ? (tasks || []).filter(t => t.parent_agent_id?.toLowerCase() === agent.id.toLowerCase()) : [];
+   141→
+   142→    const formatTimeUntil = (dateStr: string) => {
+   143→        const date = new Date(dateStr);
+   144→        const now = new Date();
+   145→        const diffMs = date.getTime() - now.getTime();
+   146→        const diffMin = Math.round(diffMs / 60000);
+   147→        const diffHrs = Math.floor(diffMin / 60);
+   148→        const diffDays = Math.floor(diffHrs / 24);
+   149→
+   150→        if (diffMs < 0) return 'any moment';
+   151→        if (diffMin < 1) return '< 1m';
+   152→        if (diffMin < 60) return `${diffMin}m`;
+   153→        if (diffHrs < 24) return `${diffHrs}h ${diffMin % 60}m`;
+   154→        return `${diffDays}d ${diffHrs % 24}h`;
+   155→    };
+   156→
+   157→    return (
+   158→        <div className="min-h-6 border-t border-border flex items-center justify-between px-3 shrink-0 bg-surface/80 backdrop-blur-md text-[9px] uppercase tracking-widest font-bold text-text-primary py-0.5 font-mono z-50">
+   159→            <div className="flex items-center gap-2.5 min-w-0 flex-1 h-full">
+   160→                <div className="flex items-center gap-1.5 min-w-0 h-full">
+   161→                    {/* Global Breadcrumbs / Agent Name */}
+   162→                    <div className="flex items-center gap-2 pr-2 border-r border-border/20 shrink-0 h-full">
+   163→                        {agent ? (
+   164→                            <>
+   165→                                {!(isSkillArchitect || isTriggerArchitect) && (
+   166→                                    <button
+   167→                                        onClick={() => setActiveTab('settings')}
+   168→                                        className="text-text-tertiary hover:text-accent transition-colors shrink-0"
+   169→                                        title="Agent Settings"
+   170→                                    >
+   171→                                        <Settings size={10} />
+   172→                                    </button>
+   173→                                )}
+   174→                                <button
+   175→                                    onClick={() => openWorkspace(agent.id)}
+   176→                                    className="text-text-tertiary hover:text-accent transition-colors shrink-0"
+   177→                                    title="Open Workspace"
+   178→                                >
+   179→                                    <Folder size={10} />
+   180→                                </button>
+   181→                                {isRenaming ? (
+   182→                                    <input
+   183→                                        ref={renameInputRef}
+   184→                                        type="text"
+   185→                                        value={tempName}
+   186→                                        onChange={(e) => setTempName(e.target.value)}
+   187→                                        onBlur={handleRenameSave}
+   188→                                        onKeyDown={handleRenameKeyDown}
+   189→                                        className="bg-background border border-accent text-accent outline-none text-[9px] font-bold h-4 flex items-center px-1 max-w-[120px] uppercase font-mono ml-2"
+   190→                                        onClick={(e) => e.stopPropagation()}
+   191→                                    />
+   192→                                ) : (
+   193→                                    <button
+   194→                                        className="text-accent truncate max-w-[120px] cursor-pointer hover:underline transition-all font-black outline-none border-none bg-transparent p-0 m-0 text-[9px] uppercase font-mono ml-2"
+   195→                                        onClick={handleRenameStart}
+   196→                                        title="Click to rename agent"
+   197→                                    >
+   198→                                        {agent.name || agent.id.slice(0, 8)}
+   199→                                    </button>
+   200→                                )}
+   201→                                <span className="text-text-tertiary opacity-40">•</span>
+   202→                                <span className={clsx(
+   203→                                    "font-black tracking-tighter flex items-center gap-1",
+   204→                                    agent.state === 'running' ? "text-status-success" :
+   205→                                        (agent.state === 'waiting' || agent.state === 'awaiting_approval' || agent.state === 'awaiting_secret') ? "text-status-warning" :
+   206→                                            agent.state === 'error' ? "text-status-error" :
+   207→                                                agent.state === 'paused' ? "text-text-primary/60" : "text-text-primary/30"
+   208→                                )}>
+   209→                                    {agent.state === 'running' ? '[RUN]' :
+   210→                                        agent.state === 'waiting' ? '[WAI]' :
+   211→                                            (agent.state === 'awaiting_approval' || agent.state === 'awaiting_secret') ? '[!!!]' :
+   212→                                                agent.state === 'error' ? '[ERR]' :
+   213→                                                    agent.state === 'paused' ? '[PAU]' : '[IDL]'}
+   214→                                </span>
+   215→                            </>
+   216→                        ) : (
+   217→                            <div className="flex items-center gap-2">
+   218→                                {(isSkillsPage || isTriggersPage) && (
+   219→                                    <button
+   220→                                        onClick={() => handleOpenBaseFolder(isTriggersPage ? 'triggers' : 'skills')}
+   221→                                        className="text-text-tertiary hover:text-accent transition-colors shrink-0"
+   222→                                        title={`Open ${isTriggersPage ? 'Triggers' : 'Skills'} Folder`}
+   223→                                    >
+   224→                                        <Folder size={10} />
+   225→                                    </button>
+   226→                                )}
+   227→                                <button
+   228→                                    onClick={() => navigate('/')}
+   229→                                    className="text-text-primary hover:text-accent transition-colors"
+   230→                                >
+   231→                                    SYSTEM
+   232→                                </button>
+   233→                                <span className="opacity-30">/</span>
+   234→                                <span className="text-accent uppercase">
+   235→                                    {isSettingsPage ? 'SETTINGS' :
+   236→                                        isFleetPage ? 'FLEET' :
+   237→                                            isSkillsPage ? 'SKILLS' :
+   238→                                                isTriggersPage ? 'TRIGGERS' :
+   239→                                                    isUsagePage ? 'USAGE' : 'NODE'}
+   240→                                </span>
+   241→                            </div>
+   242→                        )}
+   243→                    </div>
+   244→
+   245→                    {/* Agent Specific Info */}
+   246→                    {agent && (
+   247→                        <>
+   248→                            {/* Context Usage */}
+   249→                            {agent.max_context_tokens > 0 && !isSubAgentManagedCLI(agent) && (
+   250→                                <div
+   251→                                    className="flex items-center gap-1.5 py-0.5 px-2 border-r border-border/20 shrink-0"
+   252→                                    title={`Usage: ${agent.context_tokens.toLocaleString()} tk / ${agent.max_context_tokens.toLocaleString()} tk`}
+   253→                                >
+   254→                                    <span className="text-text-tertiary">ctx</span>
+   255→                                    <span className={clsx(
+   256→                                        "font-black",
+   257→                                        (agent.context_tokens / agent.max_context_tokens) > 0.9 ? "text-status-error" :
+   258→                                            (agent.context_tokens / agent.max_context_tokens) > 0.75 ? "text-status-warning" :
+   259→                                                "text-text-primary"
+   260→                                    )}>
+   261→                                        {Math.min(100, Math.round((agent.context_tokens / agent.max_context_tokens) * 100))}%
+   262→                                    </span>
+   263→                                </div>
+   264→                            )}
+   265→
+   266→                            {/* Triggers Segment */}
+   267→                            {(() => {
+   268→                                interface ActiveTrigger {
+   269→                                    id: string;
+   270→                                    type: 'system' | 'schedule';
+   271→                                    prompt?: string;
+   272→                                    status?: string;
+   273→                                    next?: string | null;
+   274→                                    recurrence?: string;
+   275→                                }
+   276→
+   277→                                const activeTriggers: ActiveTrigger[] = [
+   278→                                    ...(subscriptionsData || [])
+   279→                                        .filter(s => s.enabled && s.trigger_name.toLowerCase() !== 'cron')
+   280→                                        .map(s => ({ id: s.trigger_name, type: 'system' as const })),
+   281→                                    ...(agent ? agentTasks.map(t => ({
+   282→                                        id: t.id,
+   283→                                        type: 'schedule' as const,
+   284→                                        prompt: t.task_prompt,
+   285→                                        status: t.status,
+   286→                                        next: t.next_run_at,
+   287→                                        recurrence: t.recurrence
+   288→                                    })) : [])
+   289→                                ];
+   290→
+   291→                                return (
+   292→                                    <div
+   293→                                        className="relative border-r border-border/20 shrink-0 h-full flex items-center"
+   294→                                        ref={triggersRef}
+   295→                                        onMouseEnter={handleTriggersMouseEnter}
+   296→                                        onMouseLeave={handleTriggersMouseLeave}
+   297→                                    >
+   298→                                        <button
+   299→                                            className={clsx(
+   300→                                                "flex items-center gap-1.5 py-0.5 px-2 transition-all cursor-default h-full font-mono",
+   301→                                                showTriggersPopover ? "text-accent bg-accent/10" : "text-text-tertiary hover:text-text-primary"
+   302→                                            )}
+   303→                                        >
+   304→                                            <span className={clsx("tracking-tighter font-black", activeTriggers.length > 0 ? "text-accent" : "text-text-tertiary")}>
+   305→                                                [ {activeTriggers.length} TRIGGERS ]
+   306→                                            </span>
+   307→                                        </button>
+   308→
+   309→                                        {showTriggersPopover && (
+   310→                                            <div className="absolute bottom-full left-0 pb-2 w-80 z-[100] animate-in fade-in slide-in-from-bottom-1 duration-75">
+   311→                                                <div className="bg-surface border border-border shadow-2xl overflow-hidden flex flex-col font-mono">
+   312→                                                    <div className="px-2 py-1 border-b border-border/10 bg-background/20 flex items-center justify-between">
+   313→                                                        <span className="text-[8px] font-black text-text-tertiary tracking-widest uppercase">*** ACTIVE_TRIGGERS [ {activeTriggers.length} ] ***</span>
+   314→                                                    </div>
+   315→                                                    <div className="max-h-80 overflow-y-auto custom-scrollbar">
+   316→                                                        {activeTriggers.length === 0 ? (
+   317→                                                            <div className="p-4 text-center text-text-tertiary/20 text-[9px] font-black uppercase tracking-[0.2em]">
+   318→                                                                *** NO_ACTIVE_TRIGGERS ***
+   319→                                                            </div>
+   320→                                                        ) : (
+   321→                                                            <div className="divide-y divide-border/5">
+   322→                                                                {activeTriggers.map((trigger) => (
+   323→                                                                    <div
+   324→                                                                        key={trigger.id}
+   325→                                                                        className="group p-2 hover:bg-surface-hover transition-all relative flex flex-col gap-0.5"
+   326→                                                                    >
+   327→                                                                        <div className="flex items-center gap-2">
+   328→                                                                            <span className="text-accent text-[10px] font-black">*</span>
+   329→                                                                            <span className="text-[10px] font-black text-text-primary uppercase tracking-tighter">
+   330→                                                                                {trigger.type === 'system' ? `/${trigger.id}` : (trigger.recurrence ? `@${trigger.recurrence}` : '!ONCE')}
+   331→                                                                            </span>
+   332→                                                                            {trigger.prompt && (
+   333→                                                                                <span className="text-[9px] text-text-tertiary font-bold truncate max-w-[140px] lowercase">
+   334→                                                                                    - {trigger.prompt}
+   335→                                                                                </span>
+   336→                                                                            )}
+   337→                                                                        </div>
+   338→
+   339→                                                                        {trigger.type === 'schedule' && (
+   340→                                                                            <div className="flex items-center gap-2 ml-3">
+   341→                                                                                <span className={clsx(
+   342→                                                                                    "text-[8px] font-black uppercase",
+   343→                                                                                    trigger.status === 'running' ? "text-status-success" : "text-status-error"
+   344→                                                                                )}>
+   345→                                                                                    [{trigger.status}]
+   346→                                                                                </span>
+   347→                                                                                {trigger.next && (
+   348→                                                                                    <span className="text-[8px] text-accent font-black tracking-tight">
+   349→                                                                                        {formatTimeUntil(trigger.next)}
+   350→                                                                                    </span>
+   351→                                                                                )}
+   352→                                                                                <button
+   353→                                                                                    onClick={async (e) => {
+   354→                                                                                        e.stopPropagation();
+   355→                                                                                        if (window.confirm(`*** REMOVE_TRIGGER "${trigger.prompt}"? ***`)) {
+   356→                                                                                            await deleteTask(trigger.id);
+   357→                                                                                        }
+   358→                                                                                    }}
+   359→                                                                                    className="ml-auto text-text-tertiary hover:text-status-error opacity-0 group-hover:opacity-100 transition-all text-[8px] font-black"
+   360→                                                                                >
+   361→                                                                                    [DEL]
+   362→                                                                                </button>
+   363→                                                                            </div>
+   364→                                                                        )}
+   365→                                                                    </div>
+   366→                                                                ))}
+   367→                                                            </div>
+   368→                                                        )}
+   369→                                                    </div>
+   370→                                                </div>
+   371→                                            </div>
+   372→                                        )}
+   373→                                    </div>
+   374→                                );
+   375→                            })()}
+   376→
+   377→                            {/* Model/Provider Selection */}
+   378→                            <div className="flex items-center gap-1.5 shrink-0 pl-2">
+   379→                                {!isSubAgentManagedCLI(agent) && (
+   380→                                    <div className="flex items-center gap-1 cursor-pointer hover:text-accent transition-colors group" onClick={() => setIsEditingModel(true)}>
+   381→                                        {isEditingModel || isEditingProvider ? (
+   382→                                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+   383→                                                <select
+   384→                                                    autoFocus
+   385→                                                    className="bg-background border border-accent text-accent outline-none text-[9px] font-bold h-4 flex items-center px-1"
+   386→                                                    value={providers.includes(agent.model_config.provider) ? agent.model_config.provider : (providers[0] || '')}
+   387→                                                    onBlur={() => { if (!isEditingModel) setIsEditingProvider(false); }}
+   388→                                                    onChange={async (e) => {
+   389→                                                        const newProvider = e.target.value;
+   390→                                                        if (!newProvider) return;
+   391→                                                        const models = config?.available_models?.[newProvider]?.chat || [];
+   392→                                                        await updateAgentConfig(agent.id, {
+   393→                                                            ...agent.model_config,
+   394→                                                            provider: newProvider,
+   395→                                                            model: models[0] || agent.model_config.model
+   396→                                                        });
+   397→                                                        setIsEditingProvider(false);
+   398→                                                    }}
+   399→                                                >
+   400→                                                    {providers.map(p => (
+   401→                                                        <option key={p} value={p}>
+   402→                                                            {p}{!enabledProviders.includes(p) ? ' (DISABLED)' : ''}
+   403→                                                        </option>
+   404→                                                    ))}
+   405→                                                </select>
+   406→                                                <span className="opacity-20">/</span>
+   407→                                                <select
+   408→                                                    className="bg-background border border-accent text-accent outline-none text-[9px] font-bold h-4 flex items-center px-1"
+   409→                                                    value={availableModels.includes(agent.model_config.model) ? agent.model_config.model : (availableModels[0] || '')}
+   410→                                                    onBlur={() => { setIsEditingModel(false); setIsEditingProvider(false); }}
+   411→                                                    onChange={async (e) => {
+   412→                                                        if (!e.target.value) return;
+   413→                                                        await updateAgentConfig(agent.id, { ...agent.model_config, model: e.target.value });
+   414→                                                        setIsEditingModel(false);
+   415→                                                    }}
+   416→                                                >
+   417→                                                    {availableModels.map((m: string) => (
+   418→                                                        <option key={m} value={m}>{m.split('/').pop()}</option>
+   419→                                                    ))}
+   420→                                                </select>
+   421→                                            </div>
+   422→                                        ) : (
+   423→                                            <>
+   424→                                                <span className="opacity-40 group-hover:opacity-100">{agent.model_config.provider || 'unknown'}</span>
+   425→                                                <span className="opacity-20">/</span>
+   426→                                                <span className="opacity-60">{agent.model_config.model?.split('/').pop() || 'unknown'}</span>
+   427→                                                <ChevronDown size={11} className="opacity-20 group-hover:opacity-100 ml-0.5 pointer-events-none" />
+   428→                                            </>
+   429→                                        )}
+   430→                                    </div>
+   431→                                )}
+   432→                            </div>
+   433→                        </>
+   434→                    )}
+   435→                </div>
+   436→            </div>
+   437→
+   438→            {/* Toggles & Actions */}
+   439→            <div className="flex items-center gap-3 shrink-0">
+   440→                <div className="flex items-center gap-1">
+   441→                    <button
+   442→                        onClick={() => toggleExplorer()}
+   443→                        className={clsx(
+   444→                            "p-1 rounded transition-all active:scale-90 cursor-pointer",
+   445→                            !isExplorerCollapsed
+   446→                                ? "text-accent bg-accent/10"
+   447→                                : "text-text-tertiary hover:bg-surface-hover hover:text-text-primary"
+   448→                        )}
+   449→                        title={isExplorerCollapsed ? "Expand Explorer" : "Collapse Explorer"}
+   450→                    >
+   451→                        <PanelLeft size={13} />
+   452→                    </button>
+   453→
+   454→                    <button
+   455→                        onClick={() => toggleSidebar()}
+   456→                        disabled={!agent || isFleetPage || isSettingsPage || isSkillsPage || isUsagePage || activeTab === 'settings'}
+   457→                        className={clsx(
+   458→                            "p-1 rounded transition-all active:scale-90",
+   459→                            (!agent || isFleetPage || isSettingsPage || isSkillsPage || isUsagePage || activeTab === 'settings')
+   460→                                ? "opacity-20 cursor-not-allowed text-text-tertiary"
+   461→                                : clsx(
+   462→                                    "cursor-pointer",
+   463→                                    !isSidebarCollapsed
+   464→                                        ? "text-accent bg-accent/10"
+   465→                                        : "text-text-tertiary hover:bg-surface-hover hover:text-text-primary"
+   466→                                )
+   467→                        )}
+   468→                        title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+   469→                    >
+   470→                        <PanelRight size={13} />
+   471→                    </button>
+   472→                </div>
+   473→            </div>
+   474→        </div>
+   475→    );
+   476→};
+   477→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

@@ -1,0 +1,19 @@
+The file /Users/patrick/workingdir/familiar/packages/go-backend/internal/config/vault_test.go has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   175→			t.Errorf("expected %s, got %s", expected, result)
+   176→		}
+   177→	})
+   178→
+   179→	t.Run("partial match should mask substring", func(t *testing.T) {
+   180→		text := "password is secret12345"
+   181→		secrets := []string{"secret123"}
+   182→		result := MaskSecrets(text, secrets)
+   183→		// Should mask because the secret is a substring (security requirement)
+   184→		expected := "password is ********45"
+   185→		if result != expected {
+   186→			t.Errorf("expected %s, got %s", expected, result)
+   187→		}
+   188→	})
+   189→}
+   190→
+   191→func TestGetVaultSecretValues(t *testing.T) {
+   192→	// Enable mock mode for testing

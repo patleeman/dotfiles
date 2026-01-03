@@ -1,0 +1,23 @@
+     1→import React from 'react';
+     2→
+     3→export const UsageSidebar: React.FC = () => {
+     4→  return (
+     5→    <div className="flex flex-col h-full bg-[#0f1117] select-none">
+     6→      <div className="p-3 border-b border-[#1e293b]">
+     7→        <span className="text-[12px] font-medium text-[#e2e8f0]">Usage</span>
+     8→        <p className="text-[11px] text-[#64748b] mt-1">
+     9→          View usage statistics and metrics
+    10→        </p>
+    11→      </div>
+    12→
+    13→      <div className="flex-1 p-4 flex flex-col items-center justify-center text-[#334155]">
+    14→        <div className="animate-pulse text-[11px]">Loading metrics...</div>
+    15→      </div>
+    16→    </div>
+    17→  );
+    18→};
+    19→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

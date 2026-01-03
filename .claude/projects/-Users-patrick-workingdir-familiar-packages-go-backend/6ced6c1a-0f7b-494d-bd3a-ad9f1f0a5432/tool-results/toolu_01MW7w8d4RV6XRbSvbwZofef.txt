@@ -1,0 +1,190 @@
+Exit code 2
+make: *** [test-backend] Error 1
+
+cd packages/go-backend && go test -v ./...
+?   	github.com/patrick/familiar/packages/go-backend/cmd/server	[no test files]
+2026/01/03 06:22:17 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+=== RUN   TestAgentWithAttachments
+--- PASS: TestAgentWithAttachments (0.00s)
+=== RUN   TestCountTokens
+--- PASS: TestCountTokens (0.00s)
+=== RUN   TestNeedsCompaction
+--- PASS: TestNeedsCompaction (0.00s)
+=== RUN   TestCompactMessages
+2026/01/03 06:22:17 INFO Compacting messages tokens=84 max=10 target=5 forced=false
+2026/01/03 06:22:17 INFO Compaction complete final_tokens=70 target=5
+--- PASS: TestCompactMessages (0.00s)
+=== RUN   TestAgentLifecycleIntegration
+2026/01/03 06:22:17 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:22:18 WARN Usage callback not set, usage not saved agent_id=agent-lifecycle-test usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestAgentLifecycleIntegration (0.50s)
+=== RUN   TestLoaderDebug
+Loaded 0 triggers
+--- PASS: TestLoaderDebug (0.00s)
+=== RUN   TestScopeDocumentParsing
+--- PASS: TestScopeDocumentParsing (0.00s)
+=== RUN   TestScopeDocumentParsingWithFences
+=== RUN   TestScopeDocumentParsingWithFences/wrapped_in_backticks
+=== RUN   TestScopeDocumentParsingWithFences/with_filler_and_backticks
+--- PASS: TestScopeDocumentParsingWithFences (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/wrapped_in_backticks (0.00s)
+    --- PASS: TestScopeDocumentParsingWithFences/with_filler_and_backticks (0.00s)
+=== RUN   TestPermissionCheck
+--- PASS: TestPermissionCheck (0.00s)
+=== RUN   TestValidateScopeDocument
+=== RUN   TestValidateScopeDocument/Valid_document
+=== RUN   TestValidateScopeDocument/Missing_section
+=== RUN   TestValidateScopeDocument/Missing_frontmatter
+--- PASS: TestValidateScopeDocument (0.00s)
+    --- PASS: TestValidateScopeDocument/Valid_document (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_section (0.00s)
+    --- PASS: TestValidateScopeDocument/Missing_frontmatter (0.00s)
+=== RUN   TestStateMachine
+--- PASS: TestStateMachine (0.00s)
+=== RUN   TestStreamingEvents
+2026/01/03 06:22:18 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:10 OutputTokens:5 TotalTokens:15 Cost:0}"
+2026/01/03 06:22:18 WARN Usage callback not set, usage not saved agent_id=test-agent usage="{InputTokens:0 OutputTokens:0 TotalTokens:0 Cost:0}"
+--- PASS: TestStreamingEvents (0.00s)
+=== RUN   TestExtractVaultSaveKeys
+=== RUN   TestExtractVaultSaveKeys/keys_array_in_args
+=== RUN   TestExtractVaultSaveKeys/object_entries_inside_args_array
+=== RUN   TestExtractVaultSaveKeys/single_key_field
+=== RUN   TestExtractVaultSaveKeys/comma_separated_string
+=== RUN   TestExtractVaultSaveKeys/raw_secret_keys_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_array_fallback
+=== RUN   TestExtractVaultSaveKeys/raw_single_string_fallback
+=== RUN   TestExtractVaultSaveKeys/deduplicate_and_trim
+=== RUN   TestExtractVaultSaveKeys/secret_names_alias
+=== RUN   TestExtractVaultSaveKeys/no_keys_available
+--- PASS: TestExtractVaultSaveKeys (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/keys_array_in_args (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/object_entries_inside_args_array (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/single_key_field (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/comma_separated_string (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_secret_keys_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_array_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/raw_single_string_fallback (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/deduplicate_and_trim (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/secret_names_alias (0.00s)
+    --- PASS: TestExtractVaultSaveKeys/no_keys_available (0.00s)
+=== RUN   TestNewTriggerManager
+--- PASS: TestNewTriggerManager (0.00s)
+=== RUN   TestTriggerManager_Register
+--- PASS: TestTriggerManager_Register (0.00s)
+=== RUN   TestTriggerManager_Unregister
+--- PASS: TestTriggerManager_Unregister (0.00s)
+=== RUN   TestTriggerManager_UnregisterNonExistent
+--- PASS: TestTriggerManager_UnregisterNonExistent (0.00s)
+=== RUN   TestTriggerManager_Start
+--- PASS: TestTriggerManager_Start (0.05s)
+=== RUN   TestTriggerManager_Emit
+--- PASS: TestTriggerManager_Emit (0.05s)
+=== RUN   TestTriggerManager_Emit_NoOutput
+--- PASS: TestTriggerManager_Emit_NoOutput (0.05s)
+=== RUN   TestTriggerManager_Emit_StoreError
+--- PASS: TestTriggerManager_Emit_StoreError (0.05s)
+=== RUN   TestTriggerManager_ListAvailableTriggers
+--- PASS: TestTriggerManager_ListAvailableTriggers (0.00s)
+=== RUN   TestTriggerManager_Clear
+--- PASS: TestTriggerManager_Clear (0.00s)
+=== RUN   TestTriggerManager_Emit_MultipleSubscriptions
+--- PASS: TestTriggerManager_Emit_MultipleSubscriptions (0.05s)
+=== RUN   TestTriggerManager_Emit_EmptyOutput
+--- PASS: TestTriggerManager_Emit_Empt
+
+... [21303 characters truncated] ...
+
+ PASS: TestBrowserManager_CloseInstance_NonExistent (0.00s)
+=== RUN   TestBrowserManager_GetAvailableEngines
+--- PASS: TestBrowserManager_GetAvailableEngines (0.00s)
+=== RUN   TestBrowserManager_Shutdown
+2026/01/03 06:22:18 INFO Using system Safari via AppleScript
+2026/01/03 06:22:18 INFO Using system Safari via AppleScript
+2026/01/03 06:22:18 INFO Shutting down browser instance record for agent agent_id=agent-1
+2026/01/03 06:22:18 INFO Shutting down browser instance record for agent agent_id=agent-2
+--- PASS: TestBrowserManager_Shutdown (0.00s)
+=== RUN   TestSafariPage_URL
+--- PASS: TestSafariPage_URL (2.19s)
+=== RUN   TestSafariPage_Title
+--- PASS: TestSafariPage_Title (0.17s)
+=== RUN   TestSafariPage_Close
+--- PASS: TestSafariPage_Close (0.00s)
+=== RUN   TestBrowserManager_ConcurrentAccess
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+--- PASS: TestBrowserManager_ConcurrentAccess (0.00s)
+=== RUN   TestBrowserManager_GetPage_CreatesIfNotExists
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-7
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-3
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-2
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-0
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-5
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-8
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-9
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-1
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-6
+2026/01/03 06:22:20 INFO Shutting down browser instance record for agent agent_id=agent-4
+2026/01/03 06:22:20 INFO Using system Safari via AppleScript
+--- PASS: TestBrowserManager_GetPage_CreatesIfNotExists (0.00s)
+=== RUN   TestCreateAttachmentFromPath
+--- PASS: TestCreateAttachmentFromPath (0.00s)
+=== RUN   TestDownloadFile
+--- PASS: TestDownloadFile (0.00s)
+=== RUN   TestSaveAttachmentToDisk
+--- PASS: TestSaveAttachmentToDisk (0.00s)
+=== RUN   TestGetRandomName
+--- PASS: TestGetRandomName (0.00s)
+=== RUN   TestGenerateHash
+--- PASS: TestGenerateHash (0.00s)
+=== RUN   TestGetAssetsPath
+--- PASS: TestGetAssetsPath (0.00s)
+=== RUN   TestSetAssetsPath
+--- PASS: TestSetAssetsPath (0.00s)
+=== RUN   TestAssetsPath_WithRealDirectory
+--- PASS: TestAssetsPath_WithRealDirectory (0.00s)
+=== RUN   TestAssetsPath_RelativePath
+--- PASS: TestAssetsPath_RelativePath (0.00s)
+=== RUN   TestAssetsPath_EmptyString
+--- PASS: TestAssetsPath_EmptyString (0.00s)
+=== RUN   TestLoadSystemPrompt
+--- PASS: TestLoadSystemPrompt (0.00s)
+=== RUN   TestLoadSystemPrompt_MissingFile
+--- PASS: TestLoadSystemPrompt_MissingFile (0.00s)
+=== RUN   TestLoadSystemPrompt_EmptyFile
+--- PASS: TestLoadSystemPrompt_EmptyFile (0.00s)
+=== RUN   TestLoadSystemPrompt_WithWhitespace
+--- PASS: TestLoadSystemPrompt_WithWhitespace (0.00s)
+=== RUN   TestReplacePlaceholders
+=== RUN   TestReplacePlaceholders/replace_config_dir
+=== RUN   TestReplacePlaceholders/replace_workspace_path
+=== RUN   TestReplacePlaceholders/replace_both_placeholders
+=== RUN   TestReplacePlaceholders/multiple_occurrences
+=== RUN   TestReplacePlaceholders/no_placeholders
+=== RUN   TestReplacePlaceholders/empty_string
+=== RUN   TestReplacePlaceholders/empty_config_dir
+=== RUN   TestReplacePlaceholders/complex_path_with_special_characters
+--- PASS: TestReplacePlaceholders (0.00s)
+    --- PASS: TestReplacePlaceholders/replace_config_dir (0.00s)
+    --- PASS: TestReplacePlaceholders/replace_workspace_path (0.00s)
+    --- PASS: TestReplacePlaceholders/replace_both_placeholders (0.00s)
+    --- PASS: TestReplacePlaceholders/multiple_occurrences (0.00s)
+    --- PASS: TestReplacePlaceholders/no_placeholders (0.00s)
+    --- PASS: TestReplacePlaceholders/empty_string (0.00s)
+    --- PASS: TestReplacePlaceholders/empty_config_dir (0.00s)
+    --- PASS: TestReplacePlaceholders/complex_path_with_special_characters (0.00s)
+=== RUN   TestSkillLoader
+--- PASS: TestSkillLoader (0.00s)
+=== RUN   TestFormatSkillContext
+--- PASS: TestFormatSkillContext (0.00s)
+PASS
+ok  	github.com/patrick/familiar/packages/go-backend/internal/utils	3.860s
+?   	github.com/patrick/familiar/packages/go-backend/pkg/types	[no test files]
+FAIL

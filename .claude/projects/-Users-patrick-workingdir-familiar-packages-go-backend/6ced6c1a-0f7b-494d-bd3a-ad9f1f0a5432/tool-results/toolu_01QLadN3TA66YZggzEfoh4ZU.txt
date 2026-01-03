@@ -1,0 +1,54 @@
+   580→			newCustomProviders[name] = config.CustomProviderConfig{
+   581→				BaseURL: baseURL,
+   582→			}
+   583→		}
+   584→		cfg.CustomProviders = newCustomProviders
+   585→		delete(updates, "custom_providers")
+   586→	}
+   587→
+   588→	// Apply sub_agent updates explicitly if present
+   589→	if sa, ok := updates["sub_agent"].(map[string]interface{}); ok {
+   590→		if saEnabled, ok := sa["enabled"].(bool); ok {
+   591→			cfg.SubAgent.Enabled = &saEnabled
+   592→		}
+   593→
+   594→		if cc, ok := sa["claude_code"].(map[string]interface{}); ok {
+   595→			if cfg.SubAgent.ClaudeCode == nil {
+   596→				cfg.SubAgent.ClaudeCode = &config.ClaudeCodeConfig{}
+   597→			}
+   598→			if enabled, ok := cc["enabled"].(bool); ok {
+   599→				cfg.SubAgent.ClaudeCode.Enabled = enabled
+   600→			}
+   601→			if tools, ok := cc["allowed_tools"].([]interface{}); ok {
+   602→				toolList := make([]string, 0, len(tools))
+   603→				for _, t := range tools {
+   604→					if ts, ok := t.(string); ok {
+   605→						toolList = append(toolList, ts)
+   606→					}
+   607→				}
+   608→				cfg.SubAgent.ClaudeCode.AllowedTools = toolList
+   609→			}
+   610→		}
+   611→
+   612→		if cx, ok := sa["codex"].(map[string]interface{}); ok {
+   613→			if cfg.SubAgent.Codex == nil {
+   614→				cfg.SubAgent.Codex = &config.CodexConfig{}
+   615→			}
+   616→			if enabled, ok := cx["enabled"].(bool); ok {
+   617→				cfg.SubAgent.Codex.Enabled = enabled
+   618→			}
+   619→			if mode, ok := cx["approval_mode"].(string); ok {
+   620→				cfg.SubAgent.Codex.ApprovalMode = mode
+   621→			}
+   622→		}
+   623→		// Remove sub_agent from generic update to avoid double processing
+   624→		delete(updates, "sub_agent")
+   625→	}
+   626→
+   627→	// Apply other updates via JSON trick
+   628→	if len(updates) > 0 {
+   629→		b, err := json.Marshal(updates)
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

@@ -1,0 +1,133 @@
+import React, { useState } from 'react';
+import { Circle, Eye, EyeOff, Copy } from 'lucide-react';
+import { Tag } from './Tag';
+import { Button } from './Button';
+
+interface ProviderCardProps {
+  name: string;
+  status: 'connected' | 'not configured' | 'error';
+  models: string[];
+  apiKey?: string;
+  usage?: {
+    requests: string;
+    tokens: string;
+    cost: string;
+  };
+  onEdit?: () => void;
+  onTest?: () => void;
+}
+
+export const ProviderCard: React.FC<ProviderCardProps> = ({
+  name,
+  status,
+  models,
+  apiKey,
+  usage,
+  onEdit,
+  onTest
+}) => {
+  const [showKey, setShowKey] = useState(false);
+  const isConnected = status === 'connected';
+
+  return (
+    <div style={{
+      backgroundColor: '#0a0b0f',
+      border: '1px solid #1e293b',
+      borderRadius: '4px',
+      padding: '12px',
+      marginBottom: '8px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <span style={{
+          fontSize: '12px',
+          fontWeight: 500,
+          color: '#e2e8f0',
+          flex: 1,
+        }}>
+          {name}
+        </span>
+        <Circle
+          size={6}
+          fill={isConnected ? '#22c55e' : '#64748b'}
+          stroke="none"
+        />
+        <span style={{
+          fontSize: '10px',
+          color: isConnected ? '#22c55e' : '#64748b'
+        }}>
+          {status}
+        </span>
+      </div>
+
+      {apiKey && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          marginBottom: '8px',
+        }}>
+          <span style={{
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            color: '#64748b',
+            backgroundColor: '#1e293b',
+            padding: '2px 6px',
+            borderRadius: '2px',
+            flex: 1,
+          }}>
+            {showKey ? apiKey : '************' + apiKey.slice(-4)}
+          </span>
+          <button
+            onClick={() => setShowKey(!showKey)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#64748b',
+              cursor: 'pointer',
+              padding: '2px',
+            }}
+          >
+            {showKey ? <EyeOff size={12} /> : <Eye size={12} />}
+          </button>
+          <button
+            onClick={() => navigator.clipboard.writeText(apiKey)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#64748b',
+              cursor: 'pointer',
+              padding: '2px',
+            }}
+          >
+            <Copy size={12} />
+          </button>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+        {models.map(m => (
+          <Tag key={m} color="#8b5cf6">{m}</Tag>
+        ))}
+      </div>
+
+      {usage && (
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          fontSize: '10px',
+          color: '#64748b',
+          fontFamily: 'monospace',
+        }}>
+          <span>Requests: <span style={{ color: '#94a3b8' }}>{usage.requests}</span></span>
+          <span>Tokens: <span style={{ color: '#94a3b8' }}>{usage.tokens}</span></span>
+          <span>Cost: <span style={{ color: '#94a3b8' }}>${usage.cost}</span></span>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
+        <Button onClick={onEdit}>Edit</Button>
+        <Button onClick={onTest}>Test Connection</Button>
+      </div>
+    </div>
+  );
+};

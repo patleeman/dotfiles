@@ -1,0 +1,621 @@
+import React, { useEffect } from 'react';
+import { useAgents } from '../../context/AgentContext';
+import { useQuery } from '@tanstack/react-query';
+import { api, type Agent } from '../../lib/api';
+import { clsx } from 'clsx';
+import { Bot, Shield, Zap, Activity, Trash2, Check, X } from 'lucide-react';
+import { ask } from '@tauri-apps/plugin-dialog';
+import { useNavigate } from 'react-router-dom';
+import { Toggle, Button, Section, SettingRow } from '../ui';
+
+interface AgentSettingsProps {
+  agent: Agent;
+  onSavingChange?: (isSaving: boolean) => void;
+  onSuccessChange?: (showSuccess: boolean) => void;
+}
+
+const CheckboxItem: React.FC<{
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+}> = ({ label, checked, onToggle, disabled }) => (
+  <button
+    onClick={onToggle}
+    disabled={disabled}
+    className={clsx(
+      "flex items-center gap-2 p-1.5 transition-all text-left group rounded hover:bg-[#1e293b]/30",
+      disabled && "opacity-50 cursor-not-allowed"
+    )}
+  >
+    <div className={clsx(
+      "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+      checked ? "bg-[#6366f1] border-[#6366f1]" : "border-[#1e293b] bg-transparent"
+    )}>
+      {checked && <Check size={10} className="text-white" />}
+    </div>
+    <span className={clsx(
+      "text-[11px] transition-colors truncate",
+      checked ? "text-[#e2e8f0]" : "text-[#94a3b8]"
+    )}>
+      {label}
+    </span>
+  </button>
+);
+
+export const AgentSettings: React.FC<AgentSettingsProps> = ({ agent, onSavingChange, onSuccessChange }) => {
+  const { scopeProposals, updateScope, updateAgentConfig, listTools, listSkills, deleteAgent, updateAgentState, selectAgent, clearConversation, setActiveTab, listTriggers, listAgentSubscriptions, saveTriggerSubscription, deleteTriggerSubscription } = useAgents();
+  const navigate = useNavigate();
+  const proposal = scopeProposals[agent.id];
+
+  const { data: config } = useQuery({
+    queryKey: ['config'],
+    queryFn: () => api.getConfig(),
+  });
+
+  const { data: apiKeys } = useQuery({
+    queryKey: ['apiKeys'],
+    queryFn: () => api.getApiKeys(),
+  });
+
+  const { data: skillsData } = useQuery({
+    queryKey: ['skills'],
+    queryFn: async () => {
+      const resp = await listSkills();
+      return Array.isArray(resp?.skills) ? resp.skills : [];
+    }
+  });
+  const availableSkills = skillsData || [];
+
+  const { data: toolsData } = useQuery({
+    queryKey: ['tools'],
+    queryFn: async () => {
+      const resp = await listTools();
+      return Array.isArray(resp?.tools) ? resp.tools : [];
+    }
+  });
+  const availableTools = toolsData || [];
+
+  const [selectedProvider, setSelectedProvider] = React.useState(agent.model_config.provider);
+  const [selectedModel, setSelectedModel] = React.useState(agent.model_config.model);
+  const [subAgentsEnabled, setSubAgentsEnabled] = React.useState(agent.sub_agents_enabled);
+  const [claudeCodeEnabled, setClaudeCodeEnabled] = React.useState(agent.claude_code_enabled);
+  const [codexEnabled, setCodexEnabled] = React.useState(agent.codex_enabled);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
+
+  const { data: triggersData } = useQuery({
+    queryKey: ['triggers'],
+    queryFn: async () => {
+      const resp = await listTriggers();
+      return Array.isArray(resp?.triggers) ? resp.triggers : [];
+    }
+  });
+
+  const { data: subscriptionsData, refetch: refetchSubscriptions } = useQuery({
+    queryKey: ['agent_subscriptions', agent.id],
+    queryFn: async () => {
+      const resp = await listAgentSubscriptions(agent.id);
+      return Array.isArray(resp?.subscriptions) ? resp.subscriptions : [];
+    }
+  });
+
+  useEffect(() => {
+    onSavingChange?.(isSaving);
+  }, [isSaving, onSavingChange]);
+
+  useEffect(() => {
+    onSuccessChange?.(showSuccess);
+  }, [showSuccess, onSuccessChange]);
+
+  const saveTimeoutRef = React.useRef<any>(null);
+
+  // Frontmatter settings
+  const activeScope = proposal || agent.current_scope;
+  const [tools, setTools] = React.useState<string[]>(activeScope?.frontmatter?.permissions?.tools || ["*"]);
+  const [skills, setSkills] = React.useState<string[]>(activeScope?.frontmatter?.permissions?.skills || ["*"]);
+  const [maxLoops, setMaxLoops] = React.useState(activeScope?.frontmatter?.resource_limits?.max_loops || 20);
+
+  useEffect(() => {
+    setSelectedProvider(agent.model_config.provider);
+    setSelectedModel(agent.model_config.model);
+    setSubAgentsEnabled(agent.sub_agents_enabled);
+    setClaudeCodeEnabled(agent.claude_code_enabled);
+    setCodexEnabled(agent.codex_enabled);
+  }, [agent.id, agent.model_config.provider, agent.model_config.model, agent.sub_agents_enabled, agent.claude_code_enabled, agent.codex_enabled]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const scope = proposal || agent.current_scope;
+    if (scope?.frontmatter) {
+      setTools(scope.frontmatter.permissions.tools || ["*"]);
+      setSkills(scope.frontmatter.permissions.skills || ["*"]);
+      setMaxLoops(scope.frontmatter.resource_limits.max_loops || 20);
+    }
+  }, [agent.id, proposal?.id, agent.current_scope_id]);
+
+  const enabledProviders = Object.keys(config?.available_models || {
+    anthropic: {},
+    openai: {},
+    openrouter: {},
+    gemini: {},
+    ollama: {},
+    lmstudio: {},
+    custom: {},
+  }).filter(p => {
+    const key = apiKeys?.find(k => k.provider.toLowerCase() === p.toLowerCase());
+    return key?.enabled === true;
+  });
+  const providers = enabledProviders.includes(agent.model_config.provider)
+    ? enabledProviders
+    : (agent.model_config.provider ? [...enabledProviders, agent.model_config.provider] : enabledProviders);
+
+  const availableModels = config?.available_models?.[selectedProvider]?.chat || [];
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setShowSuccess(false);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    try {
+      // 1. Update model config (if changed)
+      if (selectedProvider !== agent.model_config.provider ||
+        selectedModel !== agent.model_config.model ||
+        subAgentsEnabled !== agent.sub_agents_enabled ||
+        claudeCodeEnabled !== agent.claude_code_enabled ||
+        codexEnabled !== agent.codex_enabled) {
+        await updateAgentConfig(agent.id, {
+          ...agent.model_config,
+          provider: selectedProvider,
+          model: selectedModel,
+        }, agent.plan_enabled, subAgentsEnabled, claudeCodeEnabled, codexEnabled);
+      }
+
+      // 2. Update scope settings (frontmatter)
+      const scope = proposal || agent.current_scope;
+      const hasScopeChanges =
+        JSON.stringify(tools) !== JSON.stringify(scope?.frontmatter?.permissions?.tools) ||
+        JSON.stringify(skills) !== JSON.stringify(scope?.frontmatter?.permissions?.skills) ||
+        maxLoops !== scope?.frontmatter?.resource_limits?.max_loops;
+
+      if (scope && hasScopeChanges) {
+        const newFrontmatter = {
+          ...scope.frontmatter,
+          permissions: {
+            tools,
+            skills,
+          },
+          resource_limits: {
+            max_loops: maxLoops,
+          }
+        };
+        await updateScope(agent.id, scope.content, newFrontmatter);
+      }
+
+      setShowSuccess(true);
+      saveTimeoutRef.current = setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleItem = (list: string[], item: string, setList: (l: string[]) => void, allItems: string[]) => {
+    if (item === "*") {
+      setList(["*"]);
+      return;
+    }
+
+    let newList: string[];
+    if (list.includes("*")) {
+      // If "Allow All" is active and we click an item, we are deselecting it
+      // from the implicit full set.
+      newList = allItems.filter(i => i !== item);
+    } else if (list.includes(item)) {
+      newList = list.filter(i => i !== item);
+    } else {
+      newList = [...list, item];
+    }
+    setList(newList);
+  };
+
+  const hasChanges =
+    selectedProvider !== agent.model_config.provider ||
+    selectedModel !== agent.model_config.model ||
+    subAgentsEnabled !== agent.sub_agents_enabled ||
+    claudeCodeEnabled !== agent.claude_code_enabled ||
+    codexEnabled !== agent.codex_enabled ||
+    JSON.stringify(tools) !== JSON.stringify(activeScope?.frontmatter?.permissions?.tools) ||
+    JSON.stringify(skills) !== JSON.stringify(activeScope?.frontmatter?.permissions?.skills) ||
+    maxLoops !== activeScope?.frontmatter?.resource_limits?.max_loops;
+
+  useEffect(() => {
+    if (hasChanges && !isSaving) {
+      const timer = setTimeout(() => {
+        handleSave();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    hasChanges,
+    selectedProvider,
+    selectedModel,
+    subAgentsEnabled,
+    claudeCodeEnabled,
+    codexEnabled,
+    tools,
+    skills,
+    maxLoops
+  ]);
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div className="max-w-2xl mx-auto space-y-6 pb-12 font-mono">
+          <div className="flex items-center justify-end">
+            <button
+              onClick={() => setActiveTab('workspace')}
+              className="px-3 py-1 bg-surface border border-border text-text-tertiary hover:text-text-primary hover:border-text-primary text-[10px] font-bold uppercase transition-all active:scale-95 shrink-0 font-mono tracking-widest"
+            >
+              [ CLOSE ]
+            </button>
+          </div>
+
+          {/* Agent Mode */}
+          <div className="border border-border/20 bg-surface/10">
+            <div className="h-9 border-b border-border/50 bg-surface/20 backdrop-blur-sm flex items-center px-4 justify-between">
+              <div className="flex flex-col gap-1 py-4">
+                <div className="flex items-center gap-2 text-accent">
+                  <Activity size={14} />
+                  <span className="text-[12px] font-bold text-accent uppercase tracking-[0.2em]">[01] AGENT_MODE</span>
+                </div>
+              </div>
+              {agent.type === 'cli' && (
+                <span className="text-[9px] bg-accent/20 text-accent px-1.5 py-0.5 rounded font-bold tracking-widest">[ EXTERNAL_CLI ]</span>
+              )}
+            </div>
+            <div className="px-4 py-3 border-b border-border/20">
+              <p className="text-[11px] text-text-primary/90 italic leading-normal font-medium tracking-tight">
+                Configure the execution environment and delegation permissions for this agent.
+              </p>
+            </div>
+            <div className="p-4 space-y-4 font-mono">
+              {agent.type === 'cli' && agent.cli_config && (
+                <div className="space-y-2 mb-4 p-2 bg-black/20 border border-accent/20 rounded">
+                  <div className="text-[9px] font-bold text-accent uppercase tracking-widest">/CLI_EXECUTION_COMMAND</div>
+                  <div className="text-[11px] font-mono text-text-primary break-all font-bold">
+                    <span className="text-accent opacity-50 mr-2">$</span>
+                    {agent.cli_config.command} {agent.cli_config.args.join(' ')}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="text-[11px] font-bold text-text-primary uppercase tracking-widest">/SUB_AGENT_ENGINE_PERMISSIONS</div>
+                  <p className="text-[10px] text-text-secondary opacity-80 max-w-[400px] font-medium italic">
+                    Control which external CLI engines this agent is allowed to delegate to. Native Go orchestration is always available as a fallback.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setClaudeCodeEnabled(!claudeCodeEnabled)}
+                    className={clsx(
+                      "px-3 py-1 font-bold text-[10px] transition-all border flex items-center gap-2 uppercase tracking-widest",
+                      claudeCodeEnabled
+                        ? "bg-accent/10 border-accent text-accent"
+                        : "bg-surface border-border text-text-tertiary hover:border-text-primary hover:text-text-primary"
+                    )}
+                  >
+                    <div className={clsx("w-1.5 h-1.5 rounded-full", claudeCodeEnabled ? "bg-accent" : "bg-text-tertiary")} />
+                    CLAUDE CODE: {claudeCodeEnabled ? "[ ALLOWED ]" : "[ OFF ]"}
+                  </button>
+                  <button
+                    onClick={() => setCodexEnabled(!codexEnabled)}
+                    className={clsx(
+                      "px-3 py-1 font-bold text-[10px] transition-all border flex items-center gap-2 uppercase tracking-widest",
+                      codexEnabled
+                        ? "bg-accent/10 border-accent text-accent"
+                        : "bg-surface border-border text-text-tertiary hover:border-text-primary hover:text-text-primary"
+                    )}
+                  >
+                    <div className={clsx("w-1.5 h-1.5 rounded-full", codexEnabled ? "bg-accent" : "bg-text-tertiary")} />
+                    CODEX: {codexEnabled ? "[ ALLOWED ]" : "[ OFF ]"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Model Selection */}
+          <div className="border border-border/20 bg-surface/10">
+            <div className="h-9 border-b border-border/50 bg-surface/20 backdrop-blur-sm flex items-center px-4 justify-between">
+              <div className="flex items-center gap-2 text-accent">
+                <Zap size={14} />
+                <span className="text-[12px] font-bold text-accent uppercase tracking-[0.2em]">[02] INFERENCE_MODEL</span>
+              </div>
+              <span className="text-[9px] text-text-tertiary font-bold tracking-widest">[ MODE: CHAT ]</span>
+            </div>
+            <div className="px-4 py-3 border-b border-border/20">
+              <p className="text-[11px] text-text-primary/90 italic leading-normal font-medium tracking-tight">
+                Select the LLM provider and specific model to power this agent's reasoning.
+              </p>
+            </div>
+            <div className="p-4 grid grid-cols-2 gap-6 font-mono">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-text-secondary uppercase tracking-[0.2em] ml-0.5 opacity-90">/PROVIDER</label>
+                <div className="relative">
+                  <select
+                    value={selectedProvider}
+                    onChange={(e) => {
+                      const newProvider = e.target.value;
+                      if (!newProvider) return;
+                      setSelectedProvider(newProvider);
+                      const models = config?.available_models?.[newProvider]?.chat || [];
+                      if (models.length > 0) setSelectedModel(models[0]);
+                    }}
+                    className="w-full bg-background border border-border px-2 py-1.5 text-[11px] font-mono font-bold text-accent focus:outline-none focus:border-accent appearance-none cursor-pointer uppercase tracking-tight"
+                  >
+                    {enabledProviders.length > 0 ? (
+                      providers.map(p => (
+                        <option key={p} value={p}>
+                          /{p}{!enabledProviders.includes(p) ? ' [DISABLED]' : ''}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        {agent.model_config.provider && (
+                          <option value={agent.model_config.provider} disabled>/{agent.model_config.provider} [DISABLED]</option>
+                        )}
+                        <option value="" disabled>[ NO_PROVIDERS_ENABLED ]</option>
+                      </>
+                    )}
+                  </select>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary text-[10px]">▼</div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-text-secondary uppercase tracking-[0.2em] ml-0.5 opacity-90">/MODEL_ID</label>
+                <div className="relative">
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      setSelectedModel(e.target.value);
+                    }}
+                    className="w-full bg-background border border-border px-2 py-1.5 text-[11px] font-mono font-bold text-text-primary focus:outline-none focus:border-accent appearance-none cursor-pointer tracking-tight uppercase"
+                  >
+                    {availableModels.length > 0 ? (
+                      availableModels.map((m: string) => (
+                        <option key={m} value={m}>/{m.split('/').pop()?.toUpperCase()}</option>
+                      ))
+                    ) : (
+                      <option value="" disabled>[ NO_MODELS_AVAILABLE ]</option>
+                    )}
+                  </select>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary text-[10px]">▼</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Permissions */}
+          <div className="border border-border/20 bg-surface/10 font-mono">
+            <div className="h-9 border-b border-border/50 bg-surface/20 backdrop-blur-sm flex items-center px-4 justify-between">
+              <div className="flex items-center gap-2 text-accent">
+                <Shield size={14} />
+                <span className="text-[12px] font-bold text-accent uppercase tracking-[0.2em]">[03] SKILLS_&_PERMISSIONS</span>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-b border-border/20">
+              <p className="text-[11px] text-text-primary/90 italic leading-normal font-medium tracking-tight">
+                Define the scope of actions this agent can perform by enabling or disabling specific tools and skills.
+              </p>
+            </div>
+            <div className="p-4 space-y-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-1 border-b border-border/30">
+                  <label className="text-[9px] font-bold text-text-secondary uppercase tracking-[0.2em] ml-0.5 opacity-90">/ALLOWED_TOOLS</label>
+                  <button
+                    onClick={() => setTools(tools.includes("*") ? [] : ["*"])}
+                    className={clsx(
+                      "text-[9px] font-bold transition-all px-1.5 tracking-widest",
+                      tools.includes("*") ? "text-accent" : "text-text-tertiary hover:text-text-secondary"
+                    )}
+                  >
+                    {tools.includes("*") ? "[ DISALLOW_ALL ]" : "[ ALLOW_ALL ]"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                  {Array.isArray(availableTools) && availableTools.map(tool => {
+                    const toolName = typeof tool === 'string' ? tool : tool.name;
+                    return (
+                      <CheckboxItem
+                        key={toolName}
+                        label={`/${toolName.toUpperCase()}`}
+                        checked={tools.includes("*") || tools.includes(toolName)}
+                        onToggle={() => toggleItem(tools, toolName, setTools, availableTools.map(t => typeof t === 'string' ? t : t.name))}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center pb-1 border-b border-border/30">
+                  <label className="text-[9px] font-bold text-text-secondary uppercase tracking-[0.2em] ml-0.5 opacity-90">/ALLOWED_SKILLS</label>
+                  <button
+                    onClick={() => setSkills(skills.includes("*") ? [] : ["*"])}
+                    className={clsx(
+                      "text-[9px] font-bold transition-all px-1.5 tracking-widest",
+                      skills.includes("*") ? "text-accent" : "text-text-tertiary hover:text-text-secondary"
+                    )}
+                  >
+                    {skills.includes("*") ? "[ DISALLOW_ALL ]" : "[ ALLOW_ALL ]"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                  {Array.isArray(availableSkills) && availableSkills.map(skill => {
+                    const skillName = typeof skill === 'string' ? skill : skill.name;
+                    return (
+                      <CheckboxItem
+                        key={skillName}
+                        label={`/${skillName.toUpperCase()}`}
+                        checked={skills.includes("*") || skills.includes(skillName)}
+                        onToggle={() => toggleItem(skills, skillName, setSkills, availableSkills.map(s => typeof s === 'string' ? s : s.name))}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Resource Limits */}
+          <div className="border border-border/20 bg-surface/10 font-mono">
+            <div className="h-9 border-b border-border/50 bg-surface/20 backdrop-blur-sm flex items-center px-4 justify-between">
+              <div className="flex items-center gap-2 text-accent">
+                <Activity size={14} />
+                <span className="text-[12px] font-bold text-accent uppercase tracking-[0.2em]">[04] RESOURCE_GUARDRAILS</span>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-b border-border/20">
+              <p className="text-[11px] text-text-primary/90 italic leading-normal font-medium tracking-tight">
+                Set execution limits to prevent infinite loops or excessive resource consumption.
+              </p>
+            </div>
+            <div className="p-4">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-text-secondary uppercase tracking-[0.2em] ml-0.5 opacity-70">/MAX_LOOPS</label>
+                <input
+                  type="number"
+                  value={maxLoops}
+                  onChange={(e) => setMaxLoops(parseInt(e.target.value) || 0)}
+                  className="w-full bg-background border border-border px-2 py-1.5 text-[11px] font-mono font-bold text-text-primary focus:outline-none focus:border-accent"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Triggers & Subscriptions */}
+          <div className="border border-border/20 bg-surface/10 font-mono">
+            <div className="h-9 border-b border-border/50 bg-surface/20 backdrop-blur-sm flex items-center px-4 justify-between">
+              <div className="flex items-center gap-2 text-accent">
+                <Bot size={14} />
+                <span className="text-[12px] font-bold text-accent uppercase tracking-[0.2em]">[05] TRIGGERS_&_SUBSCRIPTIONS</span>
+              </div>
+            </div>
+            <div className="px-4 py-3 border-b border-border/20">
+              <p className="text-[11px] text-text-primary/90 italic leading-normal font-medium tracking-tight">
+                Subscribe this agent to system triggers. When a trigger fires, the agent will react based on its North Star and mission.
+              </p>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-1 gap-2">
+                {(triggersData || []).map(triggerId => {
+                  const sub = (subscriptionsData || []).find(s => s.trigger_name === triggerId);
+                  const isEnabled = sub?.enabled || false;
+
+                  return (
+                    <div key={triggerId} className="flex items-center justify-between p-2 bg-surface/5 border border-border/10 hover:border-accent/30 transition-all group">
+                      <div className="flex items-center gap-3">
+                        <div className={clsx("w-1.5 h-1.5 rounded-full", isEnabled ? "bg-accent shadow-[0_0_8px_rgba(var(--accent-rgb),0.5)]" : "bg-text-tertiary opacity-30")} />
+                        <span className={clsx("text-[11px] font-bold uppercase tracking-tight", isEnabled ? "text-text-primary" : "text-text-secondary opacity-60")}>
+                          /{triggerId}
+                        </span>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (sub) {
+                            if (isEnabled) {
+                              await deleteTriggerSubscription(sub.id);
+                            } else {
+                              await saveTriggerSubscription({ ...sub, enabled: true });
+                            }
+                          } else {
+                            await saveTriggerSubscription({
+                              agent_id: agent.id,
+                              trigger_name: triggerId,
+                              prompt_template: "",
+                              enabled: true
+                            });
+                          }
+                          refetchSubscriptions();
+                        }}
+                        className={clsx(
+                          "px-3 py-1 font-bold text-[9px] transition-all border uppercase tracking-widest",
+                          isEnabled
+                            ? "bg-accent/10 border-accent text-accent"
+                            : "bg-surface border-border text-text-tertiary hover:border-text-primary hover:text-text-primary"
+                        )}
+                      >
+                        {isEnabled ? "[ ACTIVE ]" : "[ ATTACH ]"}
+                      </button>
+                    </div>
+                  );
+                })}
+                {(triggersData || []).length === 0 && (
+                  <div className="py-8 text-center text-text-tertiary opacity-30 text-[10px] uppercase font-black tracking-widest">
+                    [ NO_SYSTEM_TRIGGERS_AVAILABLE ]
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-border/20 space-y-4 font-mono">
+            <div className="border border-red-500/30 bg-red-500/5 p-4">
+              <div className="flex items-center justify-between gap-6">
+                <div className="min-w-0">
+                  <h4 className="text-[12px] font-bold text-red-500 flex items-center gap-2 uppercase tracking-[0.2em]">
+                    <Trash2 size={14} />
+                    [!] DANGER_ZONE
+                  </h4>
+                  <p className="text-[11px] text-red-500/80 mt-1 font-medium italic leading-tight tracking-tight">
+                    Permanently delete this agent, its sub-agents, and all history. Action cannot be undone.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const confirmed = await ask("Are you sure you want to delete this agent? This will permanently remove all logs, settings, and ALL SUB-AGENTS created by this agent.", {
+                      title: 'Delete Agent',
+                      kind: 'warning',
+                    });
+                    if (confirmed) {
+                      const parentId = agent.parent_id;
+                      const agentId = agent.id;
+
+                      if (parentId) {
+                        selectAgent(parentId);
+                        navigate(`/agent/${parentId}`, { replace: true });
+                      } else {
+                        selectAgent(null);
+                        navigate('/', { replace: true });
+                      }
+
+                      deleteAgent(agentId);
+                    }
+                  }}
+                  className="px-3 py-1 text-red-500 hover:text-text-primary hover:bg-red-500 border border-red-500/30 text-[10px] font-bold transition-all uppercase shrink-0 font-mono tracking-widest active:scale-95"
+                  title="Permanently delete this agent and all associated data."
+                >
+                  [ DELETE_AGENT ]
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

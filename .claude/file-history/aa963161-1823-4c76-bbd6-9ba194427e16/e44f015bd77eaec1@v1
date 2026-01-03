@@ -1,0 +1,36 @@
+import React from 'react';
+import { Circle } from 'lucide-react';
+
+export type StatusType = 'running' | 'waiting' | 'paused' | 'idle' | 'error' | 'awaiting_approval' | 'awaiting_secret';
+
+interface StatusProps {
+  status: StatusType;
+}
+
+const statusConfig: Record<StatusType, { color: string; label: string }> = {
+  running: { color: '#22c55e', label: 'RUN' },
+  waiting: { color: '#f59e0b', label: 'WAI' },
+  paused: { color: '#6b7280', label: 'PAU' },
+  idle: { color: '#3b82f6', label: 'IDL' },
+  error: { color: '#ef4444', label: 'ERR' },
+  awaiting_approval: { color: '#f59e0b', label: 'APR' },
+  awaiting_secret: { color: '#f59e0b', label: 'SEC' },
+};
+
+export const Status: React.FC<StatusProps> = ({ status }) => {
+  const config = statusConfig[status] || { color: '#6b7280', label: 'UNK' };
+
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: config.color,
+    }}>
+      <Circle size={6} fill={config.color} stroke="none" />
+      {config.label}
+    </span>
+  );
+};

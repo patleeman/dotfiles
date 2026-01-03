@@ -1,0 +1,200 @@
+import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
+import { useQueryClient } from '@tanstack/react-query';
+import { globalWS } from '../lib/websocket';
+
+export interface Notification {
+    id: string;
+    type: 'task_completed' | 'task_failed';
+    task_id: string;
+    agent_id: string;
+    title: string;
+    body: string;
+    timestamp: number;
+    read: boolean;
+}
+
+interface NotificationEvent {
+    type: 'task_completed' | 'task_failed';
+    task_id: string;
+    agent_id: string;
+    title: string;
+    body: string;
+    task_prompt?: string;
+}
+
+interface NotificationContextType {
+    notifications: Notification[];
+    unreadCount: number;
+    addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
+    deleteNotification: (id: string) => void;
+    clearAll: () => void;
+    markAsRead: (id: string) => void;
+    markAllAsRead: () => void;
+    requestPermission: () => Promise<boolean>;
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+
+const STORAGE_KEY = 'pa_notifications';
+
+export function NotificationProvider({ children }: { children: ReactNode }) {
+    const [notifications, setNotifications] = useState<Notification[]>(() => {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return [];
+        try {
+            const parsed = JSON.parse(stored);
+            // Filter out any corrupted notifications (e.g. from ping messages)
+            return Array.isArray(parsed) ? parsed.filter(n => n && n.title && n.body) : [];
+        } catch (e) {
+            console.error('Failed to parse stored notifications:', e);
+            return [];
+        }
+    });
+
+    const permissionGrantedRef = useRef<boolean>(false);
+    const mountedRef = useRef<boolean>(false);
+    const queryClient = useQueryClient();
+
+    // Track recently shown notifications to prevent duplicates
+    const recentNotificationsRef = useRef<Set<string>>(new Set());
+
+    // Use refs for stable access in WebSocket handlers
+    const queryClientRef = useRef(queryClient);
+    queryClientRef.current = queryClient;
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+    }, [notifications]);
+
+    const addNotification = useCallback((data: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+        const newNotification: Notification = {
+            ...data,
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+            read: false,
+        };
+        setNotifications(prev => {
+            const updated = [newNotification, ...prev];
+            // Keep only the last 100 notifications to prevent localStorage bloat
+            return updated.slice(0, 100);
+        });
+        return newNotification;
+    }, []);
+
+    const deleteNotification = useCallback((id: string) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    }, []);
+
+    const clearAll = useCallback(() => {
+        setNotifications([]);
+    }, []);
+
+    const markAsRead = useCallback((id: string) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    }, []);
+
+    const markAllAsRead = useCallback(() => {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }, []);
+
+    const showSystemNotification = async (event: NotificationEvent) => {
+        if (!permissionGrantedRef.current) {
+            return;
+        }
+        try {
+            await sendNotification({
+                title: event.title,
+                body: event.body,
+            });
+        } catch (err) {
+            console.error('Failed to send notification:', err);
+        }
+    };
+
+    const requestNotificationPermission = useCallback(async () => {
+        try {
+            let permissionGranted = await isPermissionGranted();
+
+            if (!permissionGranted) {
+                const permission = await requestPermission();
+                permissionGranted = permission === 'granted';
+            }
+
+            permissionGrantedRef.current = permissionGranted;
+            return permissionGranted;
+        } catch (err) {
+            console.error('Failed to request notification permission:', err);
+            return false;
+        }
+    }, []);
+
+    useEffect(() => {
+        if (mountedRef.current) return;
+        mountedRef.current = true;
+
+        requestNotificationPermission();
+
+        const unsubscribe = globalWS.addMessageListener((data) => {
+            if (data.type === 'task_completed' || data.type === 'task_failed') {
+                const notificationData = data as NotificationEvent;
+
+                // Deduplicate notifications by task_id
+                const notificationKey = `${notificationData.type}-${notificationData.task_id}`;
+                if (recentNotificationsRef.current.has(notificationKey)) {
+                    return;
+                }
+                recentNotificationsRef.current.add(notificationKey);
+                setTimeout(() => {
+                    recentNotificationsRef.current.delete(notificationKey);
+                }, 10000);
+
+                // Add to persistent storage
+                addNotification({
+                    type: notificationData.type,
+                    task_id: notificationData.task_id,
+                    agent_id: notificationData.agent_id,
+                    title: notificationData.title,
+                    body: notificationData.body,
+                });
+
+                // Show system notification
+                showSystemNotification(notificationData);
+
+                // Refresh agents list to show unread indicator
+                queryClientRef.current.invalidateQueries({ queryKey: ['agents'] });
+                queryClientRef.current.invalidateQueries({ queryKey: ['unread-count'] });
+            }
+        });
+
+        return () => {
+            mountedRef.current = false;
+            unsubscribe();
+        };
+    }, [addNotification, requestNotificationPermission]);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    return (
+        <NotificationContext.Provider value={{
+            notifications,
+            unreadCount,
+            addNotification,
+            deleteNotification,
+            clearAll,
+            markAsRead,
+            markAllAsRead,
+            requestPermission: requestNotificationPermission,
+        }}>
+            {children}
+        </NotificationContext.Provider>
+    );
+}
+
+export function useNotifications() {
+    const context = useContext(NotificationContext);
+    if (context === undefined) {
+        throw new Error('useNotifications must be used within a NotificationProvider');
+    }
+    return context;
+}

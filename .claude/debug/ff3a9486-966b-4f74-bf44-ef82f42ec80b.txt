@@ -1,0 +1,145 @@
+2026-01-03T12:23:00.207Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (21.9ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T12:23:00.229Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (21.2ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T12:23:00.247Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude/settings.json, /Users/patrick/workingdir/familiar/.claude/settings.json, /Users/patrick/workingdir/familiar/.claude/settings.local.json...
+2026-01-03T12:23:00.270Z [DEBUG] [LSP MANAGER] initializeLspServerManager() called
+2026-01-03T12:23:00.270Z [DEBUG] [LSP MANAGER] Created manager instance, state=pending
+2026-01-03T12:23:00.270Z [DEBUG] [LSP MANAGER] Starting async initialization (generation 1)
+2026-01-03T12:23:00.271Z [DEBUG] LSP server manager initialized successfully
+2026-01-03T12:23:00.271Z [DEBUG] LSP notification handlers registered successfully for all 0 server(s)
+2026-01-03T12:23:00.274Z [DEBUG] Applying permission update: Adding 1 allow rule(s) to destination 'userSettings': ["/Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/scripts/setup-ralph-loop.sh"]
+2026-01-03T12:23:00.274Z [DEBUG] Applying permission update: Adding 21 allow rule(s) to destination 'localSettings': ["Bash(npm run typecheck:*)","Bash(npm run:*)","Bash(npx tsc:*)","Bash(brew install:*)","Bash(echo:*)","Bash(terminal-notifier:*)","Bash(CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\" terminal-notifier -title \"Claude: $CLAUDE_PROJECT_DIR##*/\" -message 'Claude needs your attention' -activate com.apple.Terminal -sound Glass)","Bash(export CLAUDE_PROJECT_DIR=\"/Users/patrick/workingdir/familiar\")","Bash(bash -c 'terminal-notifier -title \"\"Claude: ${CLAUDE_PROJECT_DIR##*/}\"\" -message \"\"Claude needs your attention\"\" -activate com.apple.Terminal -sound Glass')","Bash(ls:*)","Bash(find:*)","Bash(grep:*)","Bash(make test:*)","Bash(go test:*)","Bash(cat:*)","Bash(make test-backend:*)","Bash(go build:*)","Bash(npm test:*)","Bash(chmod:*)","Bash(npx playwright test:*)","Bash(make test-ui:*)"]
+2026-01-03T12:23:00.280Z [DEBUG] Loading plugin ralph-wiggum from source: "./plugins/ralph-wiggum"
+2026-01-03T12:23:00.288Z [DEBUG] Git remote URL: git@github.com:patleeman/familiar.git
+2026-01-03T12:23:00.288Z [DEBUG] Parsed repository: patleeman/familiar from git@github.com:patleeman/familiar.git
+2026-01-03T12:23:00.288Z [DEBUG] Parsed repository: patleeman/familiar from URL: git@github.com:patleeman/familiar.git
+2026-01-03T12:23:00.288Z [DEBUG] Path /Users/patrick/workingdir/familiar already tracked for repo patleeman/familiar
+2026-01-03T12:23:00.292Z [DEBUG] Using git SHA for ralph-wiggum@claude-plugins-official: 6d3752c000e2
+2026-01-03T12:23:00.293Z [DEBUG] Plugin ralph-wiggum@claude-plugins-official version 6d3752c000e2 already cached at /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T12:23:00.293Z [DEBUG] Copied local plugin ralph-wiggum to versioned cache: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2
+2026-01-03T12:23:00.294Z [DEBUG] Loaded hooks from standard location for plugin ralph-wiggum: /Users/patrick/.claude/plugins/cache/claude-plugins-official/ralph-wiggum/6d3752c000e2/hooks/hooks.json
+2026-01-03T12:23:00.294Z [DEBUG] Found 1 plugins (1 enabled, 0 disabled)
+2026-01-03T12:23:00.304Z [DEBUG] Stats cache is up to date
+2026-01-03T12:23:00.309Z [DEBUG] Loading skills from directories: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T12:23:00.309Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T12:23:00.395Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (84.8ms): ps aux | grep -E "Visual Studio Code|Code Helper|Cursor Helper|Windsurf Helper|IntelliJ IDEA|PyCharm
+2026-01-03T12:23:00.396Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T12:23:00.417Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T12:23:00.417Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T12:23:00.417Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T12:23:00.418Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767442980417-qdwudz.sh
+2026-01-03T12:23:00.418Z [DEBUG] Shell binary exists: true
+2026-01-03T12:23:00.418Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T12:23:00.419Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/ff3a9486-966b-4f74-bf44-ef82f42ec80b-agent-ff3a9486-966b-4f74-bf44-ef82f42ec80b.json.tmp.93862.1767442980419
+2026-01-03T12:23:00.424Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.3ms)
+2026-01-03T12:23:00.424Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T12:23:00.424Z [DEBUG] Renaming /Users/patrick/.claude/todos/ff3a9486-966b-4f74-bf44-ef82f42ec80b-agent-ff3a9486-966b-4f74-bf44-ef82f42ec80b.json.tmp.93862.1767442980419 to /Users/patrick/.claude/todos/ff3a9486-966b-4f74-bf44-ef82f42ec80b-agent-ff3a9486-966b-4f74-bf44-ef82f42ec80b.json
+2026-01-03T12:23:00.424Z [DEBUG] File /Users/patrick/.claude/todos/ff3a9486-966b-4f74-bf44-ef82f42ec80b-agent-ff3a9486-966b-4f74-bf44-ef82f42ec80b.json written atomically
+2026-01-03T12:23:00.429Z [DEBUG] Auto-updating 1 installed marketplaces in background
+2026-01-03T12:23:00.429Z [DEBUG] Auto-updating marketplace "claude-plugins-official"
+2026-01-03T12:23:00.429Z [DEBUG] getPluginSkills: Processing 1 enabled plugins
+2026-01-03T12:23:00.429Z [DEBUG] Checking plugin ralph-wiggum: skillsPath=none, skillsPaths=0 paths
+2026-01-03T12:23:00.429Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T12:23:00.430Z [DEBUG] Loading hooks from plugin: ralph-wiggum
+2026-01-03T12:23:00.430Z [DEBUG] Registered 1 hooks from 1 plugins
+2026-01-03T12:23:00.434Z [DEBUG] Loaded 0 unique skills (managed: 0, user: 0, project: 0, duplicates removed: 0)
+2026-01-03T12:23:00.434Z [DEBUG] Loaded 3 commands from plugin ralph-wiggum default directory
+2026-01-03T12:23:00.434Z [DEBUG] Total plugin commands loaded: 3
+2026-01-03T12:23:00.435Z [DEBUG] getSkills returning: 0 skill dir commands, 0 plugin skills
+2026-01-03T12:23:00.436Z [DEBUG] Total plugin agents loaded: 0
+2026-01-03T12:23:00.514Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/Users/patrick/Library/Application Support/Zed/external_agents/claude-code-acp/0.12.6/node_modules/@anthropic-ai/claude-agent-sdk/vendor/ripgrep/arm64-darwin/rg)
+2026-01-03T12:23:00.525Z [DEBUG] Protecting locked version from cleanup: 2.0.67
+2026-01-03T12:23:00.527Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T12:23:00.533Z [DEBUG] All plugins already exist, skipping migration
+2026-01-03T12:23:00.533Z [DEBUG] Initialized versioned plugins system with 1 plugins
+2026-01-03T12:23:00.540Z [DEBUG] Skills and commands included in Skill tool:
+2026-01-03T12:23:00.540Z [DEBUG] Slash commands included in SlashCommand tool: /commit-and-push, /ralph-wiggum:cancel-ralph, /ralph-wiggum:help, /ralph-wiggum:ralph-loop
+2026-01-03T12:23:00.543Z [DEBUG] Getting matching hook commands for SubagentStart with query: Explore
+2026-01-03T12:23:00.543Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:23:00.543Z [DEBUG] Matched 0 unique hooks for query "Explore" (0 before deduplication)
+2026-01-03T12:23:00.545Z [DEBUG] Getting matching hook commands for SubagentStart with query: Plan
+2026-01-03T12:23:00.545Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:23:00.545Z [DEBUG] Matched 0 unique hooks for query "Plan" (0 before deduplication)
+2026-01-03T12:23:00.563Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.5ms)
+2026-01-03T12:23:00.589Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.93862.1767442980589
+2026-01-03T12:23:00.589Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T12:23:00.594Z [DEBUG] Temp file written successfully, size: 59184 bytes
+2026-01-03T12:23:00.594Z [DEBUG] Applied original permissions to temp file
+2026-01-03T12:23:00.594Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.93862.1767442980589 to /Users/patrick/.claude.json
+2026-01-03T12:23:00.594Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T12:23:00.832Z [DEBUG] Shell snapshot created successfully (42730 bytes)
+2026-01-03T12:23:00.960Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (6.4ms)
+2026-01-03T12:23:00.960Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T12:23:00.960Z [DEBUG] Successfully auto-updated marketplace "claude-plugins-official"
+2026-01-03T12:23:01.116Z [DEBUG] Getting matching hook commands for SessionStart with query: startup
+2026-01-03T12:23:01.116Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:23:01.116Z [DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+2026-01-03T12:23:01.137Z [DEBUG] Total plugin output styles loaded: 0
+2026-01-03T12:23:01.452Z [DEBUG] Stream started - received first chunk
+2026-01-03T12:23:04.029Z [DEBUG] Stream started - received first chunk
+2026-01-03T12:23:04.515Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T12:23:04.515Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:23:04.515Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T12:24:00.097Z [DEBUG] Getting matching hook commands for SubagentStop with query: undefined
+2026-01-03T12:24:00.097Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:24:00.097Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T12:27:23.936Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T12:27:23.936Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T12:27:23.936Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T12:27:23.936Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T12:27:23.937Z [DEBUG] Getting matching hook commands for UserPromptSubmit with query: undefined
+2026-01-03T12:27:23.937Z [DEBUG] Found 0 hook matchers in settings
+2026-01-03T12:27:23.937Z [DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+2026-01-03T12:27:27.808Z [DEBUG] Stream started - received first chunk
+2026-01-03T12:27:30.141Z [DEBUG] executePreToolHooks called for tool: mcp__acp__Read
+2026-01-03T12:27:30.141Z [DEBUG] executePreToolHooks called for tool: Glob
+2026-01-03T12:27:30.142Z [DEBUG] Getting matching hook commands for PreToolUse with query: mcp__acp__Read
+2026-01-03T12:27:30.142Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:30.142Z [DEBUG] Matched 1 unique hooks for query "mcp__acp__Read" (1 before deduplication)
+2026-01-03T12:27:30.142Z [DEBUG] Getting matching hook commands for PreToolUse with query: Glob
+2026-01-03T12:27:30.142Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:30.142Z [DEBUG] Matched 1 unique hooks for query "Glob" (1 before deduplication)
+2026-01-03T12:27:30.151Z [DEBUG] MCP server "acp": Calling MCP tool: Read
+2026-01-03T12:27:30.159Z [DEBUG] MCP server "acp": Tool 'Read' completed successfully in 8ms
+2026-01-03T12:27:30.160Z [DEBUG] Getting matching hook commands for PostToolUse with query: mcp__acp__Read
+2026-01-03T12:27:30.160Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:30.160Z [DEBUG] Matched 1 unique hooks for query "mcp__acp__Read" (1 before deduplication)
+2026-01-03T12:27:30.443Z [DEBUG] Getting matching hook commands for PostToolUse with query: Glob
+2026-01-03T12:27:30.443Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:30.443Z [DEBUG] Matched 1 unique hooks for query "Glob" (1 before deduplication)
+2026-01-03T12:27:30.457Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T12:27:30.457Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T12:27:30.457Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T12:27:30.457Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T12:27:34.348Z [DEBUG] Stream started - received first chunk
+2026-01-03T12:27:35.963Z [DEBUG] executePreToolHooks called for tool: mcp__acp__Read
+2026-01-03T12:27:35.963Z [DEBUG] executePreToolHooks called for tool: mcp__acp__Read
+2026-01-03T12:27:35.963Z [DEBUG] Getting matching hook commands for PreToolUse with query: mcp__acp__Read
+2026-01-03T12:27:35.963Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:35.963Z [DEBUG] Matched 1 unique hooks for query "mcp__acp__Read" (1 before deduplication)
+2026-01-03T12:27:35.963Z [DEBUG] Getting matching hook commands for PreToolUse with query: mcp__acp__Read
+2026-01-03T12:27:35.963Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:35.963Z [DEBUG] Matched 1 unique hooks for query "mcp__acp__Read" (1 before deduplication)
+2026-01-03T12:27:35.968Z [DEBUG] MCP server "acp": Calling MCP tool: Read
+2026-01-03T12:27:35.969Z [DEBUG] MCP server "acp": Tool 'Read' completed successfully in 1ms
+2026-01-03T12:27:35.970Z [DEBUG] Getting matching hook commands for PostToolUse with query: mcp__acp__Read
+2026-01-03T12:27:35.970Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:35.970Z [DEBUG] Matched 1 unique hooks for query "mcp__acp__Read" (1 before deduplication)
+2026-01-03T12:27:35.973Z [DEBUG] MCP server "acp": Calling MCP tool: Read
+2026-01-03T12:27:35.974Z [DEBUG] MCP server "acp": Tool 'Read' completed successfully in 1ms
+2026-01-03T12:27:35.975Z [DEBUG] Getting matching hook commands for PostToolUse with query: mcp__acp__Read
+2026-01-03T12:27:35.975Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:35.975Z [DEBUG] Matched 1 unique hooks for query "mcp__acp__Read" (1 before deduplication)
+2026-01-03T12:27:36.003Z [DEBUG] LSP Diagnostics: getLSPDiagnosticAttachments called
+2026-01-03T12:27:36.003Z [DEBUG] LSP Diagnostics: Checking registry - 0 pending
+2026-01-03T12:27:36.003Z [DEBUG] Hooks: Found 0 total hooks in registry
+2026-01-03T12:27:36.003Z [DEBUG] Hooks: checkForNewResponses returning 0 responses
+2026-01-03T12:27:40.191Z [DEBUG] Stream started - received first chunk
+2026-01-03T12:27:46.431Z [DEBUG] Getting matching hook commands for Stop with query: undefined
+2026-01-03T12:27:46.431Z [DEBUG] Found 1 hook matchers in settings
+2026-01-03T12:27:46.431Z [DEBUG] Matched 1 unique hooks for query "no match query" (1 before deduplication)
+2026-01-03T12:39:28.610Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:44:14.091Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:47:29.876Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:47:34.351Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:47:40.052Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json
+2026-01-03T12:50:27.109Z [DEBUG] Detected change to /Users/patrick/.claude/settings.json

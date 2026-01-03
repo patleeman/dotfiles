@@ -1,0 +1,265 @@
+> familiar-ui@0.1.0 test:e2e
+> playwright test
+
+Starting backend server...
+[backend] 2026/01/03 06:50:59 INFO Found assets directory path=/Users/patrick/workingdir/familiar/assets
+
+[backend] time=2026-01-03T06:50:59.299-05:00 level=INFO msg="Backend boot starting"
+
+[backend] time=2026-01-03T06:50:59.302-05:00 level=INFO msg="Database initialized" duration=2.217ms
+
+[backend] time=2026-01-03T06:50:59.302-05:00 level=INFO msg="Bootstrap phase completed" duration=55.417µs
+
+[backend] time=2026-01-03T06:50:59.303-05:00 level=INFO msg="Scheduler started"
+
+[backend] time=2026-01-03T06:50:59.303-05:00 level=INFO msg="Scheduler started"
+
+[backend] [GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+
+[backend] [GIN-debug] GET    /health                   --> main.main.func5 (4 handlers)
+[GIN-debug] GET    /api/health               --> main.main.func6 (4 handlers)
+[GIN-debug] GET    /api/ws                   --> main.(*Server).handleGlobalWebSocket-fm (4 handlers)
+
+[backend] time=2026-01-03T06:50:59.303-05:00 level=INFO msg="Server starting" port=18080 total_boot_duration=3.523458ms
+
+[backend] time=2026-01-03T06:50:59.404-05:00 level=INFO msg="Event recovery completed" duration=1.1295ms
+
+[backend] time=2026-01-03T06:50:59.405-05:00 level=INFO msg="Run recovery completed" duration=411.375µs
+
+[backend] [GIN] 2026/01/03 - 06:50:59 | 200 |      54.167µs |             ::1 | GET      "/api/health"
+
+Backend server ready
+
+Running 112 tests using 6 workers
+
+[1A[2K[1/112] [chromium] › e2e/agent.spec.ts:14:3 › Agent Management › should create a new agent
+[1A[2K[2/112] [chromium] › e2e/agent.spec.ts:30:3 › Agent Management › should select an agent from the list
+[1A[2K[3/112] [chromium] › e2e/agent.spec.ts:47:3 › Agent Management › should open context menu on right-click
+[1A[2K[4/112] [chromium] › e2e/agent.spec.ts:66:3 › Agent Management › should rename an agent via context menu
+[1A[2K[5/112] [chromium] › e2e/agent.spec.ts:92:3 › Agent Management › should delete an agent
+[1A[2K[6/112] [chromium] › e2e/agent.spec.ts:8:3 › Agent Management › should display the agent dashboard
+[backend] time=2026-01-03T06:51:00.863-05:00 level=DEBUG msg="WS Request received" type=get_status
+time=2026-01-03T06:51:00.863-05:00 level=DEBUG msg="WS Request received" type=get_status
+
+[backend] time=2026-01-03T06:51:00.886-05:00 level=DEBUG msg="WS Request received" type=get_status
+time=2026-01-03T06:51:00.886-05:00 level=DEBUG msg="WS Request received" type=get_status
+
+[backend] time=2026-01-03T06:51:00.897-05:00 level=DEBUG msg="WS Request received" type=get_config
+
+[backend] time=2026-01-03T06:51:00.898-05:00 level=INFO msg="Loaded model metadata cache from disk" count=353 models_with_pricing=316 last_fetch=2026-01-03T06:49:50.641-05:00
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5 baseModel=openai/gpt-5 cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5 baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Direct match found but pricing is zero" baseModel=mistralai/devstral-2512:free
+
+[backend] time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="No pricing found, cache sample keys" baseModel=mistralai/devstral-2512:free sample_keys="[google/gemma-3n-e2b-it:free x-ai/grok-3-beta qwen/qwen-2.5-7b-instruct minimax/minimax-m1 nousresearch/hermes-3-llama-3.1-405b]"
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="No pricing found for model" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini cache_size=353
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:00.898-05:00 level=INFO msg="OpenRouter pricing lookup" total_models=11 pricing_found=true pricing_map_size=10
+time=2026-01-03T06:51:00.898-05:00 level=DEBUG msg="WS Request received" type=get_api_keys
+
+[backend] time=2026-01-03T06:51:00.900-05:00 level=DEBUG msg="WS Request received" type=get_status
+time=2026-01-03T06:51:00.900-05:00 level=DEBUG msg="WS Request received" type=get_status
+
+[backend] time=2026-01-03T06:51:00.925-05:00 level=DEBUG msg="WS Request received" type=get_config
+
+[backend] time=2026-01-03T06:51:00.928-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 cache_size=353
+
+[backend] time=2026-01-03T06:51:00.930-05:00 level=DEBUG msg="WS Request received" type=get_config
+
+[backend] time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5 baseModel=openai/gpt-5 cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5 baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Direct match found but pricing is zero" baseModel=mistralai/devstral-2512:free
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="No pricing found, cache sample keys" baseModel=mistralai/devstral-2512:free sample_keys="[openai/gpt-4o-2024-05-13 qwen/qwen3-30b-a3b-instruct-2507 openai/gpt-5.2-chat nousresearch/deephermes-3-mistral-24b-preview baidu/ernie-4.5-vl-28b-a3b]"
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="No pricing found for model" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini cache_size=353
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:00.931-05:00 level=INFO msg="OpenRouter pricing lookup" total_models=11 pricing_found=true pricing_map_size=10
+time=2026-01-03T06:51:00.931-05:00 level=DEBUG msg="WS Request received" type=get_api_keys
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5 baseModel=openai/gpt-5 cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5 baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Found pricing for model" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="GetModelPricing lookup" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free cache_size=353
+time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="Direct match found but pricing is zero" baseModel=mistralai/devstral-2512:free
+
+[backend] time=2026-01-03T06:51:00.932-05:00 level=DEBUG msg="No pricing found, cache sample keys" baseModel=mistralai/devstral-2512:free sample_keys="[openai/o4-mini-high openai/o3-mini-high z-ai/glm-4.6:exacto nousresearch/hermes-4-70b qwen/qwen2.5-vl-72b-instruct]"
+time=2026-01-03T06:51:00.933-05:00 level=DEBUG msg="No pricing found for model" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free
+time=2026-01-03T06:51:00.933-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini cache_size=353
+time=2026-01-03T06:51:00.933-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:00.933-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:00.933-05:00 level=INFO msg="OpenRouter pricing lookup" total_models=11 pricing_found=true pricing_map_size=10
+time=2026-01-03T06:51:00.933-05:00 level=DEBUG msg="WS Request received" type=get_api_keys
+
+[backend] time=2026-01-03T06:51:01.006-05:00 level=DEBUG msg="WS Request received" type=get_status
+
+[backend] time=2026-01-03T06:51:01.007-05:00 level=DEBUG msg="WS Request received" type=get_status
+
+[backend] time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="WS Request received" type=get_config
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5 baseModel=openai/gpt-5 cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5 baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 prompt=0.3 completion=1.2
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+
+[backend] time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=z-ai/glm-4.7 baseModel=z-ai/glm-4.7 prompt=0.39999999999999997 completion=1.5
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=qwen/qwen3-vl-30b-a3b-thinking baseModel=qwen/qwen3-vl-30b-a3b-thinking prompt=0.19999999999999998 completion=1
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=x-ai/grok-code-fast-1 baseModel=x-ai/grok-code-fast-1 prompt=0.19999999999999998 completion=1.5
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=deepseek/deepseek-v3.2 baseModel=deepseek/deepseek-v3.2 prompt=0.25 completion=0.38
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Direct match found but pricing is zero" baseModel=mistralai/devstral-2512:free
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="No pricing found, cache sample keys" baseModel=mistralai/devstral-2512:free sample_keys="[alpindale/goliath-120b meta-llama/llama-3.3-70b-instruct openai/gpt-5.1 anthropic/claude-3.5-sonnet google/gemma-3-12b-it:free]"
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="No pricing found for model" model=mistralai/devstral-2512:free baseModel=mistralai/devstral-2512:free
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini cache_size=353
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:01.040-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-4o-mini baseModel=openai/gpt-4o-mini prompt=0.15 completion=0.6
+time=2026-01-03T06:51:01.040-05:00 level=INFO msg="OpenRouter pricing lookup" total_models=11 pricing_found=true pricing_map_size=10
+
+[backend] time=2026-01-03T06:51:01.041-05:00 level=DEBUG msg="WS Request received" type=get_api_keys
+
+[backend] time=2026-01-03T06:51:01.063-05:00 level=DEBUG msg="WS Request received" type=get_status
+time=2026-01-03T06:51:01.063-05:00 level=DEBUG msg="WS Request received" type=get_status
+
+[backend] time=2026-01-03T06:51:01.065-05:00 level=DEBUG msg="WS Request received" type=list_agents
+
+[backend] time=2026-01-03T06:51:01.066-05:00 level=DEBUG msg="WS Request received" type=list_tasks
+time=2026-01-03T06:51:01.066-05:00 level=DEBUG msg="WS Request received" type=list_agents
+time=2026-01-03T06:51:01.066-05:00 level=DEBUG msg="WS Request received" type=list_tasks
+time=2026-01-03T06:51:01.067-05:00 level=DEBUG msg="WS Request received" type=create_agent
+
+[backend] time=2026-01-03T06:51:01.082-05:00 level=DEBUG msg="WS Request received" type=list_agents
+
+[backend] time=2026-01-03T06:51:01.083-05:00 level=DEBUG msg="WS Request received" type=list_tasks
+time=2026-01-03T06:51:01.083-05:00 level=DEBUG msg="WS Request received" type=list_agents
+
+[backend] time=2026-01-03T06:51:01.084-05:00 level=DEBUG msg="WS Request received" type=list_agents
+
+[backend] time=2026-01-03T06:51:01.086-05:00 level=DEBUG msg="WS Request received" type=list_tasks
+time=2026-01-03T06:51:01.087-05:00 level=DEBUG msg="WS Request received" type=list_agents
+
+[backend] time=2026-01-03T06:51:01.089-05:00 level=DEBUG msg="WS Request received" type=list_tasks
+time=2026-01-03T06:51:01.089-05:00 level=DEBUG msg="WS Request received" type=create_agent
+
+[backend] time=2026-01-03T06:51:01.091-05:00 level=DEBUG msg="WS Request received" type=list_tasks
+time=2026-01-03T06:51:01.091-05:00 level=DEBUG msg="WS Request received" type=create_agent
+
+[backend] time=2026-01-03T06:51:01.099-05:00 level=DEBUG msg="WS Request received" type=get_status
+time=2026-01-03T06:51:01.100-05:00 level=DEBUG msg="WS Request received" type=get_config
+
+[backend] time=2026-01-03T06:51:01.101-05:00 level=DEBUG msg="WS Request received" type=get_status
+
+[backend] time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 cache_size=353
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-haiku-4.5 baseModel=anthropic/claude-haiku-4.5 prompt=1 completion=5
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini cache_size=353
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5-mini baseModel=openai/gpt-5-mini prompt=0.25 completion=2
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="GetModelPricing lookup" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 cache_size=353
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing for model" model=anthropic/claude-sonnet-4.5 baseModel=anthropic/claude-sonnet-4.5 prompt=3 completion=15
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="GetModelPricing lookup" model=openai/gpt-5 baseModel=openai/gpt-5 cache_size=353
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing for model" model=openai/gpt-5 baseModel=openai/gpt-5 prompt=1.25 completion=10
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="GetModelPricing lookup" model=minimax/minimax-m2.1 baseModel=minimax/minimax-m2.1 cache_size=353
+time=2026-01-03T06:51:01.104-05:00 level=DEBUG msg="Found pricing via direct match" baseModel=minimax/minimax-m2.1 prompt=0.3 completio
+
+... [9397 lines truncated] ...

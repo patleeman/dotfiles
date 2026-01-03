@@ -1,0 +1,19 @@
+     1→export default async function globalTeardown() {
+     2→  const pid = process.env.BACKEND_PID;
+     3→
+     4→  if (pid) {
+     5→    console.log(`Stopping backend server (PID: ${pid})...`);
+     6→    try {
+     7→      // Kill the process group to ensure all child processes are terminated
+     8→      process.kill(-Number(pid), 'SIGTERM');
+     9→    } catch (error) {
+    10→      // Process might already be dead
+    11→      console.log('Backend server already stopped or could not be stopped');
+    12→    }
+    13→  }
+    14→}
+    15→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

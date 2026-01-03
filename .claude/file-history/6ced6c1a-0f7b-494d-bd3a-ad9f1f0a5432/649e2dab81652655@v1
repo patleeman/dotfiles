@@ -1,0 +1,360 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { isHotkey } from './hotkeys';
+
+// Helper to create a mock keyboard event
+function createKeyboardEvent(
+  key: string,
+  options: {
+    metaKey?: boolean;
+    ctrlKey?: boolean;
+    shiftKey?: boolean;
+    altKey?: boolean;
+  } = {}
+): KeyboardEvent {
+  return {
+    key,
+    metaKey: options.metaKey ?? false,
+    ctrlKey: options.ctrlKey ?? false,
+    shiftKey: options.shiftKey ?? false,
+    altKey: options.altKey ?? false,
+  } as KeyboardEvent;
+}
+
+// Mock navigator.platform
+const originalPlatform = navigator.platform;
+
+describe('isHotkey', () => {
+  beforeEach(() => {
+    // Reset navigator.platform mock
+    Object.defineProperty(navigator, 'platform', {
+      writable: true,
+      value: originalPlatform,
+    });
+  });
+
+  describe('empty/invalid hotkey strings', () => {
+    it('returns false for empty string', () => {
+      const event = createKeyboardEvent('a');
+      expect(isHotkey(event, '')).toBe(false);
+    });
+
+    it('returns false for null/undefined hotkey', () => {
+      const event = createKeyboardEvent('a');
+      expect(isHotkey(event, null as any)).toBe(false);
+      expect(isHotkey(event, undefined as any)).toBe(false);
+    });
+  });
+
+  describe('simple key presses', () => {
+    it('matches single key', () => {
+      const event = createKeyboardEvent('a');
+      expect(isHotkey(event, 'a')).toBe(true);
+    });
+
+    it('matches uppercase key', () => {
+      const event = createKeyboardEvent('A');
+      expect(isHotkey(event, 'a')).toBe(true);
+    });
+
+    it('matches space key', () => {
+      const event = createKeyboardEvent(' ');
+      expect(isHotkey(event, 'SPACE')).toBe(true);
+    });
+
+    it('does not match different key', () => {
+      const event = createKeyboardEvent('a');
+      expect(isHotkey(event, 'b')).toBe(false);
+    });
+  });
+
+  describe('Cmd modifier (Mac)', () => {
+    beforeEach(() => {
+      Object.defineProperty(navigator, 'platform', {
+        writable: true,
+        value: 'MacIntel',
+      });
+    });
+
+    it('matches Cmd+key on Mac', () => {
+      const event = createKeyboardEvent('n', { metaKey: true });
+      expect(isHotkey(event, 'Cmd+N')).toBe(true);
+    });
+
+    it('does not match Cmd+key without metaKey on Mac', () => {
+      const event = createKeyboardEvent('n');
+      expect(isHotkey(event, 'Cmd+N')).toBe(false);
+    });
+
+    it('does not match key with extra metaKey when Cmd not specified', () => {
+      const event = createKeyboardEvent('n', { metaKey: true });
+      expect(isHotkey(event, 'N')).toBe(false);
+    });
+  });
+
+  describe('Cmd modifier (non-Mac)', () => {
+    beforeEach(() => {
+      Object.defineProperty(navigator, 'platform', {
+        writable: true,
+        value: 'Win32',
+      });
+    });
+
+    it('matches Cmd+key with ctrlKey on non-Mac', () => {
+      const event = createKeyboardEvent('n', { ctrlKey: true });
+      expect(isHotkey(event, 'Cmd+N')).toBe(true);
+    });
+
+    it('does not match Cmd+key without ctrlKey on non-Mac', () => {
+      const event = createKeyboardEvent('n');
+      expect(isHotkey(event, 'Cmd+N')).toBe(false);
+    });
+  });
+
+  describe('Ctrl modifier', () => {
+    it('matches Ctrl+key', () => {
+      const event = createKeyboardEvent('c', { ctrlKey: true });
+      expect(isHotkey(event, 'Ctrl+C')).toBe(true);
+    });
+
+    it('does not match Ctrl+key without ctrlKey', () => {
+      const event = createKeyboardEvent('c');
+      expect(isHotkey(event, 'Ctrl+C')).toBe(false);
+    });
+
+    it('does not match key with extra ctrlKey when Ctrl not specified', () => {
+      const event = createKeyboardEvent('c', { ctrlKey: true });
+      expect(isHotkey(event, 'C')).toBe(false);
+    });
+  });
+
+  describe('Shift modifier', () => {
+    it('matches Shift+key', () => {
+      const event = createKeyboardEvent('A', { shiftKey: true });
+      expect(isHotkey(event, 'Shift+A')).toBe(true);
+    });
+
+    it('does not match Shift+key without shiftKey', () => {
+      const event = createKeyboardEvent('a');
+      expect(isHotkey(event, 'Shift+A')).toBe(false);
+    });
+
+    it('does not match key with extra shiftKey when Shift not specified', () => {
+      const event = createKeyboardEvent('a', { shiftKey: true });
+      expect(isHotkey(event, 'A')).toBe(false);
+    });
+  });
+
+  describe('Alt modifier', () => {
+    it('matches Alt+key', () => {
+      const event = createKeyboardEvent('f', { altKey: true });
+      expect(isHotkey(event, 'Alt+F')).toBe(true);
+    });
+
+    it('does not match Alt+key without altKey', () => {
+      const event = createKeyboardEvent('f');
+      expect(isHotkey(event, 'Alt+F')).toBe(false);
+    });
+
+    it('does not match key with extra altKey when Alt not specified', () => {
+      const event = createKeyboardEvent('f', { altKey: true });
+      expect(isHotkey(event, 'F')).toBe(false);
+    });
+  });
+
+  describe('multiple modifiers', () => {
+    it('matches Cmd+Shift+key', () => {
+      const event = createKeyboardEvent('c', { metaKey: true, shiftKey: true });
+      expect(isHotkey(event, 'Cmd+Shift+C')).toBe(true);
+    });
+
+    it('matches Ctrl+Alt+key', () => {
+      const event = createKeyboardEvent('x', { ctrlKey: true, altKey: true });
+      expect(isHotkey(event, 'Ctrl+Alt+X')).toBe(true);
+    });
+
+    it('does not match if one modifier is missing', () => {
+      const event = createKeyboardEvent('c', { metaKey: true });
+      expect(isHotkey(event, 'Cmd+Shift+C')).toBe(false);
+    });
+
+    it('does not match if extra modifier is pressed', () => {
+      const event = createKeyboardEvent('c', { metaKey: true, shiftKey: true, altKey: true });
+      expect(isHotkey(event, 'Cmd+Shift+C')).toBe(false);
+    });
+  });
+
+  describe('plus key handling', () => {
+    it('matches standalone plus key', () => {
+      const event = createKeyboardEvent('+');
+      expect(isHotkey(event, '+')).toBe(true);
+    });
+
+    it('matches plus key with modifiers ending in ++', () => {
+      const event = createKeyboardEvent('+', { metaKey: true });
+      expect(isHotkey(event, 'Cmd++')).toBe(true);
+    });
+
+    it('matches plus key with multiple modifiers ending in ++', () => {
+      const event = createKeyboardEvent('+', { metaKey: true, shiftKey: true });
+      expect(isHotkey(event, 'Cmd+Shift++')).toBe(true);
+    });
+
+    it('does not match plus key without modifiers when modifiers specified', () => {
+      const event = createKeyboardEvent('+');
+      expect(isHotkey(event, 'Cmd++')).toBe(false);
+    });
+  });
+
+  describe('special keys', () => {
+    it('matches Escape key', () => {
+      const event = createKeyboardEvent('Escape');
+      expect(isHotkey(event, 'Escape')).toBe(true);
+    });
+
+    it('matches Enter key', () => {
+      const event = createKeyboardEvent('Enter');
+      expect(isHotkey(event, 'Enter')).toBe(true);
+    });
+
+    it('matches Arrow keys', () => {
+      const event = createKeyboardEvent('ArrowUp');
+      expect(isHotkey(event, 'ArrowUp')).toBe(true);
+    });
+
+    it('matches function keys', () => {
+      const event = createKeyboardEvent('F1');
+      expect(isHotkey(event, 'F1')).toBe(true);
+    });
+  });
+
+  describe('case insensitivity', () => {
+    beforeEach(() => {
+      // Simulate Mac platform for consistent Cmd behavior
+      Object.defineProperty(navigator, 'platform', {
+        writable: true,
+        value: 'MacIntel',
+      });
+    });
+
+    it('matches regardless of hotkey string case', () => {
+      const event = createKeyboardEvent('n', { metaKey: true });
+      expect(isHotkey(event, 'cmd+n')).toBe(true);
+      expect(isHotkey(event, 'CMD+N')).toBe(true);
+      expect(isHotkey(event, 'Cmd+n')).toBe(true);
+    });
+
+    it('matches regardless of event key case', () => {
+      const event1 = createKeyboardEvent('n', { metaKey: true });
+      const event2 = createKeyboardEvent('N', { metaKey: true });
+      expect(isHotkey(event1, 'Cmd+N')).toBe(true);
+      expect(isHotkey(event2, 'Cmd+N')).toBe(true);
+    });
+  });
+
+  describe('edge cases', () => {
+    beforeEach(() => {
+      // Simulate Mac platform for consistent Cmd behavior
+      Object.defineProperty(navigator, 'platform', {
+        writable: true,
+        value: 'MacIntel',
+      });
+    });
+
+    it('handles hotkey with only modifiers', () => {
+      const event = createKeyboardEvent('', { metaKey: true });
+      // This should fail because no target key is specified
+      expect(isHotkey(event, 'Cmd+')).toBe(false);
+    });
+
+    it('handles multiple plus signs in hotkey', () => {
+      const event = createKeyboardEvent('+', { metaKey: true });
+      expect(isHotkey(event, 'Cmd++')).toBe(true);
+    });
+
+    it('handles empty modifiers array', () => {
+      const event = createKeyboardEvent('a');
+      expect(isHotkey(event, 'A')).toBe(true);
+    });
+  });
+
+  describe('real-world hotkey examples', () => {
+    beforeEach(() => {
+      Object.defineProperty(navigator, 'platform', {
+        writable: true,
+        value: 'MacIntel',
+      });
+    });
+
+    it('matches Cmd+N (new agent)', () => {
+      const event = createKeyboardEvent('n', { metaKey: true });
+      expect(isHotkey(event, 'Cmd+N')).toBe(true);
+    });
+
+    it('matches Cmd+L (focus input)', () => {
+      const event = createKeyboardEvent('l', { metaKey: true });
+      expect(isHotkey(event, 'Cmd+L')).toBe(true);
+    });
+
+    it('matches Cmd+Shift+C (compact)', () => {
+      const event = createKeyboardEvent('c', { metaKey: true, shiftKey: true });
+      expect(isHotkey(event, 'Cmd+Shift+C')).toBe(true);
+    });
+
+    it('matches Escape (global back)', () => {
+      const event = createKeyboardEvent('Escape');
+      expect(isHotkey(event, 'Escape')).toBe(true);
+    });
+
+    it('matches Cmd+K (toggle unibar)', () => {
+      const event = createKeyboardEvent('k', { metaKey: true });
+      expect(isHotkey(event, 'Cmd+K')).toBe(true);
+    });
+  });
+
+  describe('non-matching scenarios', () => {
+    it('does not match when key is different', () => {
+      const event = createKeyboardEvent('a', { metaKey: true });
+      expect(isHotkey(event, 'Cmd+B')).toBe(false);
+    });
+
+    it('does not match when modifier is different', () => {
+      const event = createKeyboardEvent('c', { metaKey: true });
+      expect(isHotkey(event, 'Ctrl+C')).toBe(false);
+    });
+
+    it('does not match when modifier count differs', () => {
+      const event = createKeyboardEvent('c', { metaKey: true });
+      expect(isHotkey(event, 'Cmd+Shift+C')).toBe(false);
+    });
+
+    it('does not match when extra modifier is present', () => {
+      const event = createKeyboardEvent('c', { metaKey: true, shiftKey: true, altKey: true });
+      expect(isHotkey(event, 'Cmd+Shift+C')).toBe(false);
+    });
+  });
+
+  describe('React keyboard events', () => {
+    it('works with React.KeyboardEvent', () => {
+      const reactEvent = {
+        key: 'n',
+        metaKey: true,
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+      } as React.KeyboardEvent;
+
+      Object.defineProperty(navigator, 'platform', {
+        writable: true,
+        value: 'MacIntel',
+      });
+
+      expect(isHotkey(reactEvent, 'Cmd+N')).toBe(true);
+    });
+  });
+});
+
+
+
+
+
+

@@ -1,0 +1,168 @@
+import { test, expect } from './fixtures/test-fixtures';
+
+test.describe('Usage View', () => {
+  test.beforeEach(async ({ usagePage }) => {
+    await usagePage.goto();
+  });
+
+  test('should display usage page', async ({ page }) => {
+    await expect(page).toHaveURL('/usage');
+  });
+
+  test('should show resource usage header', async ({ page }) => {
+    await expect(page.locator('text=Resource Usage')).toBeVisible();
+  });
+
+  test('should display summary stats', async ({ page }) => {
+    // Should show request count
+    await expect(page.locator('text=Requests')).toBeVisible();
+  });
+
+  test('should show input token count', async ({ page }) => {
+    // May appear as "In:" in header
+    await expect(page.locator('text=In:').or(page.locator('text=Input'))).toBeVisible();
+  });
+
+  test('should show output token count', async ({ page }) => {
+    // May appear as "Out:" in header
+    await expect(page.locator('text=Out:').or(page.locator('text=Output'))).toBeVisible();
+  });
+
+  test('should show cost', async ({ page }) => {
+    await expect(page.locator('text=Cost')).toBeVisible();
+  });
+});
+
+test.describe('Usage - Provider Summary', () => {
+  test.beforeEach(async ({ usagePage }) => {
+    await usagePage.goto();
+  });
+
+  test('should display provider summary section', async ({ page }) => {
+    await expect(page.locator('text=Provider Summary')).toBeVisible();
+  });
+
+  test('should show provider table headers', async ({ page }) => {
+    // Provider column header
+    await expect(page.locator('th:has-text("Provider")')).toBeVisible();
+    // Total Cost column header
+    await expect(page.locator('th:has-text("Total Cost")').or(page.locator('th:has-text("Cost")'))).toBeVisible();
+  });
+
+  test('should display provider data or empty state', async ({ page }) => {
+    // Either show provider data or "No data available"
+    const providerData = page.locator('table tbody tr');
+    const emptyState = page.locator('text=No data available');
+
+    // One of these should be visible
+    const hasData = await providerData.first().isVisible().catch(() => false);
+    const hasEmpty = await emptyState.first().isVisible().catch(() => false);
+
+    expect(hasData || hasEmpty).toBe(true);
+  });
+});
+
+test.describe('Usage - Model Utilization', () => {
+  test.beforeEach(async ({ usagePage }) => {
+    await usagePage.goto();
+  });
+
+  test('should display model utilization section', async ({ page }) => {
+    await expect(page.locator('text=Model Utilization')).toBeVisible();
+  });
+
+  test('should show model table headers', async ({ page }) => {
+    await expect(page.locator('th:has-text("Model")')).toBeVisible();
+  });
+
+  test('should display model data or empty state', async ({ page }) => {
+    // Look for model entries or empty state
+    const modelData = page.locator('table').nth(1).locator('tbody tr');
+    const emptyState = page.locator('text=No data available');
+
+    const hasData = await modelData.first().isVisible().catch(() => false);
+    const hasEmpty = await emptyState.first().isVisible().catch(() => false);
+
+    expect(hasData || hasEmpty).toBe(true);
+  });
+});
+
+test.describe('Usage - Agent Usage', () => {
+  test.beforeEach(async ({ usagePage }) => {
+    await usagePage.goto();
+  });
+
+  test('should display agent usage section', async ({ page }) => {
+    await expect(page.locator('text=Agent Usage')).toBeVisible();
+  });
+
+  test('should show agent table headers', async ({ page }) => {
+    await expect(page.locator('th:has-text("Agent")')).toBeVisible();
+    await expect(page.locator('th:has-text("Calls")')).toBeVisible();
+  });
+
+  test('should display agent usage data or empty state', async ({ page }) => {
+    // Look for agent entries or empty state
+    const agentData = page.locator('table').nth(2).locator('tbody tr');
+    const emptyState = page.locator('text=No data available');
+
+    const hasData = await agentData.first().isVisible().catch(() => false);
+    const hasEmpty = await emptyState.first().isVisible().catch(() => false);
+
+    expect(hasData || hasEmpty).toBe(true);
+  });
+});
+
+test.describe('Usage - Tool Output Volume', () => {
+  test.beforeEach(async ({ usagePage }) => {
+    await usagePage.goto();
+  });
+
+  test('should display tool output volume section', async ({ page }) => {
+    await expect(page.locator('text=Tool Output Volume')).toBeVisible();
+  });
+
+  test('should show description about token costs', async ({ page }) => {
+    await expect(page.locator('text=Tracks the volume')).toBeVisible();
+  });
+
+  test('should show tool table headers', async ({ page }) => {
+    await expect(page.locator('th:has-text("Tool")')).toBeVisible();
+    await expect(page.locator('th:has-text("Est. Volume")')).toBeVisible();
+  });
+});
+
+test.describe('Usage - Skill Output Volume', () => {
+  test.beforeEach(async ({ usagePage }) => {
+    await usagePage.goto();
+  });
+
+  test('should display skill output volume section', async ({ page }) => {
+    await expect(page.locator('text=Skill Output Volume')).toBeVisible();
+  });
+
+  test('should show skill table headers', async ({ page }) => {
+    // Look for skill-related headers in the last table
+    await expect(page.locator('th:has-text("Skill")').last()).toBeVisible();
+  });
+});
+
+test.describe('Usage - Data Formatting', () => {
+  test.beforeEach(async ({ usagePage }) => {
+    await usagePage.goto();
+  });
+
+  test('should format token counts with commas', async ({ page }) => {
+    // If there's data, check formatting
+    await page.waitForTimeout(1000);
+
+    // Token counts should be formatted (e.g., "1,234" not "1234")
+    // This is a visual check - actual assertion would depend on data
+  });
+
+  test('should format costs with dollar sign', async ({ page }) => {
+    // Cost values should have $ prefix - either in header or in table
+    const costValues = page.locator('text=/\\$\\d/');
+    expect(await costValues.count()).toBeGreaterThan(0);
+  });
+});

@@ -1,0 +1,191 @@
+import { test, expect } from './fixtures/test-fixtures';
+
+test.describe('Settings - Provider Configuration (Models Tab)', () => {
+  test.beforeEach(async ({ settingsPage, page }) => {
+    await settingsPage.goto();
+    // Click on Models tab
+    await page.click('text=Models');
+    await page.waitForTimeout(300);
+  });
+
+  test('should display provider configuration section', async ({ page }) => {
+    await expect(page.locator('text=Provider Configuration')).toBeVisible();
+  });
+
+  test('should show provider index with cloud providers', async ({ page }) => {
+    await expect(page.locator('text=Cloud')).toBeVisible();
+    // Should show common providers (text may be in different case)
+    await expect(page.locator('text=anthropic').or(page.locator('text=Anthropic')).or(page.locator('text=ANTHROPIC'))).toBeVisible();
+  });
+
+  test('should show local providers section', async ({ page }) => {
+    await expect(page.locator('text=Local')).toBeVisible();
+  });
+
+  test('should select a provider and show details', async ({ page }) => {
+    // Click on a provider (may be uppercase)
+    await page.locator('text=anthropic').or(page.locator('text=Anthropic')).or(page.locator('text=ANTHROPIC')).first().click();
+
+    // Should show API key input or status
+    await expect(
+      page.locator('text=API Key').or(page.locator('text=Register')).or(page.getByPlaceholder(/paste key/i))
+    ).toBeVisible();
+  });
+
+  test('should add API key for a provider', async ({ page }) => {
+    await page.locator('text=anthropic').or(page.locator('text=Anthropic')).or(page.locator('text=ANTHROPIC')).first().click();
+
+    const keyInput = page.getByPlaceholder(/paste key/i);
+    if (await keyInput.isVisible()) {
+      await keyInput.fill('sk-test-key-12345');
+      await page.getByRole('button', { name: /register/i }).click();
+      // Should show success or update state
+      await page.waitForTimeout(500);
+    }
+  });
+
+  test('should toggle provider on/off', async ({ page }) => {
+    await page.locator('text=anthropic').or(page.locator('text=Anthropic')).or(page.locator('text=ANTHROPIC')).first().click();
+
+    const toggleButton = page.getByRole('button', { name: /on|off/i }).first();
+    if (await toggleButton.isVisible()) {
+      const initialState = await toggleButton.textContent();
+      await toggleButton.click();
+      await page.waitForTimeout(300);
+      const newState = await toggleButton.textContent();
+      expect(newState).not.toBe(initialState);
+    }
+  });
+
+  test('should show models section for provider', async ({ page }) => {
+    await page.locator('text=anthropic').or(page.locator('text=Anthropic')).or(page.locator('text=ANTHROPIC')).first().click();
+    await expect(page.locator('text=Models')).toBeVisible();
+  });
+});
+
+test.describe('Settings - Behavior (General Tab)', () => {
+  test.beforeEach(async ({ settingsPage, page }) => {
+    await settingsPage.goto();
+    // General tab should be active by default, but click to be sure
+    await page.click('text=General');
+    await page.waitForTimeout(300);
+  });
+
+  test('should display behavior section', async ({ page }) => {
+    await expect(page.locator('text=Behavior')).toBeVisible();
+  });
+
+  test('should show auto-compaction toggle', async ({ page }) => {
+    await expect(page.locator('text=Auto-compaction')).toBeVisible();
+
+    const toggleButton = page.getByRole('button', { name: /active|inactive/i }).first();
+    await expect(toggleButton).toBeVisible();
+  });
+
+  test('should toggle auto-compaction', async ({ page }) => {
+    const toggleButton = page.getByRole('button', { name: /active|inactive/i }).first();
+    const initialState = await toggleButton.textContent();
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+    const newState = await toggleButton.textContent();
+    expect(newState).not.toBe(initialState);
+  });
+});
+
+test.describe('Settings - Sub-agents (General Tab)', () => {
+  test.beforeEach(async ({ settingsPage, page }) => {
+    await settingsPage.goto();
+    await page.click('text=General');
+    await page.waitForTimeout(300);
+  });
+
+  test('should display sub-agents section', async ({ page }) => {
+    // Sub-agents section header
+    await expect(page.locator('text=Sub-agents').or(page.locator('text=SUB-AGENTS'))).toBeVisible();
+  });
+
+  test('should toggle sub-agent options if available', async ({ page }) => {
+    // Look for any toggle buttons in the sub-agents section
+    const toggles = page.getByRole('button').filter({ hasText: /enabled|disabled/i });
+    const count = await toggles.count();
+    if (count > 0) {
+      await toggles.first().click();
+      await page.waitForTimeout(300);
+    }
+  });
+});
+
+test.describe('Settings - Shell Policy (Security Tab)', () => {
+  test.beforeEach(async ({ settingsPage, page }) => {
+    await settingsPage.goto();
+    // Click on Security tab
+    await page.click('text=Security');
+    await page.waitForTimeout(300);
+  });
+
+  test('should display shell policy section', async ({ page }) => {
+    // Shell Policy section header
+    await expect(page.locator('text=Shell Policy').or(page.locator('text=SHELL POLICY'))).toBeVisible();
+  });
+
+  test('should show execution mode options', async ({ page }) => {
+    // Look for execution mode or shell execution text
+    await expect(
+      page.locator('text=Execution Mode')
+        .or(page.locator('text=EXECUTION MODE'))
+        .or(page.locator('text=Shell'))
+    ).toBeVisible();
+  });
+});
+
+test.describe('Settings - Secure Vault (Security Tab)', () => {
+  test.beforeEach(async ({ settingsPage, page }) => {
+    await settingsPage.goto();
+    // Click on Security tab
+    await page.click('text=Security');
+    await page.waitForTimeout(300);
+  });
+
+  test('should display vault section', async ({ page }) => {
+    // Secure Vault section header
+    await expect(page.locator('text=Secure Vault').or(page.locator('text=SECURE VAULT'))).toBeVisible();
+  });
+
+  test('should show vault index', async ({ page }) => {
+    // Vault Index section header
+    await expect(page.locator('text=Vault Index').or(page.locator('text=VAULT INDEX'))).toBeVisible();
+  });
+
+  test('should add a secret to vault', async ({ page }) => {
+    const keyInput = page.getByPlaceholder(/github_token/i);
+    const valueInput = page.getByPlaceholder(/secret value/i);
+
+    if (await keyInput.isVisible() && await valueInput.isVisible()) {
+      await keyInput.fill('TEST_SECRET');
+      await valueInput.fill('test-secret-value');
+      await page.getByRole('button', { name: /store in vault/i }).click();
+      await page.waitForTimeout(500);
+      // Secret should appear in the list
+      await expect(page.locator('text=TEST_SECRET')).toBeVisible();
+    }
+  });
+});
+
+test.describe('Settings - Shortcuts (Shortcuts Tab)', () => {
+  test.beforeEach(async ({ settingsPage, page }) => {
+    await settingsPage.goto();
+    // Click on Shortcuts tab
+    await page.click('text=Shortcuts');
+    await page.waitForTimeout(300);
+  });
+
+  test('should display shortcuts section', async ({ page }) => {
+    await expect(page.locator('text=Shortcuts')).toBeVisible();
+  });
+
+  test('should show keyboard shortcut list', async ({ page }) => {
+    // Should show various shortcut labels (Cmd on Mac)
+    const shortcuts = page.locator('button').filter({ hasText: /⌘|cmd|ctrl|alt|shift/i });
+    expect(await shortcuts.count()).toBeGreaterThan(0);
+  });
+});

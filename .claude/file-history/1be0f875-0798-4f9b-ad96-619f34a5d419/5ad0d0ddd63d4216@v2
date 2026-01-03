@@ -1,0 +1,362 @@
+import React, { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api, type UsageSummaryItem, type UsageAgentSummaryItem } from '../../lib/api';
+import { clsx } from 'clsx';
+
+export const UsageView: React.FC = () => {
+  const { data: usage, isLoading } = useQuery({
+    queryKey: ['usage'],
+    queryFn: () => api.getUsage(365),
+  });
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInput = activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement as HTMLElement)?.isContentEditable;
+
+      if (isInput && !(e.metaKey || e.ctrlKey)) return;
+
+      if (e.key === 'ArrowUp') {
+        if (scrollRef.current) {
+          e.preventDefault();
+          scrollRef.current.scrollBy({ top: -100, behavior: 'smooth' });
+        }
+      }
+      if (e.key === 'ArrowDown') {
+        if (scrollRef.current) {
+          e.preventDefault();
+          scrollRef.current.scrollBy({ top: 100, behavior: 'smooth' });
+        }
+      }
+      if (e.key === ' ' && !isInput) {
+        if (scrollRef.current) {
+          e.preventDefault();
+          const direction = e.shiftKey ? -1 : 1;
+          scrollRef.current.scrollBy({
+            top: direction * scrollRef.current.clientHeight * 0.8,
+            behavior: 'smooth'
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-background font-mono space-y-6">
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-accent font-black uppercase tracking-[0.2em] text-[11px] animate-pulse">
+            Loading usage data...
+          </span>
+          <span className="text-text-primary/30 text-[9px] uppercase tracking-[0.2em] font-black">
+            Fetching metrics
+          </span>
+        </div>
+        <div className="text-accent/20 animate-pulse font-black text-xl">_</div>
+      </div>
+    );
+  }
+
+  const totals = usage?.totals;
+  const models = [...(usage?.by_model || [])].sort((a, b) => {
+    if (a.provider !== b.provider) {
+      return a.provider.localeCompare(b.provider);
+    }
+    return (b.total_cost || 0) - (a.total_cost || 0);
+  });
+  const agents = usage?.by_agent || [];
+  const tools = [...(usage?.by_tool || [])].sort((a, b) => b.total_volume_tk - a.total_volume_tk);
+  const skills = [...(usage?.by_skill || [])].sort((a, b) => b.total_volume_tk - a.total_volume_tk);
+
+  const providerStats = models.reduce((acc: Record<string, { provider: string; total_requests: number; total_input_tokens: number; total_output_tokens: number; total_tokens: number; total_cost: number }>, m: UsageSummaryItem) => {
+    if (!acc[m.provider]) {
+      acc[m.provider] = {
+        provider: m.provider,
+        total_requests: 0,
+        total_input_tokens: 0,
+        total_output_tokens: 0,
+        total_tokens: 0,
+        total_cost: 0,
+      };
+    }
+    acc[m.provider].total_requests += m.total_requests;
+    acc[m.provider].total_input_tokens += m.total_input_tokens;
+    acc[m.provider].total_output_tokens += m.total_output_tokens;
+    acc[m.provider].total_tokens += m.total_tokens;
+    acc[m.provider].total_cost += (m.total_cost ?? 0);
+    return acc;
+  }, {});
+
+  const providers = Object.values(providerStats).sort((a, b) => b.total_cost - a.total_cost);
+
+  return (
+    <div className="flex flex-col h-full bg-background font-mono text-[13px] overflow-hidden">
+      <div className="flex-1 overflow-auto p-6 custom-scrollbar" ref={scrollRef}>
+        <div className="max-w-7xl mx-auto space-y-10 pb-12">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border/10 pb-2">
+            <div className="flex items-center gap-3 text-accent/80 font-black uppercase tracking-[0.2em]">
+              <h2 className="text-[12px]">Resource Usage</h2>
+            </div>
+            <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-text-primary/40">
+              <div className="flex items-center gap-1.5">
+                <span>Requests: {totals?.total_requests || 0}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span>In: {totals?.total_input_tokens?.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span>Out: {totals?.total_output_tokens?.toLocaleString() || 0}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-status-success/80">
+                <span>Cost: ${totals?.total_cost?.toFixed(2) || '0.00'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            {/* Provider Summary Table */}
+            <section className="space-y-2">
+              <div className="text-[10px] font-black text-accent uppercase tracking-widest px-1">
+                Provider Summary
+              </div>
+              <div className="border border-border/20 bg-surface/5">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">
+                      <th className="px-4 py-1.5 w-[25%]">Provider</th>
+                      <th className="px-4 py-1.5 text-right w-[15%]">Requests</th>
+                      <th className="px-4 py-1.5 text-right">Input</th>
+                      <th className="px-4 py-1.5 text-right">Output</th>
+                      <th className="px-4 py-1.5 text-right w-[20%]">Total Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[11px]">
+                    {providers.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+                          No data available
+                        </td>
+                      </tr>
+                    ) : (
+                      providers.map((p, i) => (
+                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+                          <td className="px-4 py-1 truncate font-black text-text-primary uppercase">
+                            {p.provider}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {p.total_requests.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {p.total_input_tokens.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {p.total_output_tokens.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-status-success font-black">
+                            ${p.total_cost.toFixed(4)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Unified Usage Table */}
+            <section className="space-y-2">
+              <div className="text-[10px] font-black text-accent uppercase tracking-widest px-1">
+                Model Utilization
+              </div>
+              <div className="border border-border/20 bg-surface/5">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">
+                      <th className="px-4 py-1.5 w-[35%]">Model</th>
+                      <th className="px-4 py-1.5 text-right">Input</th>
+                      <th className="px-4 py-1.5 text-right">Output</th>
+                      <th className="px-4 py-1.5 text-right w-[20%]">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[11px]">
+                    {models.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+                          No data available
+                        </td>
+                      </tr>
+                    ) : (
+                      models.map((m: UsageSummaryItem, i: number) => (
+                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+                          <td className="px-4 py-1 truncate font-black text-text-primary">
+                            <span className="opacity-40 uppercase text-[9px] mr-2">{m.provider}</span>
+                            {m.model.toUpperCase()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {m.total_input_tokens.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {m.total_output_tokens.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-status-success font-black">
+                            ${(m.total_cost ?? 0).toFixed(4)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <div className="text-[10px] font-black text-accent uppercase tracking-widest px-1">
+                Agent Usage
+              </div>
+              <div className="border border-border/20 bg-surface/5">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">
+                      <th className="px-4 py-1.5 w-[35%]">Agent</th>
+                      <th className="px-4 py-1.5 text-right w-[15%]">Calls</th>
+                      <th className="px-4 py-1.5 text-right">Input</th>
+                      <th className="px-4 py-1.5 text-right">Output</th>
+                      <th className="px-4 py-1.5 text-right w-[20%]">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[11px]">
+                    {agents.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+                          No data available
+                        </td>
+                      </tr>
+                    ) : (
+                      agents.map((a: UsageAgentSummaryItem, i: number) => (
+                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+                          <td className="px-4 py-1 truncate font-black text-text-primary" title={a.agent_id}>
+                            {(a.agent_name || a.agent_id.slice(0, 8)).toUpperCase()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {a.total_requests}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {a.total_input_tokens.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {a.total_output_tokens.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-status-success font-black">
+                            ${(a.total_cost ?? 0).toFixed(4)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <div className="flex flex-col gap-1 px-1">
+                <div className="text-[10px] font-black text-accent uppercase tracking-widest">
+                  Tool Output Volume
+                </div>
+                <div className="text-[9px] text-text-primary/40 font-black leading-relaxed max-w-2xl italic">
+                  Tracks the volume of raw data returned by external tools (browser content, file reads, shell output).
+                  High volume here directly increases input token costs as this data is fed back into the model's history.
+                </div>
+              </div>
+              <div className="border border-border/20 bg-surface/5">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">
+                      <th className="px-4 py-1.5 w-[35%]">Tool</th>
+                      <th className="px-4 py-1.5 text-right w-[15%]">Calls</th>
+                      <th className="px-4 py-1.5 text-right">Est. Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[11px]">
+                    {tools.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+                          No data available
+                        </td>
+                      </tr>
+                    ) : (
+                      tools.map((t, i) => (
+                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+                          <td className="px-4 py-1 truncate font-black text-text-primary uppercase">
+                            {t.tool}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {t.total_calls.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary font-black">
+                            {t.total_volume_tk.toLocaleString()} <span className="text-[9px] opacity-30 ml-1">TK</span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section className="space-y-2">
+              <div className="flex flex-col gap-1 px-1">
+                <div className="text-[10px] font-black text-accent uppercase tracking-widest">
+                  Skill Output Volume
+                </div>
+                <div className="text-[9px] text-text-primary/40 font-black leading-relaxed max-w-2xl italic">
+                  Attributes tool output volume to specific skills by detecting when tool arguments reference a skill's directory.
+                </div>
+              </div>
+              <div className="border border-border/20 bg-surface/5">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-background/40 text-[9px] uppercase tracking-widest text-text-primary/40 font-black border-b border-border/10">
+                      <th className="px-4 py-1.5 w-[35%]">Skill</th>
+                      <th className="px-4 py-1.5 text-right w-[15%]">Calls</th>
+                      <th className="px-4 py-1.5 text-right">Est. Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[11px]">
+                    {skills.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-8 text-center text-text-primary/20 italic uppercase tracking-widest text-[10px] font-black">
+                          No data available
+                        </td>
+                      </tr>
+                    ) : (
+                      skills.map((s, i) => (
+                        <tr key={i} className="border-b border-border/5 last:border-0 hover:bg-accent/5 transition-all group">
+                          <td className="px-4 py-1 truncate font-black text-text-primary uppercase">
+                            {s.skill}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary/60 font-black">
+                            {s.total_calls.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-1 text-right text-text-primary font-black">
+                            {s.total_volume_tk.toLocaleString()} <span className="text-[9px] opacity-30 ml-1">TK</span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

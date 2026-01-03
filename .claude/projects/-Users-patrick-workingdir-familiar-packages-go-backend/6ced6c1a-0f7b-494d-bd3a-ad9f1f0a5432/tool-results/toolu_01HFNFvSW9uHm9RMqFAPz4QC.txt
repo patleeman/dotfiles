@@ -1,0 +1,11 @@
+The file /Users/patrick/workingdir/familiar/packages/go-backend/internal/tools/base_test.go has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     1→package tools
+     2→
+     3→import (
+     4→	"context"
+     5→	"testing"
+     6→)
+     7→
+     8→// MockTool implements the Tool interface for testing
+     9→type MockTool struct {
+    10→	nameVal          string

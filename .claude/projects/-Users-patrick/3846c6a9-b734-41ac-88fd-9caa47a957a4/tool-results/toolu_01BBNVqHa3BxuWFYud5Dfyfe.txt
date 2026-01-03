@@ -1,0 +1,4 @@
+/Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/ui/SettingRow.tsx
+/Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/SettingsSidebar.tsx
+/Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/AgentSettings.tsx
+/Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/SettingsView.tsx

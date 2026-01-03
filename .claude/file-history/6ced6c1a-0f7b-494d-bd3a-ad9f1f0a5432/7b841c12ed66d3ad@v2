@@ -1,0 +1,214 @@
+import React from 'react';
+import { clsx } from 'clsx';
+import { ChevronRight, ChevronDown } from 'lucide-react';
+import type { Agent } from '../../lib/api';
+import { Status, DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from '../ui';
+
+interface HierarchyTreeProps {
+    agents: Record<string, Agent>;
+    activeAgentId: string | null;
+    highlightedAgentId?: string | null;
+    onSelectAgent: (id: string) => void;
+    onRename?: (id: string) => void;
+    onAddSubagent?: (parentId: string) => void;
+    onAction?: (id: string, action: 'pause' | 'pause_tree' | 'resume' | 'resume_tree' | 'delete') => void;
+}
+
+export const HierarchyTree: React.FC<HierarchyTreeProps> = ({
+    agents,
+    activeAgentId,
+    highlightedAgentId,
+    onSelectAgent,
+    onRename,
+    onAddSubagent,
+    onAction
+}) => {
+    const [contextMenu, setContextMenu] = React.useState<{ x: number, y: number, agentId: string } | null>(null);
+    const [expandedIds, setExpandedIds] = React.useState<Record<string, boolean>>({});
+
+    React.useEffect(() => {
+        const handleClick = () => setContextMenu(null);
+        window.addEventListener('click', handleClick);
+        return () => window.removeEventListener('click', handleClick);
+    }, []);
+
+    const handleContextMenu = (e: React.MouseEvent, agentId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({ x: e.clientX, y: e.clientY, agentId });
+    };
+
+    const renderAgentNode = (agent: Agent, depth: number) => {
+        const isCurrent = activeAgentId ? agent.id.toLowerCase() === activeAgentId.toLowerCase() : false;
+        const isHighlighted = highlightedAgentId ? agent.id.toLowerCase() === highlightedAgentId.toLowerCase() : false;
+
+        // Build path to active agent for expansion
+        const pathIds = new Set<string>();
+        if (activeAgentId && agents[activeAgentId]) {
+            let curr = agents[activeAgentId];
+            pathIds.add(curr.id.toLowerCase());
+            while (curr.parent_id && agents[curr.parent_id]) {
+                curr = agents[curr.parent_id];
+                pathIds.add(curr.id.toLowerCase());
+            }
+        }
+
+        const isOnPath = pathIds.has(agent.id.toLowerCase());
+
+        // Find visible children for this agent
+        const children = Object.values(agents).filter(
+            (a) => a.parent_id?.toLowerCase() === agent.id.toLowerCase() && !a.is_internal
+        ).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+        const hasChildren = children.length > 0;
+        // Always show up to 3 levels deep, or if on path, unless manually toggled
+        const defaultExpand = depth < 3 || isOnPath || isCurrent;
+        const shouldExpand = expandedIds[agent.id] !== undefined ? expandedIds[agent.id] : defaultExpand;
+
+        return (
+            <div key={agent.id} className="flex flex-col">
+                <div className="group flex flex-col relative">
+                    <div
+                        data-testid="agent-item"
+                        onClick={() => onSelectAgent(agent.id)}
+                        onContextMenu={(e) => handleContextMenu(e, agent.id)}
+                        style={{ paddingLeft: `${depth * 12 + 8}px` }}
+                        className={clsx(
+                            "flex items-center gap-2 py-1.5 px-2 cursor-pointer relative transition-colors rounded-sm mx-1",
+                            isCurrent ? "bg-[#6366f1]/20 text-[#e2e8f0]" : (isHighlighted ? "bg-[#6366f1]/10 text-[#e2e8f0]" : "hover:bg-[#1e293b]/50 text-[#94a3b8] hover:text-[#e2e8f0]")
+                        )}
+                    >
+                        {/* Status Indicator */}
+                        <Status
+                            data-testid="agent-status"
+                            status={
+                                agent.state === 'running' ? 'running' :
+                                agent.state === 'waiting' ? 'waiting' :
+                                agent.state === 'awaiting_approval' ? 'awaiting_approval' :
+                                agent.state === 'awaiting_secret' ? 'awaiting_secret' :
+                                agent.state === 'error' ? 'error' :
+                                agent.state === 'paused' ? 'paused' : 'idle'
+                            }
+                        />
+
+                        <span className={clsx(
+                            "text-[11px] truncate flex-1 min-w-0",
+                            isCurrent ? "font-medium" : (isHighlighted ? "font-medium" : "")
+                        )}>
+                            {depth > 0 && <span className="opacity-30 mr-1">↳</span>}
+                            {agent.name || agent.id.slice(0, 8)}
+                        </span>
+
+                        {agent.type === 'cli' && (
+                            <span className="text-[9px] text-[#6366f1] opacity-60 font-medium shrink-0 bg-[#6366f1]/10 px-1 py-0.5 rounded">CLI</span>
+                        )}
+
+                        {hasChildren && !isCurrent && (
+                            <span
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedIds(prev => ({ ...prev, [agent.id]: !shouldExpand }));
+                                }}
+                                className="text-[#64748b] hover:text-[#e2e8f0] shrink-0 p-0.5"
+                            >
+                                {shouldExpand ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {shouldExpand && hasChildren && (
+                    <div className="flex flex-col">
+                        {children.map((child) => renderAgentNode(child, depth + 1))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Find root agents (no parent or parent not found)
+    const rootAgents = Object.values(agents).filter(
+        (a) => (!a.parent_id || !agents[a.parent_id]) && !a.is_internal
+    ).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+    return (
+        <div className="flex flex-col py-1">
+            {rootAgents.map((agent) => renderAgentNode(agent, 0))}
+
+            <DropdownMenu
+                data-testid="context-menu"
+                isOpen={!!contextMenu}
+                onClose={() => setContextMenu(null)}
+                position={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : { x: 0, y: 0 }}
+                title={contextMenu ? (agents[contextMenu.agentId]?.name || agents[contextMenu.agentId]?.id.slice(0, 8)) : ''}
+            >
+                <DropdownMenuItem
+                    onClick={() => {
+                        if (contextMenu) onRename?.(contextMenu.agentId);
+                        setContextMenu(null);
+                    }}
+                >
+                    Rename
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                    onClick={() => {
+                        if (contextMenu) onAddSubagent?.(contextMenu.agentId);
+                        setContextMenu(null);
+                    }}
+                >
+                    Add Subagent
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                    onClick={() => {
+                        if (contextMenu) {
+                            const agent = agents[contextMenu.agentId];
+                            if (agent) {
+                                onAction?.(contextMenu.agentId, agent.state === 'running' ? 'pause' : 'resume');
+                            }
+                        }
+                        setContextMenu(null);
+                    }}
+                >
+                    {contextMenu && agents[contextMenu.agentId]?.state === 'running' ? 'Pause' : 'Resume'}
+                </DropdownMenuItem>
+
+                {contextMenu && agents[contextMenu.agentId]?.state === 'running' && (
+                    <DropdownMenuItem
+                        onClick={() => {
+                            if (contextMenu) onAction?.(contextMenu.agentId, 'pause_tree');
+                            setContextMenu(null);
+                        }}
+                    >
+                        Pause Tree
+                    </DropdownMenuItem>
+                )}
+
+                {contextMenu && (agents[contextMenu.agentId]?.state === 'paused' || agents[contextMenu.agentId]?.state === 'waiting') && (
+                    <DropdownMenuItem
+                        onClick={() => {
+                            if (contextMenu) onAction?.(contextMenu.agentId, 'resume_tree');
+                            setContextMenu(null);
+                        }}
+                    >
+                        Resume Tree
+                    </DropdownMenuItem>
+                )}
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem
+                    variant="danger"
+                    onClick={async () => {
+                        if (contextMenu) await onAction?.(contextMenu.agentId, 'delete');
+                        setContextMenu(null);
+                    }}
+                >
+                    Delete
+                </DropdownMenuItem>
+            </DropdownMenu>
+        </div>
+    );
+};
+

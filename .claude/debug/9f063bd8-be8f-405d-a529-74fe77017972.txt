@@ -1,0 +1,72 @@
+2026-01-03T03:27:55.649Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (18.9ms): security find-generic-password -a $USER -w -s "Claude Code"
+2026-01-03T03:27:55.667Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (17.2ms): security find-generic-password -a "patrick" -w -s "Claude Code-credentials"
+2026-01-03T03:27:55.680Z [DEBUG] Watching for changes in setting files /Users/patrick/.claude, /Users/patrick/.claude...
+2026-01-03T03:27:55.715Z [DEBUG] Stats cache is up to date
+2026-01-03T03:27:55.718Z [DEBUG] Loading skills from: managed=/Library/Application Support/ClaudeCode/.claude/skills, user=/Users/patrick/.claude/skills, project=[]
+2026-01-03T03:27:55.719Z [DEBUG] Passes: Using fresh cached eligibility data
+2026-01-03T03:27:55.785Z [DEBUG] [SLOW OPERATION DETECTED] execSyncWithDefaults_DEPRECATED (65.1ms): ps aux | grep -E "Visual Studio Code|Code Helper|Cursor Helper|Windsurf Helper|IntelliJ IDEA|PyCharm
+2026-01-03T03:27:55.786Z [DEBUG] Loaded 1 installed plugins from /Users/patrick/.claude/plugins/installed_plugins.json
+2026-01-03T03:27:55.797Z [DEBUG] Creating shell snapshot for zsh (/bin/zsh)
+2026-01-03T03:27:55.797Z [DEBUG] Looking for shell config file: /Users/patrick/.zshrc
+2026-01-03T03:27:55.797Z [DEBUG] Snapshots directory: /Users/patrick/.claude/shell-snapshots
+2026-01-03T03:27:55.798Z [DEBUG] Creating snapshot at: /Users/patrick/.claude/shell-snapshots/snapshot-zsh-1767410875797-ev6eap.sh
+2026-01-03T03:27:55.798Z [DEBUG] Shell binary exists: true
+2026-01-03T03:27:55.798Z [DEBUG] Execution timeout: 10000ms
+2026-01-03T03:27:55.799Z [DEBUG] Writing to temp file: /Users/patrick/.claude/todos/9f063bd8-be8f-405d-a529-74fe77017972-agent-9f063bd8-be8f-405d-a529-74fe77017972.json.tmp.74484.1767410875799
+2026-01-03T03:27:55.804Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.1ms)
+2026-01-03T03:27:55.804Z [DEBUG] Temp file written successfully, size: 2 bytes
+2026-01-03T03:27:55.804Z [DEBUG] Renaming /Users/patrick/.claude/todos/9f063bd8-be8f-405d-a529-74fe77017972-agent-9f063bd8-be8f-405d-a529-74fe77017972.json.tmp.74484.1767410875799 to /Users/patrick/.claude/todos/9f063bd8-be8f-405d-a529-74fe77017972-agent-9f063bd8-be8f-405d-a529-74fe77017972.json
+2026-01-03T03:27:55.804Z [DEBUG] File /Users/patrick/.claude/todos/9f063bd8-be8f-405d-a529-74fe77017972-agent-9f063bd8-be8f-405d-a529-74fe77017972.json written atomically
+2026-01-03T03:27:55.813Z [DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+2026-01-03T03:27:55.815Z [DEBUG] getPluginSkills: Processing 0 enabled plugins
+2026-01-03T03:27:55.815Z [DEBUG] Total plugin skills loaded: 0
+2026-01-03T03:27:55.815Z [DEBUG] Total plugin commands loaded: 0
+2026-01-03T03:27:55.815Z [DEBUG] Registered 0 hooks from 0 plugins
+2026-01-03T03:27:55.858Z [DEBUG] Git remote URL: null
+2026-01-03T03:27:55.858Z [DEBUG] No git remote URL found
+2026-01-03T03:27:55.858Z [DEBUG] Not in a GitHub repository, skipping path mapping update
+2026-01-03T03:27:55.890Z [DEBUG] Install: Starting installation process (force=false, target=stable)
+2026-01-03T03:27:55.890Z [DEBUG] Install: Calling installLatest(channelOrVersion=stable, force=true, forceReinstall=false)
+2026-01-03T03:27:55.898Z [DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/arm64-darwin/rg)
+2026-01-03T03:27:55.900Z [DEBUG] Loaded 1 unique skills (managed: 0, user: 0, project: 0, legacy commands: 1)
+2026-01-03T03:27:55.900Z [DEBUG] getSkills returning: 1 skill dir commands, 0 plugin skills
+2026-01-03T03:27:55.949Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74484.1767410875949
+2026-01-03T03:27:55.949Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:27:55.954Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.1ms)
+2026-01-03T03:27:55.954Z [DEBUG] Temp file written successfully, size: 59060 bytes
+2026-01-03T03:27:55.954Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:27:55.954Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74484.1767410875949 to /Users/patrick/.claude.json
+2026-01-03T03:27:55.954Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:27:56.061Z [DEBUG] Shell snapshot created successfully (42864 bytes)
+2026-01-03T03:27:56.080Z [DEBUG] Checking for native installer update to version 2.0.67
+2026-01-03T03:27:56.086Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.5ms)
+2026-01-03T03:27:56.087Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74484.1767410876087
+2026-01-03T03:27:56.087Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:27:56.093Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.4ms)
+2026-01-03T03:27:56.093Z [DEBUG] Temp file written successfully, size: 59106 bytes
+2026-01-03T03:27:56.093Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:27:56.093Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74484.1767410876087 to /Users/patrick/.claude.json
+2026-01-03T03:27:56.093Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:27:56.095Z [DEBUG] Downloading native installer version 2.0.67
+2026-01-03T03:27:56.282Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (5.4ms)
+2026-01-03T03:27:56.282Z [DEBUG] Successfully refreshed marketplace: claude-plugins-official
+2026-01-03T03:27:56.282Z [DEBUG] Plugin autoupdate: checking installed plugins
+2026-01-03T03:27:58.575Z [DEBUG] CDN dark read succeeded for 2.0.67
+2026-01-03T03:27:59.917Z [DEBUG] [SLOW OPERATION DETECTED] fs.copyFileSync (100.2ms)
+2026-01-03T03:27:59.917Z [DEBUG] Atomically installed binary to /Users/patrick/.local/share/claude/versions/2.0.67
+2026-01-03T03:27:59.919Z [DEBUG] Atomically updated symlink /Users/patrick/.local/bin/claude -> /Users/patrick/.local/share/claude/versions/2.0.67
+2026-01-03T03:27:59.921Z [DEBUG] Successfully updated to version 2.0.67
+2026-01-03T03:27:59.923Z [DEBUG] Writing to temp file: /Users/patrick/.claude.json.tmp.74484.1767410879923
+2026-01-03T03:27:59.923Z [DEBUG] Preserving file permissions: 100600
+2026-01-03T03:27:59.941Z [DEBUG] [SLOW OPERATION DETECTED] fs.writeFileSync (17.7ms)
+2026-01-03T03:27:59.941Z [DEBUG] Temp file written successfully, size: 59200 bytes
+2026-01-03T03:27:59.941Z [DEBUG] Applied original permissions to temp file
+2026-01-03T03:27:59.941Z [DEBUG] Renaming /Users/patrick/.claude.json.tmp.74484.1767410879923 to /Users/patrick/.claude.json
+2026-01-03T03:27:59.941Z [DEBUG] File /Users/patrick/.claude.json written atomically
+2026-01-03T03:27:59.941Z [DEBUG] Native installer: Set installMethod to "native" and disabled legacy auto-updater for protection
+2026-01-03T03:27:59.942Z [DEBUG] Install: installLatest returned version=2.0.67, wasUpdated=true, lockFailed=false
+2026-01-03T03:27:59.942Z [DEBUG] Install: Setup launcher completed with 0 messages
+2026-01-03T03:27:59.942Z [DEBUG] Install: Cleaning up npm installations after successful install
+2026-01-03T03:28:00.196Z [DEBUG] Removed global npm installation of @anthropic-ai/claude-code
+2026-01-03T03:28:00.196Z [DEBUG] Cleaned up 1 npm installation(s)
+2026-01-03T03:28:00.196Z [DEBUG] Install: Shell PATH already configured

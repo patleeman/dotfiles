@@ -1,0 +1,98 @@
+     1→import React, { useState, useMemo, memo } from 'react';
+     2→import ReactMarkdown from 'react-markdown';
+     3→import { clsx } from 'clsx';
+     4→import { diffWordsWithSpace } from 'diff';
+     5→import type { ScopeDocument } from '../../lib/api';
+     6→
+     7→interface InlineScopeProposalProps {
+     8→  proposal: ScopeDocument;
+     9→  previousContent?: string;
+    10→  onUpdate?: (content: string) => void;
+    11→}
+    12→
+    13→export const InlineScopeProposal: React.FC<InlineScopeProposalProps> = memo(({
+    14→  proposal,
+    15→  previousContent,
+    16→}) => {
+    17→  const [isCollapsed, setIsCollapsed] = useState(true);
+    18→
+    19→  const highlightedContent = useMemo(() => {
+    20→    if (!previousContent) return proposal.content;
+    21→
+    22→    const diff = diffWordsWithSpace(previousContent, proposal.content);
+    23→    return diff
+    24→      .filter(part => !part.removed)
+    25→      .map(part => {
+    26→        if (part.added) {
+    27→          // Wrap added parts in a special link that we'll render as a highlight
+    28→          // We allow spaces but avoid characters that have structural meaning in markdown
+    29→          // to prevent breaking headers, lists, and formatting.
+    30→          return part.value.replace(/([^#*_\-`<>\[\]().\n]+)/g, '[$1](#highlight)');
+    31→        }
+    32→        return part.value;
+    33→      })
+    34→      .join('');
+    35→  }, [previousContent, proposal.content]);
+    36→
+    37→  return (
+    38→    <div className="my-0.5 border-l border-border/10 bg-surface/5 font-mono text-[11px] animate-in fade-in slide-in-from-left-1 duration-200 overflow-hidden">
+    39→      <div
+    40→        className={clsx(
+    41→          "flex items-center justify-between px-3 py-1 bg-surface/10 cursor-pointer select-none hover:bg-surface/20 transition-all active:bg-surface/30",
+    42→          !isCollapsed && "border-b border-border/10 shadow-[0_4px_10px_rgba(0,0,0,0.05)]"
+    43→        )}
+    44→        onClick={() => setIsCollapsed(!isCollapsed)}
+    45→      >
+    46→        <div className="flex items-center gap-2">
+    47→          <span className="text-text-tertiary/40 text-[9px] w-2 font-black">{isCollapsed ? '+' : '-'}</span>
+    48→          <span className="text-[10px] font-black text-accent/80 uppercase tracking-[0.2em]">
+    49→            /PLAN_UPDATE {proposal.version > 1 && `(v${proposal.version})`}
+    50→          </span>
+    51→        </div>
+    52→      </div>
+    53→
+    54→      {!isCollapsed && (
+    55→        <div className="p-3">
+    56→          <div className="text-text-primary/80 leading-relaxed font-mono text-[11px]">
+    57→            <ReactMarkdown
+    58→              components={{
+    59→                h1: ({ children }) => <h1 className="text-accent/60 font-black uppercase tracking-widest mt-4 mb-2 border-b border-border/10 pb-1 text-[10px]"># {children}</h1>,
+    60→                h2: ({ children }) => <h2 className="text-accent/60 font-black uppercase tracking-widest mt-3 mb-1 text-[10px]">## {children}</h2>,
+    61→                h3: ({ children }) => <h3 className="text-accent/60 font-black uppercase tracking-widest mt-2 mb-1 text-[10px]">### {children}</h3>,
+    62→                p: ({ children }) => <p className="mb-2 last:mb-0 whitespace-pre-wrap">{children}</p>,
+    63→                ul: ({ children }) => <ul className="list-none pl-4 mb-2 space-y-0.5 text-text-secondary">{children}</ul>,
+    64→                ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-0.5 text-text-secondary">{children}</ol>,
+    65→                li: ({ children }) => <li className="pl-1"><span className="text-text-tertiary/40 mr-2">*</span>{children}</li>,
+    66→                code: ({ children }) => <code className="bg-background/40 px-1 text-accent font-mono uppercase">{children}</code>,
+    67→                blockquote: ({ children }) => <blockquote className="border-l border-border/20 pl-3 italic my-2 text-text-secondary/40 font-black uppercase">{children}</blockquote>,
+    68→                // Custom link renderer to handle highlights
+    69→                a: ({ href, children }) => {
+    70→                  if (href === '#highlight') {
+    71→                    return (
+    72→                      <span className="text-accent font-black border-b border-accent/40">
+    73→                        {children}
+    74→                      </span>
+    75→                    );
+    76→                  }
+    77→                  return (
+    78→                    <a href={href} className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">
+    79→                      {children}
+    80→                    </a>
+    81→                  );
+    82→                },
+    83→              }}
+    84→            >
+    85→              {highlightedContent}
+    86→            </ReactMarkdown>
+    87→          </div>
+    88→        </div>
+    89→      )}
+    90→
+    91→    </div>
+    92→  );
+    93→});
+    94→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

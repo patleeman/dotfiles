@@ -1,0 +1,34 @@
+   170→		text := "secret123 and secret123 again"
+   171→		secrets := []string{"secret123"}
+   172→		result := MaskSecrets(text, secrets)
+   173→		expected := "******** and ******** again"
+   174→		if result != expected {
+   175→			t.Errorf("expected %s, got %s", expected, result)
+   176→		}
+   177→	})
+   178→
+   179→	t.Run("partial match should not mask", func(t *testing.T) {
+   180→		text := "password is secret12345"
+   181→		secrets := []string{"secret123"}
+   182→		result := MaskSecrets(text, secrets)
+   183→		// Should not mask because it's not an exact match
+   184→		if result != text {
+   185→			t.Errorf("expected original text for partial match, got %s", result)
+   186→		}
+   187→	})
+   188→}
+   189→
+   190→func TestGetVaultSecretValues(t *testing.T) {
+   191→	// Enable mock mode for testing
+   192→	originalMockMode := MockMode
+   193→	MockMode = true
+   194→	defer func() {
+   195→		MockMode = originalMockMode
+   196→		// Clear mock vault after tests
+   197→		mockMu.Lock()
+   198→		mockVault = make(map[string]string)
+   199→		mockMu.Unlock()
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

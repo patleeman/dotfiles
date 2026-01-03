@@ -1,0 +1,13 @@
+The file /Users/patrick/workingdir/familiar/packages/go-backend/internal/inference/gemini_test.go has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+     1→package inference
+     2→
+     3→import (
+     4→	"encoding/base64"
+     5→	"testing"
+     6→
+     7→	"github.com/patrick/familiar/packages/go-backend/pkg/types"
+     8→)
+     9→
+    10→func TestParseThinkingModel(t *testing.T) {
+    11→	tests := []struct {
+    12→		name       string

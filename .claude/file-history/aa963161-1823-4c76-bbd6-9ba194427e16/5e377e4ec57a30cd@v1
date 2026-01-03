@@ -1,0 +1,18 @@
+import React from 'react';
+
+export const UsageSidebar: React.FC = () => {
+  return (
+    <div className="flex flex-col h-full bg-[#0f1117] select-none">
+      <div className="p-3 border-b border-[#1e293b]">
+        <span className="text-[12px] font-medium text-[#e2e8f0]">Usage</span>
+        <p className="text-[11px] text-[#64748b] mt-1">
+          View usage statistics and metrics
+        </p>
+      </div>
+
+      <div className="flex-1 p-4 flex flex-col items-center justify-center text-[#334155]">
+        <div className="animate-pulse text-[11px]">Loading metrics...</div>
+      </div>
+    </div>
+  );
+};

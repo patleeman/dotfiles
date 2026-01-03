@@ -1,0 +1,640 @@
+     1→package config
+     2→
+     3→import (
+     4→	"os"
+     5→	"path/filepath"
+     6→	"runtime"
+     7→	"sync"
+     8→	"time"
+     9→
+    10→	"gopkg.in/yaml.v3"
+    11→)
+    12→
+    13→var (
+    14→	MockMode     = false
+    15→	cachedConfig *Config
+    16→	configMu     sync.RWMutex
+    17→)
+    18→
+    19→type ProviderConfig struct {
+    20→	Enabled *bool `yaml:"enabled" json:"enabled"`
+    21→}
+    22→
+    23→type CustomProviderConfig struct {
+    24→	BaseURL string `yaml:"base_url" json:"base_url"`
+    25→}
+    26→
+    27→type Config struct {
+    28→	Inference struct {
+    29→		Chat struct {
+    30→			Provider string `yaml:"provider" json:"provider"`
+    31→			Model    string `yaml:"model" json:"model"`
+    32→		} `yaml:"chat" json:"chat"`
+    33→	} `yaml:"inference" json:"inference"`
+    34→	UI struct {
+    35→		Theme   string            `yaml:"theme" json:"theme"`
+    36→		Hotkeys map[string]string `yaml:"hotkeys" json:"hotkeys"`
+    37→	} `yaml:"ui" json:"ui"`
+    38→	Security struct {
+    39→		AlwaysAllowAll      bool   `yaml:"always_allow_all" json:"always_allow_all"`
+    40→		ShellPermissionMode string `yaml:"shell_permission_mode" json:"shell_permission_mode"`
+    41→	} `yaml:"security" json:"security"`
+    42→	SubAgent struct {
+    43→		Enabled *bool `yaml:"enabled" json:"enabled"`
+    44→	} `yaml:"sub_agent" json:"sub_agent"`
+    45→	Agent struct {
+    46→		AutoCompactionEnabled  *bool `yaml:"auto_compaction_enabled" json:"auto_compaction_enabled"`
+    47→		MaxToolResultTokens    *int  `yaml:"max_tool_result_tokens" json:"max_tool_result_tokens"`
+    48→		ToolResultSummaryWords *int  `yaml:"tool_result_summary_words" json:"tool_result_summary_words"`
+    49→	} `yaml:"agent" json:"agent"`
+    50→	Providers       map[string]ProviderConfig       `yaml:"providers" json:"providers"`
+    51→	AvailableModels map[string]map[string][]string  `yaml:"available_models" json:"available_models"`
+    52→	CustomProviders map[string]CustomProviderConfig `yaml:"custom_providers" json:"custom_providers"`
+    53→}
+    54→
+    55→func GetConfigDir() string {
+    56→	if env := os.Getenv("FAMILIAR_CONFIG_DIR"); env != "" {
+    57→		return env
+    58→	}
+    59→
+    60→	suffix := ""
+    61→	if os.Getenv("FAMILIAR_DEV") != "" {
+    62→		suffix = "-dev"
+    63→	}
+    64→
+    65→	if runtime.GOOS != "darwin" {
+    66→		// Fallback for non-macOS during dev
+    67→		home, _ := os.UserHomeDir()
+    68→		return filepath.Join(home, ".familiar"+suffix)
+    69→	}
+    70→	home, _ := os.UserHomeDir()
+    71→	return filepath.Join(home, "Library", "Application Support", "familiar"+suffix)
+    72→}
+    73→
+    74→func IsDev() bool {
+    75→	return os.Getenv("FAMILIAR_DEV") != ""
+    76→}
+    77→
+    78→func GetWorkspacesDir() string {
+    79→	return filepath.Join(GetConfigDir(), "workspaces")
+    80→}
+    81→
+    82→func GetSkillsDir() string {
+    83→	return filepath.Join(GetConfigDir(), "skills")
+    84→}
+    85→
+    86→func GetTriggersDir() string {
+    87→	return filepath.Join(GetConfigDir(), "triggers")
+    88→}
+    89→
+    90→func InitializeDefaultSkills() error {
+    91→	skillsDir := GetSkillsDir()
+    92→	if _, err := os.Stat(skillsDir); err == nil {
+    93→		entries, _ := os.ReadDir(skillsDir)
+    94→		if len(entries) > 0 {
+    95→			return nil
+    96→		}
+    97→	}
+    98→
+    99→	if err := os.MkdirAll(skillsDir, 0755); err != nil {
+   100→		return err
+   101→	}
+   102→
+   103→	defaultSkills := map[string]string{
+   104→		"linear": `---
+   105→name: linear
+   106→description: Create and manage Linear issues using the Linear CLI.
+   107→compatibility: linear cli (brew install linear)
+   108→---
+   109→
+   110→## Usage
+   111→
+   112→Use the linear CLI to interact with Linear. Common commands:
+   113→
+   114→` + "```" + `bash
+   115→# Create an issue
+   116→linear issue create --title "Bug: ..." --team "ENG"
+   117→
+   118→# List issues assigned to me
+   119→linear issue list --mine
+   120→
+   121→# View issue details  
+   122→linear issue view ENG-123
+   123→` + "```" + `
+   124→`,
+   125→		"reminders": `---
+   126→name: reminders
+   127→description: Create and manage macOS Reminders.
+   128→compatibility: macOS
+   129→---
+   130→
+   131→## Usage
+   132→
+   133→Manage reminders using AppleScript.
+   134→
+   135→` + "```" + `bash
+   136→# Add a reminder
+   137→osascript -e 'tell application "Reminders" to make new reminder with properties {name:"Task Name", due date:date "tomorrow 5pm"}'
+   138→
+   139→# List incomplete reminders
+   140→osascript -e 'tell application "Reminders" to get name of reminders where completed is false'
+   141→` + "```" + `
+   142→`,
+   143→		"calendar": `---
+   144→name: calendar
+   145→description: Interact with macOS Calendar.
+   146→compatibility: macOS
+   147→---
+   148→
+   149→## Usage
+   150→
+   151→Check and create calendar events.
+   152→
+   153→` + "```" + `bash
+   154→# List today's events
+   155→osascript -e 'tell application "Calendar" to get summary of events of calendar "Calendar" whose start date > (current date) and start date < (current date) + 1 * days'
+   156→
+   157→# Create a new event
+   158→osascript -e 'tell application "Calendar" to tell calendar "Work" to make new event with properties {summary:"Meeting", start date:current date + 1 * hours, end date:current date + 2 * hours}'
+   159→` + "```" + `
+   160→`,
+   161→		"notes": `---
+   162→name: notes
+   163→description: Create and search Apple Notes.
+   164→compatibility: macOS
+   165→---
+   166→
+   167→## Usage
+   168→
+   169→Quick capture and search notes.
+   170→
+   171→` + "```" + `bash
+   172→# Create a new note
+   173→osascript -e 'tell application "Notes" to make new note with properties {body:"New note content"}'
+   174→
+   175→# Search notes
+   176→osascript -e 'tell application "Notes" to get name of every note whose body contains "search term"'
+   177→` + "```" + `
+   178→`,
+   179→		"clipboard": `---
+   180→name: clipboard
+   181→description: Smart clipboard operations.
+   182→compatibility: macOS
+   183→---
+   184→
+   185→## Usage
+   186→
+   187→Get or set the system clipboard content.
+   188→
+   189→` + "```" + `bash
+   190→# Get clipboard content
+   191→osascript -e 'the clipboard'
+   192→
+   193→# Set clipboard content
+   194→osascript -e 'set the clipboard to "new content"'
+   195→` + "```" + `
+   196→`,
+   197→		"focus": `---
+   198→name: focus
+   199→description: Control Focus/Do Not Disturb modes.
+   200→compatibility: macOS
+   201→---
+   202→
+   203→## Usage
+   204→
+   205→Toggle focus modes via System Events.
+   206→
+   207→` + "```" + `bash
+   208→# Enable focus mode (DND)
+   209→osascript -e 'tell application "System Events" to set focus mode to "Do Not Disturb"'
+   210→` + "```" + `
+   211→`,
+   212→		"contacts": `---
+   213→name: contacts
+   214→description: Search and manage macOS Contacts.
+   215→compatibility: macOS
+   216→---
+   217→
+   218→## Usage
+   219→
+   220→Look up contact information.
+   221→
+   222→` + "```" + `bash
+   223→# Search contacts by name
+   224→osascript -e 'tell application "Contacts" to get {name, email of emails, value of phones} of every person whose name contains "John"'
+   225→` + "```" + `
+   226→`,
+   227→		"file-search": `---
+   228→name: file-search
+   229→description: Find files using Spotlight (mdfind).
+   230→compatibility: macOS
+   231→---
+   232→
+   233→## Usage
+   234→
+   235→Search for files by name or content.
+   236→
+   237→` + "```" + `bash
+   238→# Search by name
+   239→mdfind -name "filename"
+   240→
+   241→# Search by kind and content
+   242→mdfind "kind:pdf budget 2024"
+   243→` + "```" + `
+   244→`,
+   245→		"claude-code": `---
+   246→name: claude-code
+   247→description: Spawn Claude Code CLI for complex coding tasks, repository-wide refactoring, and git operations.
+   248→compatibility: claude cli (npm install -g @anthropic-ai/claude-code)
+   249→---
+   250→
+   251→## Usage
+   252→
+   253→Use the Claude Code CLI directly for specialized coding tasks. Claude Code excels at:
+   254→- Repository-wide refactoring
+   255→- Complex multi-file changes
+   256→- Git operations and commit management
+   257→- Code review and analysis
+   258→
+   259→` + "```" + `bash
+   260→# Run Claude Code with a prompt
+   261→claude -p "Refactor the authentication module to use JWT tokens"
+   262→
+   263→# Resume a previous session
+   264→claude -r <session_id> -p "Continue with the database migrations"
+   265→
+   266→# With specific allowed tools
+   267→claude --allowedTools "Edit,Bash(git:*),Read" -p "Fix the failing tests"
+   268→` + "```" + `
+   269→
+   270→Note: Ensure ANTHROPIC_API_KEY is set in your environment.
+   271→`,
+   272→		"codex": `---
+   273→name: codex
+   274→description: Spawn OpenAI Codex CLI for coding tasks and deep technical analysis.
+   275→compatibility: codex cli (npm install -g @openai/codex)
+   276→---
+   277→
+   278→## Usage
+   279→
+   280→Use the Codex CLI directly for specialized coding and analysis tasks. Codex excels at:
+   281→- Deep technical research
+   282→- Architectural analysis
+   283→- Code generation and modification
+   284→- Complex debugging
+   285→
+   286→` + "```" + `bash
+   287→# Run Codex with a prompt
+   288→codex exec "Analyze the codebase architecture and suggest improvements"
+   289→
+   290→# With approval mode
+   291→codex -a on-request exec "Implement the new API endpoint"
+   292→
+   293→# Resume a previous session
+   294→codex exec resume <session_id> "Continue with the implementation"
+   295→` + "```" + `
+   296→
+   297→Note: Ensure OPENAI_API_KEY is set in your environment.
+   298→`,
+   299→		"pdf": `---
+   300→name: pdf
+   301→description: PDF operations (read, merge, fill forms).
+   302→compatibility: python3, pypdf, fillpdf (pip install pypdf fillpdf)
+   303→---
+   304→
+   305→## Usage
+   306→
+   307→Read text, merge PDFs, or fill forms.
+   308→
+   309→` + "```" + `bash
+   310→# Read PDF text
+   311→python3 -c "from pypdf import PdfReader; print(' '.join([p.extract_text() for p in PdfReader('file.pdf').pages]))"
+   312→
+   313→# Fill PDF form
+   314→python3 -c "from fillpdf import fillpdfs; fillpdfs.write_fillable_pdf('input.pdf', 'output.pdf', {'field1': 'value1'})"
+   315→
+   316→# List form fields
+   317→python3 -c "from pypdf import PdfReader; print([f for f in PdfReader('form.pdf').get_fields()])"
+   318→` + "```" + `
+   319→`,
+   320→		"docx": `---
+   321→name: docx
+   322→description: Word document operations.
+   323→compatibility: python3, python-docx (pip install python-docx)
+   324→---
+   325→
+   326→## Usage
+   327→
+   328→Read or create Word documents.
+   329→
+   330→` + "```" + `bash
+   331→# Read docx text
+   332→python3 -c "import docx; print('\n'.join([p.text for p in docx.Document('file.docx').paragraphs]))"
+   333→` + "```" + `
+   334→`,
+   335→		"xlsx": `---
+   336→name: xlsx
+   337→description: Excel spreadsheet operations.
+   338→compatibility: python3, openpyxl (pip install openpyxl)
+   339→---
+   340→
+   341→## Usage
+   342→
+   343→Read or manipulate Excel files.
+   344→
+   345→` + "```" + `bash
+   346→# Read first sheet
+   347→python3 -c "import openpyxl; wb = openpyxl.load_workbook('file.xlsx'); print([[c.value for c in r] for r in wb.active.rows])"
+   348→` + "```" + `
+   349→`,
+   350→	}
+   351→
+   352→	for name, content := range defaultSkills {
+   353→		skillDir := filepath.Join(skillsDir, name)
+   354→		if err := os.MkdirAll(skillDir, 0755); err != nil {
+   355→			return err
+   356→		}
+   357→		skillFile := filepath.Join(skillDir, "skill.md")
+   358→		if err := os.WriteFile(skillFile, []byte(content), 0644); err != nil {
+   359→			return err
+   360→		}
+   361→	}
+   362→
+   363→	return nil
+   364→}
+   365→
+   366→func InitializeDefaultTriggers() error {
+   367→	triggersDir := GetTriggersDir()
+   368→	if _, err := os.Stat(triggersDir); err == nil {
+   369→		entries, _ := os.ReadDir(triggersDir)
+   370→		if len(entries) > 0 {
+   371→			return nil
+   372→		}
+   373→	}
+   374→
+   375→	if err := os.MkdirAll(triggersDir, 0755); err != nil {
+   376→		return err
+   377→	}
+   378→
+   379→	defaultTriggerDir := filepath.Join(triggersDir, "cron")
+   380→	if err := os.MkdirAll(defaultTriggerDir, 0755); err != nil {
+   381→		return err
+   382→	}
+   383→
+   384→	defaultTrigger := `name: cron
+   385→description: Built-in scheduler trigger.
+   386→type: schedule
+   387→enabled: true
+   388→`
+   389→	return os.WriteFile(filepath.Join(defaultTriggerDir, "trigger.yaml"), []byte(defaultTrigger), 0644)
+   390→}
+   391→
+   392→func RestoreDefaultSkills() (string, error) {
+   393→	backupPath, err := backupDir(GetSkillsDir(), "skills")
+   394→	if err != nil {
+   395→		return "", err
+   396→	}
+   397→	return backupPath, InitializeDefaultSkills()
+   398→}
+   399→
+   400→func RestoreDefaultTriggers() (string, error) {
+   401→	backupPath, err := backupDir(GetTriggersDir(), "triggers")
+   402→	if err != nil {
+   403→		return "", err
+   404→	}
+   405→	return backupPath, InitializeDefaultTriggers()
+   406→}
+   407→
+   408→func backupDir(sourceDir string, label string) (string, error) {
+   409→	if _, err := os.Stat(sourceDir); err != nil {
+   410→		if os.IsNotExist(err) {
+   411→			return "", nil
+   412→		}
+   413→		return "", err
+   414→	}
+   415→
+   416→	timestamp := time.Now().Format("20060102-150405")
+   417→	backupRoot := filepath.Join(GetConfigDir(), "backups")
+   418→	if err := os.MkdirAll(backupRoot, 0755); err != nil {
+   419→		return "", err
+   420→	}
+   421→	backupPath := filepath.Join(backupRoot, label+"-"+timestamp)
+   422→	if err := os.Rename(sourceDir, backupPath); err != nil {
+   423→		return "", err
+   424→	}
+   425→	return backupPath, nil
+   426→}
+   427→
+   428→func IsCronTriggerEnabled() (bool, error) {
+   429→	type triggerConfig struct {
+   430→		Enabled *bool `yaml:"enabled"`
+   431→	}
+   432→	configPath := filepath.Join(GetTriggersDir(), "cron", "trigger.yaml")
+   433→	data, err := os.ReadFile(configPath)
+   434→	if err != nil {
+   435→		if os.IsNotExist(err) {
+   436→			return true, nil
+   437→		}
+   438→		return true, err
+   439→	}
+   440→
+   441→	var cfg triggerConfig
+   442→	if err := yaml.Unmarshal(data, &cfg); err != nil {
+   443→		return true, err
+   444→	}
+   445→	if cfg.Enabled == nil {
+   446→		return true, nil
+   447→	}
+   448→	return *cfg.Enabled, nil
+   449→}
+   450→
+   451→func GetConfigPath() string {
+   452→	return filepath.Join(GetConfigDir(), "config.yaml")
+   453→}
+   454→
+   455→func LoadConfig() (*Config, error) {
+   456→	configMu.RLock()
+   457→	if cachedConfig != nil {
+   458→		defer configMu.RUnlock()
+   459→		return cachedConfig, nil
+   460→	}
+   461→	configMu.RUnlock()
+   462→
+   463→	configMu.Lock()
+   464→	defer configMu.Unlock()
+   465→
+   466→	// Double check after acquiring lock
+   467→	if cachedConfig != nil {
+   468→		return cachedConfig, nil
+   469→	}
+   470→
+   471→	path := GetConfigPath()
+   472→	data, err := os.ReadFile(path)
+   473→	if err != nil {
+   474→		if os.IsNotExist(err) {
+   475→			cfg := &Config{}
+   476→			cfg.defaults()
+   477→			cachedConfig = cfg
+   478→			return cfg, nil
+   479→		}
+   480→		return nil, err
+   481→	}
+   482→
+   483→	var cfg Config
+   484→	if err := yaml.Unmarshal(data, &cfg); err != nil {
+   485→		return nil, err
+   486→	}
+   487→
+   488→	cfg.defaults()
+   489→	if err := cfg.Validate(); err != nil {
+   490→		return nil, err
+   491→	}
+   492→
+   493→	cachedConfig = &cfg
+   494→	return &cfg, nil
+   495→}
+   496→
+   497→func (c *Config) defaults() {
+   498→	if c.Inference.Chat.Provider == "" {
+   499→		c.Inference.Chat.Provider = ""
+   500→	}
+   501→	if c.Inference.Chat.Model == "" {
+   502→		c.Inference.Chat.Model = ""
+   503→	}
+   504→
+   505→	if c.UI.Theme == "" {
+   506→		c.UI.Theme = "default"
+   507→	}
+   508→
+   509→	if len(c.UI.Hotkeys) < 10 {
+   510→		c.UI.Hotkeys = map[string]string{
+   511→			"global_back":     "Escape",
+   512→			"new_agent":       "Cmd+N",
+   513→			"focus_input":     "Cmd+L",
+   514→			"toggle_sidebar":  "Cmd+B",
+   515→			"toggle_settings": "Cmd+,",
+   516→			"toggle_pause":    "Cmd+P",
+   517→			"compact":         "Cmd+Shift+C",
+   518→			"accept":          "Cmd+Y",
+   519→			"reject":          "Cmd+N",
+   520→			"toggle_run":      "Cmd+R",
+   521→			"pause_agent":     "Ctrl+C",
+   522→			"toggle_unibar":   "Cmd+K",
+   523→			"delete_agent":    "Cmd+D",
+   524→		}
+   525→	} else {
+   526→		// Fill in any missing default hotkeys
+   527→		defaults := map[string]string{
+   528→			"global_back":     "Escape",
+   529→			"new_agent":       "Cmd+N",
+   530→			"focus_input":     "Cmd+L",
+   531→			"toggle_sidebar":  "Cmd+B",
+   532→			"toggle_settings": "Cmd+,",
+   533→			"toggle_pause":    "Cmd+P",
+   534→			"compact":         "Cmd+Shift+C",
+   535→			"accept":          "Cmd+Y",
+   536→			"reject":          "Cmd+N",
+   537→			"toggle_run":      "Cmd+R",
+   538→			"pause_agent":     "Ctrl+C",
+   539→			"toggle_unibar":   "Cmd+K",
+   540→			"delete_agent":    "Cmd+D",
+   541→		}
+   542→		for k, v := range defaults {
+   543→			if _, ok := c.UI.Hotkeys[k]; !ok {
+   544→				c.UI.Hotkeys[k] = v
+   545→			}
+   546→		}
+   547→	}
+   548→
+   549→	if c.SubAgent.Enabled == nil {
+   550→		enabled := true
+   551→		c.SubAgent.Enabled = &enabled
+   552→	}
+   553→
+   554→	// Default auto-compaction to true as it was the previous behavior
+   555→	if c.Agent.AutoCompactionEnabled == nil {
+   556→		enabled := true
+   557→		c.Agent.AutoCompactionEnabled = &enabled
+   558→	}
+   559→
+   560→	// Default max tool result tokens
+   561→	if c.Agent.MaxToolResultTokens == nil {
+   562→		tokens := 5000
+   563→		c.Agent.MaxToolResultTokens = &tokens
+   564→	}
+   565→
+   566→	// Default summary max words
+   567→	if c.Agent.ToolResultSummaryWords == nil {
+   568→		words := 200
+   569→		c.Agent.ToolResultSummaryWords = &words
+   570→	}
+   571→
+   572→	if c.Providers == nil {
+   573→		c.Providers = make(map[string]ProviderConfig)
+   574→	}
+   575→	enabled := false
+   576→	if _, ok := c.Providers["ollama"]; !ok {
+   577→		c.Providers["ollama"] = ProviderConfig{Enabled: &enabled}
+   578→	}
+   579→	if _, ok := c.Providers["lmstudio"]; !ok {
+   580→		c.Providers["lmstudio"] = ProviderConfig{Enabled: &enabled}
+   581→	}
+   582→
+   583→	if c.CustomProviders == nil {
+   584→		c.CustomProviders = make(map[string]CustomProviderConfig)
+   585→	}
+   586→
+   587→	if c.Security.ShellPermissionMode == "" {
+   588→		c.Security.ShellPermissionMode = "restricted"
+   589→	}
+   590→}
+   591→
+   592→func (c *Config) Validate() error {
+   593→	// Purge any non-chat capabilities from available_models
+   594→	if c.AvailableModels != nil {
+   595→		for provider, caps := range c.AvailableModels {
+   596→			for capName := range caps {
+   597→				if capName != "chat" {
+   598→					delete(c.AvailableModels[provider], capName)
+   599→				}
+   600→			}
+   601→		}
+   602→	}
+   603→	return nil
+   604→}
+   605→
+   606→func SaveConfig(cfg *Config) error {
+   607→	configMu.Lock()
+   608→	defer configMu.Unlock()
+   609→
+   610→	path := GetConfigPath()
+   611→	data, err := yaml.Marshal(cfg)
+   612→	if err != nil {
+   613→		return err
+   614→	}
+   615→
+   616→	// Ensure directory exists
+   617→	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+   618→		return err
+   619→	}
+   620→
+   621→	if err := os.WriteFile(path, data, 0644); err != nil {
+   622→		return err
+   623→	}
+   624→
+   625→	cachedConfig = cfg
+   626→	return nil
+   627→}
+   628→
+   629→func GetAlwaysAllowAll() bool {
+   630→	cfg, err := LoadConfig()
+   631→	if err != nil {
+   632→		return false
+   633→	}
+   634→	return cfg.Security.AlwaysAllowAll
+   635→}
+   636→
+
+<system-reminder>
+Whenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.
+</system-reminder>

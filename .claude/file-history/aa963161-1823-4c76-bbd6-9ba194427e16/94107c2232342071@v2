@@ -1,0 +1,149 @@
+import { getBackendPort } from './backend';
+
+export interface WebSocketRequest {
+  type: string;
+  request_id?: string;
+  session_id?: string;
+  payload?: Record<string, any>;
+}
+
+export interface WebSocketResponse {
+  type: string;
+  request_id?: string;
+  status?: string;
+  payload?: any;
+  error?: string;
+}
+
+type ResponseHandler = (resp: WebSocketResponse) => void;
+
+class GlobalWebSocket {
+  private ws: WebSocket | null = null;
+  private pendingRequests = new Map<string, ResponseHandler>();
+  private messageListeners = new Set<(data: any) => void>();
+  private connectPromise: Promise<WebSocket> | null = null;
+  private reconnectTimer: number | null = null;
+  private reconnectAttempts = 0;
+  private statusListeners = new Set<(status: 'connecting' | 'open' | 'closed' | 'error') => void>();
+
+  private notifyStatus(status: 'connecting' | 'open' | 'closed' | 'error') {
+    this.statusListeners.forEach(listener => {
+      try {
+        listener(status);
+      } catch (err) {
+        console.error('WebSocket status listener failed', err);
+      }
+    });
+  }
+
+  private clearReconnectTimer() {
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  private scheduleReconnect() {
+    this.clearReconnectTimer();
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 15000);
+    this.reconnectAttempts += 1;
+    this.reconnectTimer = window.setTimeout(() => {
+      this.connect().catch(() => {
+        // swallow errors; scheduleReconnect handles retries
+      });
+    }, delay);
+  }
+
+  async connect(): Promise<WebSocket> {
+    if (this.ws?.readyState === WebSocket.OPEN) return this.ws;
+    if (this.connectPromise) return this.connectPromise;
+
+    this.connectPromise = (async () => {
+      this.notifyStatus('connecting');
+      const port = await getBackendPort();
+      const wsUrl = `ws://localhost:${port}/api/ws`;
+
+      return new Promise<WebSocket>((resolve, reject) => {
+        const ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          this.ws = ws;
+          this.connectPromise = null;
+           this.clearReconnectTimer();
+           this.reconnectAttempts = 0;
+           this.notifyStatus('open');
+          resolve(ws);
+        };
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          
+          // Handle matched responses
+          if (data.request_id && this.pendingRequests.has(data.request_id)) {
+            const handler = this.pendingRequests.get(data.request_id);
+            if (handler) {
+              handler(data);
+              this.pendingRequests.delete(data.request_id);
+            }
+          }
+
+          // Notify general listeners (for streaming chunks etc.)
+          this.messageListeners.forEach(listener => listener(data));
+        };
+
+        ws.onclose = () => {
+          this.ws = null;
+          this.connectPromise = null;
+          this.notifyStatus('closed');
+          if (this.pendingRequests.size > 0) {
+            this.pendingRequests.forEach(handler => handler({ type: 'error', status: 'error', error: 'WebSocket closed before response' }));
+            this.pendingRequests.clear();
+          }
+          this.scheduleReconnect();
+        };
+
+        ws.onerror = (err) => {
+          this.notifyStatus('error');
+          if (import.meta.env.DEV) {
+            console.error('Global WebSocket error', err);
+          }
+          this.connectPromise = null;
+          ws.close();
+          reject(err);
+        };
+      });
+    })();
+
+    return this.connectPromise;
+  }
+
+  async send(req: WebSocketRequest): Promise<any> {
+    const ws = await this.connect();
+    const requestId = crypto.randomUUID().split('-')[0];
+    req.request_id = requestId;
+
+    return new Promise((resolve, reject) => {
+      this.pendingRequests.set(requestId, (resp) => {
+        if (resp.status === 'error') {
+          reject(new Error(resp.error || 'Unknown error'));
+        } else {
+          resolve(resp.payload);
+        }
+      });
+
+      ws.send(JSON.stringify(req));
+    });
+  }
+
+  addMessageListener(listener: (data: any) => void) {
+    this.messageListeners.add(listener);
+    return () => this.messageListeners.delete(listener);
+  }
+
+  addStatusListener(listener: (status: 'connecting' | 'open' | 'closed' | 'error') => void) {
+    this.statusListeners.add(listener);
+    return () => this.statusListeners.delete(listener);
+  }
+}
+
+export const globalWS = new GlobalWebSocket();

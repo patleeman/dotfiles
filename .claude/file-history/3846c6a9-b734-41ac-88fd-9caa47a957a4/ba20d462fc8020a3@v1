@@ -1,0 +1,445 @@
+package auth
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"log/slog"
+	"net"
+	"net/http"
+	"net/url"
+	"os/exec"
+	"runtime"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/patrick/familiar/packages/go-backend/internal/config"
+)
+
+const (
+	ClaudeCodeClientID     = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
+	ClaudeCodeAuthURL      = "https://console.anthropic.com/oauth/authorize"
+	ClaudeCodeTokenURL     = "https://console.anthropic.com/oauth/token"
+	ClaudeCodeCallbackPort = 54545
+	ClaudeCodeCallbackPath = "/oauth/callback"
+	ClaudeCodeScopes       = "org:create_api_key user:profile user:inference"
+)
+
+// OAuthManager handles the OAuth flow state
+type OAuthManager struct {
+	mu              sync.Mutex
+	codeVerifier    string
+	state           string
+	pendingCallback chan *OAuthResult
+}
+
+// OAuthResult represents the result of an OAuth flow
+type OAuthResult struct {
+	Token *config.ClaudeCodeOAuthToken
+	Error error
+}
+
+var globalOAuthManager = &OAuthManager{}
+
+// generatePKCE generates code verifier and code challenge for PKCE
+func generatePKCE() (verifier, challenge string, err error) {
+	// Generate random 32-byte verifier
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", "", err
+	}
+	verifier = base64.RawURLEncoding.EncodeToString(bytes)
+
+	// Create challenge using SHA256
+	hash := sha256.Sum256([]byte(verifier))
+	challenge = base64.RawURLEncoding.EncodeToString(hash[:])
+
+	return verifier, challenge, nil
+}
+
+// generateState generates a random state string
+func generateState() (string, error) {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
+// StartOAuthFlow initiates the OAuth flow and returns when complete
+func (m *OAuthManager) StartOAuthFlow(ctx context.Context) (*config.ClaudeCodeOAuthToken, error) {
+	m.mu.Lock()
+
+	// Generate PKCE values
+	verifier, challenge, err := generatePKCE()
+	if err != nil {
+		m.mu.Unlock()
+		return nil, fmt.Errorf("failed to generate PKCE: %w", err)
+	}
+	m.codeVerifier = verifier
+
+	// Generate state
+	state, err := generateState()
+	if err != nil {
+		m.mu.Unlock()
+		return nil, fmt.Errorf("failed to generate state: %w", err)
+	}
+	m.state = state
+
+	m.pendingCallback = make(chan *OAuthResult, 1)
+	m.mu.Unlock()
+
+	// Start callback server
+	callbackURL := fmt.Sprintf("http://localhost:%d%s", ClaudeCodeCallbackPort, ClaudeCodeCallbackPath)
+
+	server, err := m.startCallbackServer(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start callback server: %w", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		server.Shutdown(shutdownCtx)
+	}()
+
+	// Build authorization URL
+	authURL, err := url.Parse(ClaudeCodeAuthURL)
+	if err != nil {
+		return nil, err
+	}
+	params := authURL.Query()
+	params.Set("client_id", ClaudeCodeClientID)
+	params.Set("redirect_uri", callbackURL)
+	params.Set("response_type", "code")
+	params.Set("scope", ClaudeCodeScopes)
+	params.Set("state", state)
+	params.Set("code_challenge", challenge)
+	params.Set("code_challenge_method", "S256")
+	authURL.RawQuery = params.Encode()
+
+	slog.Info("Starting OAuth flow", "url", authURL.String())
+
+	// Open browser
+	if err := openBrowser(authURL.String()); err != nil {
+		return nil, fmt.Errorf("failed to open browser: %w", err)
+	}
+
+	// Wait for callback or timeout
+	select {
+	case result := <-m.pendingCallback:
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		return result.Token, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(5 * time.Minute):
+		return nil, errors.New("OAuth flow timed out")
+	}
+}
+
+func (m *OAuthManager) startCallbackServer(ctx context.Context) (*http.Server, error) {
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", ClaudeCodeCallbackPort))
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on port %d: %w", ClaudeCodeCallbackPort, err)
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc(ClaudeCodeCallbackPath, m.handleCallback)
+
+	server := &http.Server{Handler: mux}
+
+	go func() {
+		if err := server.Serve(listener); err != http.ErrServerClosed {
+			slog.Error("OAuth callback server error", "error", err)
+			m.pendingCallback <- &OAuthResult{Error: err}
+		}
+	}()
+
+	return server, nil
+}
+
+func (m *OAuthManager) handleCallback(w http.ResponseWriter, r *http.Request) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	slog.Info("OAuth callback received", "query", r.URL.RawQuery)
+
+	// Verify state
+	state := r.URL.Query().Get("state")
+	if state != m.state {
+		slog.Error("OAuth state mismatch", "expected", m.state, "got", state)
+		m.pendingCallback <- &OAuthResult{Error: errors.New("invalid state parameter")}
+		http.Error(w, "Invalid state", http.StatusBadRequest)
+		return
+	}
+
+	// Check for error
+	if errParam := r.URL.Query().Get("error"); errParam != "" {
+		errDesc := r.URL.Query().Get("error_description")
+		slog.Error("OAuth error", "error", errParam, "description", errDesc)
+		m.pendingCallback <- &OAuthResult{Error: fmt.Errorf("OAuth error: %s - %s", errParam, errDesc)}
+		http.Error(w, "Authorization failed", http.StatusBadRequest)
+		return
+	}
+
+	// Get authorization code
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		m.pendingCallback <- &OAuthResult{Error: errors.New("no authorization code received")}
+		http.Error(w, "No code received", http.StatusBadRequest)
+		return
+	}
+
+	// Exchange code for token
+	token, err := m.exchangeCode(code)
+	if err != nil {
+		slog.Error("Token exchange failed", "error", err)
+		m.pendingCallback <- &OAuthResult{Error: err}
+		http.Error(w, "Token exchange failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Save token
+	if err := config.SaveClaudeCodeToken(token); err != nil {
+		slog.Error("Failed to save token", "error", err)
+		m.pendingCallback <- &OAuthResult{Error: err}
+		http.Error(w, "Failed to save token", http.StatusInternalServerError)
+		return
+	}
+
+	// Success response
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Authorization Successful</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+        }
+        .container {
+            text-align: center;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 400px;
+        }
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .checkmark svg {
+            width: 40px;
+            height: 40px;
+            stroke: white;
+            stroke-width: 3;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="checkmark">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <h1>Connected to Claude Code!</h1>
+        <p>You can close this window and return to Familiar.</p>
+    </div>
+</body>
+</html>`))
+
+	slog.Info("OAuth flow completed successfully")
+	m.pendingCallback <- &OAuthResult{Token: token}
+}
+
+func (m *OAuthManager) exchangeCode(code string) (*config.ClaudeCodeOAuthToken, error) {
+	callbackURL := fmt.Sprintf("http://localhost:%d%s", ClaudeCodeCallbackPort, ClaudeCodeCallbackPath)
+
+	data := url.Values{}
+	data.Set("grant_type", "authorization_code")
+	data.Set("client_id", ClaudeCodeClientID)
+	data.Set("code", code)
+	data.Set("redirect_uri", callbackURL)
+	data.Set("code_verifier", m.codeVerifier)
+
+	req, err := http.NewRequest("POST", ClaudeCodeTokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("token exchange failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var tokenResp struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int    `json:"expires_in"`
+		TokenType    string `json:"token_type"`
+	}
+
+	if err := json.Unmarshal(body, &tokenResp); err != nil {
+		return nil, fmt.Errorf("failed to parse token response: %w", err)
+	}
+
+	return &config.ClaudeCodeOAuthToken{
+		AccessToken:  tokenResp.AccessToken,
+		RefreshToken: tokenResp.RefreshToken,
+		ExpiresAt:    time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
+		TokenType:    tokenResp.TokenType,
+		Scopes:       strings.Split(ClaudeCodeScopes, " "),
+	}, nil
+}
+
+// RefreshToken refreshes the access token using the refresh token
+func (m *OAuthManager) RefreshToken() (*config.ClaudeCodeOAuthToken, error) {
+	refreshToken := config.GetKeychainPassword("claude-code-refresh-token")
+	if refreshToken == "" {
+		return nil, errors.New("no refresh token available")
+	}
+
+	data := url.Values{}
+	data.Set("grant_type", "refresh_token")
+	data.Set("client_id", ClaudeCodeClientID)
+	data.Set("refresh_token", refreshToken)
+
+	req, err := http.NewRequest("POST", ClaudeCodeTokenURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("token refresh failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var tokenResp struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int    `json:"expires_in"`
+		TokenType    string `json:"token_type"`
+	}
+
+	if err := json.Unmarshal(body, &tokenResp); err != nil {
+		return nil, fmt.Errorf("failed to parse refresh response: %w", err)
+	}
+
+	// Use new refresh token if provided, otherwise keep old one
+	newRefreshToken := tokenResp.RefreshToken
+	if newRefreshToken == "" {
+		newRefreshToken = refreshToken
+	}
+
+	token := &config.ClaudeCodeOAuthToken{
+		AccessToken:  tokenResp.AccessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresAt:    time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
+		TokenType:    tokenResp.TokenType,
+	}
+
+	if err := config.SaveClaudeCodeToken(token); err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+// GetValidAccessToken returns a valid access token, refreshing if necessary
+func GetValidAccessToken() (string, error) {
+	token, err := config.LoadClaudeCodeToken()
+	if err != nil {
+		return "", fmt.Errorf("no Claude Code token found: %w", err)
+	}
+
+	// Check if token needs refresh (expires within 5 minutes)
+	if time.Now().Add(5 * time.Minute).After(token.ExpiresAt) {
+		slog.Info("Refreshing Claude Code token")
+		token, err = globalOAuthManager.RefreshToken()
+		if err != nil {
+			return "", fmt.Errorf("failed to refresh token: %w", err)
+		}
+	}
+
+	return token.AccessToken, nil
+}
+
+func openBrowser(url string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "linux":
+		cmd = exec.Command("xdg-open", url)
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	default:
+		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
+	}
+	return cmd.Start()
+}
+
+// StartOAuth is the exported function to initiate OAuth flow
+func StartOAuth(ctx context.Context) (*config.ClaudeCodeOAuthToken, error) {
+	return globalOAuthManager.StartOAuthFlow(ctx)
+}
+
+// DisconnectClaudeCode clears the OAuth tokens
+func DisconnectClaudeCode() error {
+	return config.ClearClaudeCodeToken()
+}
+
+// IsClaudeCodeConnected checks if Claude Code is connected
+func IsClaudeCodeConnected() bool {
+	return config.IsClaudeCodeTokenValid()
+}

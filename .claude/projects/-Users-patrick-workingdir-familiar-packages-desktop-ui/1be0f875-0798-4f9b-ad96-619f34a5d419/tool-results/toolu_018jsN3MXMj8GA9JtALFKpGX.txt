@@ -1,0 +1,15 @@
+The file /Users/patrick/workingdir/familiar/packages/desktop/ui/src/components/Agent/TriggersView.tsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:
+   112→        <div className="flex flex-col h-full bg-background font-mono text-[12px] relative overflow-hidden select-none">
+   113→            {/* Triggers Header */}
+   114→            <div className="flex items-center justify-between px-4 py-2 border-b border-border/20 bg-surface/5 shrink-0 font-mono">
+   115→                <div className="flex items-center gap-3">
+   116→                    <h1 className="text-[11px] font-black text-accent uppercase tracking-[0.25em]">
+   117→                        {isExplorerCollapsed ? 'Triggers ' : null}
+   118→                        <span className={clsx("text-text-tertiary opacity-30 font-black", isExplorerCollapsed ? "ml-1" : "ml-0")}>
+   119→                            {triggersData?.length || 0} triggers
+   120→                        </span>
+   121→                    </h1>
+   122→                </div>
+   123→            </div>
+   124→
+   125→            <div className="flex-1 overflow-auto p-1 custom-scrollbar">
